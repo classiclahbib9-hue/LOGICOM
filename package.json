@@ -1,0 +1,19 @@
+{
+    "name": "logicom-desktop",
+    "version": "1.0.0",
+    "description": "LOGICOM - Editeur Interactif",
+    "main": "main.js",
+    "scripts": {
+        "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
+        "build": "electron-builder"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "electron": "^29.1.0",
+        "electron-builder": "^24.13.3"
+    },
+    "dependencies": {
+        "sqlite3": "^5.1.7"
+    }
+}
