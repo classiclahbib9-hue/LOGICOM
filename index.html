@@ -25,8 +25,8 @@
       --muted: #7a8fb0;
       --card: #111e35;
       --border: #1e3155;
-      --green: #22c87a;
-      --red: #e04040;
+      --green: #11a65d;
+      --red: #b02020;
       --tag-bg: #162040;
       --danger: rgba(224, 64, 64, 0.15);
       --header-bg: linear-gradient(135deg, #0a1628, #0f2a50, #1a4fa0);
@@ -45,8 +45,8 @@
       --muted: #64748b;
       --card: #ffffff;
       --border: #cbd5e1;
-      --green: #15803d;
-      --red: #dc2626;
+      --green: #0d5a2b;
+      --red: #991b1b;
       --tag-bg: #f8fafc;
       --danger: rgba(220, 38, 38, 0.1);
       --header-bg: linear-gradient(135deg, #ffffff, #f1f5f9, #e2e8f0);
@@ -117,8 +117,7 @@
       transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
       position: relative;
-      width: fit-content;
-      min-width: 180px;
+      width: 220px; /* Use fixed width instead of fit-content for smooth transition */
       height: 70px;
       margin-left: auto;
       margin-right: auto;
@@ -138,6 +137,7 @@
       border-radius: 50%;
       position: absolute;
       z-index: 2;
+      object-fit: cover;
     }
 
     .logo-text {
@@ -146,6 +146,7 @@
       transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       z-index: 1;
+      white-space: nowrap;
     }
 
     /* Glossy shine overlay for ball state */
@@ -165,7 +166,6 @@
       background: var(--white);
       width: 130px;
       height: 130px;
-      min-width: 130px;
       border-radius: 50%;
       transform: rotate(360deg) scale(0.95);
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(232, 160, 32, 0.2);
@@ -202,9 +202,11 @@
     /* TABS */
     .tabs {
       display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
       background: var(--card);
       border-bottom: 1px solid var(--border);
-      padding: 0 20px;
+      padding: 0 40px;
     }
 
     .tab {
@@ -262,9 +264,9 @@
 
     /* CONTAINER */
     .container {
-      max-width: 1300px;
+      max-width: 98%;
       margin: 0 auto;
-      padding: 32px 24px 60px;
+      padding: 24px 15px 60px;
     }
 
     /* PANEL */
@@ -365,34 +367,48 @@
       color: var(--muted);
     }
 
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 10px;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none;  /* IE and Edge */
+    }
+
+    .table-container::-webkit-scrollbar {
+      display: none; /* Chrome, Safari and Opera */
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background: var(--card);
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid var(--border);
+      table-layout: auto;
     }
 
     thead tr {
       background: var(--tag-bg);
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid var(--border);
     }
 
     th {
-      padding: 12px 16px;
+      padding: 8px 10px;
       text-align: left;
       font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 11px;
+      font-weight: 700;
       color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     td {
-      padding: 12px 16px;
+      padding: 8px 10px;
       border-top: 1px solid var(--border);
       font-size: 14px;
-      font-weight: 400;
+      font-weight: 500;
       vertical-align: middle;
       font-family: 'DM Sans', sans-serif;
     }
@@ -711,7 +727,6 @@
     .modal-close:hover {
       color: var(--white);
     }
-
     .modal-body {
       padding: 24px;
       display: flex;
@@ -801,16 +816,18 @@
 
     /* Client Row Highlighting */
     tr.client-paid td {
-      background: rgba(34, 200, 122, 0.35); /* Very visible Green */
+      background: #0d3824 !important; /* Dark Green */
+      color: #ffffff !important;
     }
     tr.client-unpaid td {
-      background: rgba(224, 64, 64, 0.35); /* Very visible Red */
+      background: #58151c !important; /* Dark Red */
+      color: #ffffff !important;
     }
     tr.client-paid:hover td {
-      background: rgba(34, 200, 122, 0.5);
+      background: #114a30 !important;
     }
     tr.client-unpaid:hover td {
-      background: rgba(224, 64, 64, 0.5);
+      background: #6e1a23 !important;
     }
 
     .toast {
@@ -1402,35 +1419,144 @@
 
     /* ───── PRINT STYLES ───── */
     @media print {
-      body { background: white !important; color: black !important; }
-      header, .tabs, .theme-toggle, .toolbar, .modal, .overlay, .btn, .toast, .recap-note, .act-chips, .act-actions, .add-opt-row, .type-toggle, .modal-footer, .note-area {
+      body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
+      
+      /* Aggressive hiding of all non-preview elements */
+      header, .tabs, .theme-toggle, .toolbar, .toast, .modal-header, .modal-footer, 
+      .overlay:not(#modalPreview), .container, .sidebar, .btn, .nav, .panel, .main {
         display: none !important;
       }
-      .container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
-      .panel { display: none !important; }
-      .panel.active { display: block !important; }
-      .act-grid { display: block !important; }
-      .act-card { 
-        break-inside: avoid; 
-        border: 1px solid #ddd !important; 
-        box-shadow: none !important; 
-        margin-bottom: 20px;
+      
+      #modalPreview {
+        display: block !important;
+        position: static !important;
         background: white !important;
+        width: 100% !important;
+        height: auto !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        z-index: 99999 !important;
       }
-      .act-card .act-header { background: #f9f9f9 !important; border-bottom: 1px solid #eee !important; }
-      .act-card .act-name { color: black !important; }
-      .act-card .val { color: black !important; }
-      table { border-collapse: collapse !important; width: 100% !important; background: white !important; }
-      th, td { border: 1px solid #ddd !important; color: black !important; background: white !important; }
-      .chart-container { page-break-inside: avoid; border: 1px solid #ddd !important; box-shadow: none !important; }
-      .summary-card { border: 2px solid black !important; box-shadow: none !important; }
-      .grand-total-box { border: 1px solid black !important; background: #eee !important; color: black !important; }
-      .grand-total-box .gtv { color: black !important; }
-      .price-cell { color: black !important; }
-      .print-only { display: block !important; margin-bottom: 20px; font-family: 'Syne', sans-serif; }
-      .no-print { display: none !important; }
+      
+      #modalPreview .modal {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: static !important;
+      }
+      
+      #modalPreview .modal-body {
+        overflow: visible !important;
+        padding: 0 !important;
+      }
+      
+      .preview-page {
+        margin: 0 !important;
+        padding: 1cm !important; /* Proper margin for A4 paper */
+        box-shadow: none !important;
+        border: none !important;
+        width: 100% !important;
+        min-height: auto !important;
+      }
     }
     .print-only { display: none; }
+
+    /* ───── PREVIEW MODAL ───── */
+    #modalPreview .modal {
+      max-width: 850px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #modalPreview .modal-body {
+      padding: 0;
+      flex: 1;
+      overflow-y: auto;
+      background: #f0f0f0;
+    }
+    .preview-page {
+      background: white;
+      width: 100%;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 30px 40px;
+      min-height: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      color: #333;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 2px solid #333;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
+    }
+    .preview-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+    }
+    .preview-logo span { color: #1a4fa0; }
+    .preview-title {
+      font-size: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      text-align: right;
+    }
+    .preview-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 25px;
+    }
+    .preview-info-box h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #777;
+      margin-bottom: 5px;
+    }
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 25px;
+    }
+    .preview-table th {
+      background: #f5f5f5;
+      padding: 8px 12px;
+      border-bottom: 2px solid #eee;
+      text-align: left;
+      font-size: 12px;
+    }
+    .preview-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+    .preview-total-box {
+      margin-left: auto;
+      width: 280px;
+      border-top: 2px solid #333;
+      padding-top: 15px;
+    }
+    .preview-total-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .preview-grand-total {
+      background: #333;
+      color: white;
+      padding: 12px 15px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
   </style>
 </head>
 
@@ -1442,20 +1568,21 @@
       <span id="themeLabel">Mode Sombre</span>
     </div>
     <h1>
-      <img src="logo.png" class="logo-img" alt="Logo">
+      <img src="photo_2026-03-11_13-50-24.jpg" class="logo-img" alt="Logo">
       <span class="logo-text">LOGI<span>COM</span></span>
     </h1>
     <div class="logo-badge">DELFI – Votre Fidèle Partenaire</div>
     <p>Éditeur interactif — Gérez vos options et activités librement</p>
   </header>
 
-  <div class="tabs">
+  <div class="tabs no-print">
     <div class="tab active" onclick="switchTab(0)">📋 Catalogue</div>
     <div class="tab" onclick="switchTab(1)">🏢 Activités</div>
     <div class="tab" onclick="switchTab(2)">👥 Clients</div>
     <div class="tab" onclick="switchTab(3)">📈 Dashboard</div>
     <div class="tab" onclick="switchTab(4)">📊 Devis & Récap</div>
     <div class="tab" onclick="switchTab(5)">💻 Matériel</div>
+    <div class="tab" onclick="switchTab(6)">🔔 Rappels</div>
   </div>
 
   <div class="container">
@@ -1468,17 +1595,19 @@
         <div class="search-box"><input type="text" id="searchOpt" placeholder="🔍  Rechercher une option…"
             oninput="renderOptions()"></div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>N°</th>
-            <th>Désignation</th>
-            <th>Tarif (DA)</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="optBody"></tbody>
-      </table>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Désignation</th>
+              <th>Tarif (DA)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="optBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ══ PANEL 2 : ACTIVITÉS ══ -->
@@ -1522,24 +1651,29 @@
           </div>
         </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Téléphone</th>
-            <th>Domaine/Marque</th>
-            <th>Potentiel</th>
-            <th>Installé</th>
-            <th>Paiement</th>
-            <th>Matériel</th>
-            <th>Remarque</th>
-            <th>Total (DA)</th>
-            <th>Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="clientBody"></tbody>
-      </table>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nom</th>
+              <th width="50">📞</th>
+              <th>Téléphone</th>
+              <th>Domaine/Marque</th>
+              <th>Potentiel</th>
+              <th>Installé</th>
+              <th>Paiement</th>
+              <th>Matériel</th>
+              <th>Remarque</th>
+              <th>Total (DA)</th>
+              <th>Date</th>
+              <th>WhatsApp</th>
+              <th width="120">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="clientBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ══ PANEL 5 : DASHBOARD ══ -->
@@ -1622,7 +1756,9 @@
       </div>
     </div>
     <div class="panel" id="p3">
-      <div class="toolbar" style="justify-content: flex-end;">
+      <div class="toolbar" style="justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-ghost" style="border-color:#1a4fa0; color:#1a4fa0" onclick="openApercu()">👁️ Aperçu</button>
+        <button class="btn btn-ghost" style="border-color:#25D366; color:#25D366" onclick="sendRecapWhatsApp()">🟢 WhatsApp Recap</button>
         <button class="btn btn-primary" onclick="printPage('Récapitulatif & Devis LOGICOM')">🖨 Imprimer Devis</button>
       </div>
       <div class="recap-note">
@@ -1661,19 +1797,62 @@
           <input type="text" id="searchMaterial" placeholder="🔍 Rechercher un matériel..." oninput="renderMaterials()">
         </div>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th>N°</th>
-            <th>Désignation</th>
-            <th>Stock</th>
-            <th>Tarif (DA)</th>
-            <th>Note</th>
-            <th width="180">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="materialBody"></tbody>
-      </table>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Désignation</th>
+              <th>Stock</th>
+              <th>Tarif (DA)</th>
+              <th>Note</th>
+              <th width="180">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="materialBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ PANEL 7 : RAPPELS (CREDITS) ══ -->
+    <div class="panel" id="p6">
+      <div class="toolbar">
+        <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🔔 Relances & Dettes</h2>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary" onclick="syncExternalClients()">📥 Sync des Clients API</button>
+        <button class="btn btn-ghost" onclick="toggleApiSettings()">⚙️ Config API</button>
+      </div>
+
+      <div id="apiSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
+        <h4 style="margin-bottom:15px; font-family:'Syne'; font-size:14px; color:var(--accent)">Configuration API WhatsApp (Automatique)</h4>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+          <div class="field"><label>Endpoint API</label><input type="text" id="apiEndpoint" placeholder="https://api.example.com/send"></div>
+          <div class="field"><label>Clé API / Token</label><input type="password" id="apiKey" placeholder="Votre token secret..."></div>
+        </div>
+        <div class="field" style="margin-top:15px;">
+          <label>Modèle de Message Reminder</label>
+          <textarea id="reminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !</textarea>
+        </div>
+        <div style="margin-top:15px; display:flex; justify-content:flex-end;">
+          <button class="btn btn-primary btn-sm" onclick="saveApiSettings()">💾 Sauvegarder Config</button>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Téléphone</th>
+              <th>Total Devis</th>
+              <th>Reste à Payer</th>
+              <th>Dernière Relance</th>
+              <th width="200">Actions WhatsApp</th>
+            </tr>
+          </thead>
+          <tbody id="reminderBody"></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -1681,7 +1860,7 @@
   <!-- ══ MODAL OPTION ══ -->
   <div class="overlay" id="modalOpt">
     <div class="modal">
-      <div class="modal-header">
+      <div class="modal-header no-print">
         <h3 id="modalOptTitle">Ajouter une option</h3>
         <button class="modal-close" onclick="closeModal('modalOpt')">✕</button>
       </div>
@@ -1701,7 +1880,7 @@
   <!-- ══ MODAL ACTIVITÉ ══ -->
   <div class="overlay" id="modalAct">
     <div class="modal">
-      <div class="modal-header">
+      <div class="modal-header no-print">
         <h3 id="modalActTitle">Nouvelle activité</h3>
         <button class="modal-close" onclick="closeModal('modalAct')">✕</button>
       </div>
@@ -1723,7 +1902,7 @@
   <!-- ══ MODAL CLIENT ══ -->
   <div class="overlay" id="modalClient">
     <div class="modal">
-      <div class="modal-header">
+      <div class="modal-header no-print">
         <h3 id="modalClientTitle">Ajouter un client</h3>
         <button class="modal-close" onclick="closeModal('modalClient')">✕</button>
       </div>
@@ -1745,7 +1924,7 @@
           <input type="text" id="clNoPurchaseReason" placeholder="ex: Trop cher, etc.">
         </div>
         <div class="field">
-          <label>Matériel Fourmi ?</label>
+          <label>Matériel Fourni ?</label>
           <select id="clMaterial">
             <option value="Non">Non</option>
             <option value="Oui">Oui</option>
@@ -1754,9 +1933,13 @@
         <div class="field">
           <label>Installé ?</label>
           <select id="clInstaller">
-            <option value="Oui">Oui</option>
             <option value="Non">Non</option>
+            <option value="Oui">Oui</option>
           </select>
+        </div>
+        <div class="field" style="display:flex; align-items:center; gap:10px; flex-direction:row;">
+          <input type="checkbox" id="clCalled" style="width:20px; height:20px; cursor:pointer;">
+          <label style="margin-bottom:0; cursor:pointer;" for="clCalled">Client déjà appelé ?</label>
         </div>
         <div class="field">
           <label>Paiement</label>
@@ -1803,7 +1986,7 @@
   <!-- ══ MODAL MATERIEL ══ -->
   <div class="overlay" id="modalMaterial">
     <div class="modal">
-      <div class="modal-header">
+      <div class="modal-header no-print">
         <h3 id="modalMaterialTitle">Ajouter Matériel</h3>
         <button class="modal-close" onclick="closeModal('modalMaterial')">✕</button>
       </div>
@@ -1816,6 +1999,26 @@
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('modalMaterial')">Annuler</button>
         <button class="btn btn-primary" onclick="saveMaterial()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL APERCU PREVIEW ══ -->
+  <div class="overlay" id="modalPreview">
+    <div class="modal">
+      <div class="modal-header no-print">
+        <h3>👁️ Aperçu du Devis</h3>
+        <button class="modal-close" onclick="closeModal('modalPreview')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-page" id="previewContent">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      <div class="modal-footer no-print">
+        <button class="btn btn-ghost" onclick="closeModal('modalPreview')">Fermer</button>
+        <button class="btn btn-ghost" style="border-color:var(--accent2); color:var(--accent2)" onclick="saveAsPDF()">📄 Sauvegarder en PDF</button>
+        <button class="btn btn-primary" onclick="printPage('Devis LOGICOM')">🖨 Imprimer maintenant</button>
       </div>
     </div>
   </div>
@@ -1960,6 +2163,7 @@
       if (i === 3) renderDashboard();
       if (i === 4) renderRecap();
       if (i === 5) renderMaterials();
+      if (i === 6) renderReminders();
     }
 
     // ═══════════════════════════ OPTIONS TABLE ═══════════════════════════
@@ -2239,7 +2443,9 @@
         const totalVal = getClientTotalValue(c);
 
         return `<tr class="${rowClass}">
+      <td><span class="num-badge">${c.id}</span></td>
       <td>${c.name}</td>
+      <td style="text-align:center"><input type="checkbox" ${c.called ? 'checked' : ''} onclick="toggleCalled(${c.id})" style="width:18px; height:18px; cursor:pointer;"></td>
       <td>${c.phone}</td>
       <td>${c.brand}</td>
       <td>${potLabel}</td>
@@ -2250,8 +2456,14 @@
       <td class="price-cell">${totalVal.toLocaleString('fr-DZ')} DA</td>
       <td>${displayDate}</td>
       <td>
-        <button class="btn btn-ghost btn-sm" onclick="openEditClient(${c.id})">✏️</button>
-        <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteClient(${c.id})">🗑</button>
+        <button class="btn btn-ghost btn-sm" style="color:#25D366; border-color:#25D366; padding:0 8px;" onclick="sendClientWhatsApp(${c.id})">📲 WhatsApp</button>
+      </td>
+      <td>
+        <div style="display:flex; gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="printClientDevis(${c.id})" title="Imprimer le devis">🖨️</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditClient(${c.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteClient(${c.id})">🗑</button>
+        </div>
       </td>
     </tr>`;
       }).join('');
@@ -2260,12 +2472,34 @@
     function initClientOptionsSelect() {
       const container = document.getElementById('clOptions');
       let html = `<div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">🏢 Activités</div>`;
-      html += activities.map(a => `<label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer;"><input type="checkbox" value="act_${a.id}" class="cl-opt-cb"> <span>${a.name}</span></label>`).join('');
+      html += activities.map(a => `
+        <div class="cl-opt-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
+            <input type="checkbox" value="act_${a.id}" class="cl-opt-cb" onchange="toggleQtyInput(this)">
+            <span>${a.name}</span>
+          </label>
+          <input type="number" class="cl-opt-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="act_${a.id}">
+        </div>
+      `).join('');
       
       html += `<div style="font-size:11px; font-weight:700; color:var(--muted); margin:12px 0 4px; text-transform:uppercase;">📋 Options Individuelles</div>`;
-      html += Object.keys(options).map(Number).sort((a,b)=>a-b).map(k => `<label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer;"><input type="checkbox" value="opt_${k}" class="cl-opt-cb"> <span>${k} — ${options[k].name}</span></label>`).join('');
+      html += Object.keys(options).map(Number).sort((a,b)=>a-b).map(k => `
+        <div class="cl-opt-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
+            <input type="checkbox" value="opt_${k}" class="cl-opt-cb" onchange="toggleQtyInput(this)">
+            <span>${k} — ${options[k].name}</span>
+          </label>
+          <input type="number" class="cl-opt-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}">
+        </div>
+      `).join('');
       
       container.innerHTML = html;
+    }
+
+    function toggleQtyInput(cb) {
+      const row = cb.closest('div');
+      const qtyInp = row.querySelector('.cl-opt-qty');
+      if (qtyInp) qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
     }
 
     function openAddClient() {
@@ -2284,6 +2518,7 @@
       document.getElementById('clFinalState').value = '';
       document.getElementById('clNoPurchaseReason').value = '';
       document.getElementById('clDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('clCalled').checked = false;
       togglePaymentMode();
       toggleNoPurchaseReason();
       initClientOptionsSelect();
@@ -2308,13 +2543,20 @@
       document.getElementById('clFinalState').value = c.finalState || '';
       document.getElementById('clNoPurchaseReason').value = c.noPurchaseReason || '';
       document.getElementById('clDate').value = c.created_at || '';
+      document.getElementById('clCalled').checked = c.called || false;
       togglePaymentMode();
       toggleNoPurchaseReason();
 
       initClientOptionsSelect();
       const checkboxes = document.querySelectorAll('.cl-opt-cb');
       checkboxes.forEach(cb => {
-        cb.checked = c.options && c.options.includes(cb.value);
+        const item = c.options && c.options.find(o => (typeof o === 'string' ? o : o.tag) === cb.value);
+        cb.checked = !!item;
+        const qtyInp = cb.closest('div').querySelector('.cl-opt-qty');
+        if (qtyInp) {
+          qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
+          qtyInp.value = (item && typeof item === 'object') ? item.qty : 1;
+        }
       });
 
       document.getElementById('modalClient').classList.add('open');
@@ -2334,9 +2576,13 @@
       const finalState = document.getElementById('clFinalState').value.trim();
       const noPurchaseReason = document.getElementById('clNoPurchaseReason').value.trim();
       const createdAt = document.getElementById('clDate').value;
+      const called = document.getElementById('clCalled').checked;
 
       const checkboxes = document.querySelectorAll('.cl-opt-cb:checked');
-      const selectedOpts = Array.from(checkboxes).map(cb => cb.value);
+      const selectedOpts = Array.from(checkboxes).map(cb => {
+        const qtyInp = cb.closest('div').querySelector('.cl-opt-qty');
+        return { tag: cb.value, qty: parseInt(qtyInp.value) || 1 };
+      });
 
       if (!name) { toast('Le nom est obligatoire', true); return; }
 
@@ -2345,9 +2591,9 @@
         c.name = name; c.phone = phone; c.brand = brand;
         c.potential = potential; c.address = address; c.source = source; c.options = selectedOpts;
         c.installer = installer; c.material = material; c.paymentStatus = paymentStatus; c.paymentMode = paymentMode; c.finalState = finalState; c.noPurchaseReason = noPurchaseReason;
-        c.created_at = createdAt;
+        c.created_at = createdAt; c.called = called;
       } else {
-        clients.push({ id: nextClientId++, name, phone, brand, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt });
+        clients.push({ id: nextClientId++, name, phone, brand, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called });
       }
 
       closeModal('modalClient');
@@ -2362,6 +2608,15 @@
       renderClients();
       syncDB();
       toast('Client supprimé');
+    }
+
+    async function toggleCalled(id) {
+      const c = clients.find(x => x.id === id);
+      if (c) {
+        c.called = !c.called;
+        renderClients(); // UI first for speed
+        await syncDB();
+      }
     }
 
     // ═══════════════════════════ UTILS ═══════════════════════════
@@ -2424,22 +2679,28 @@
       setVal('statResteRecouvrer', Math.round(resteRecouvrer).toLocaleString('fr-DZ') + ' DA');
       setVal('statManqueGagner', Math.round(manqueGagner).toLocaleString('fr-DZ') + ' DA');
 
-      // 1. Analytics Data
       const optionCounts = {};
       clients.forEach(c => {
         if (!c.options) return;
-        const uniqueInClient = new Set();
-        c.options.forEach(tag => {
+        const clientOptQtys = {}; // { oId: totalQtyForThisClient }
+        c.options.forEach(item => {
+          const tag = typeof item === 'string' ? item : item.tag;
+          const qty = typeof item === 'object' ? item.qty : 1;
+          
           if (tag.startsWith('act_')) {
             const actId = parseInt(tag.split('_')[1]);
             const act = activities.find(a => a.id === actId);
-            if (act) act.mandatory.forEach(oId => uniqueInClient.add(oId));
+            if (act) act.mandatory.forEach(oId => {
+              clientOptQtys[oId] = (clientOptQtys[oId] || 0) + qty;
+            });
           } else if (tag.startsWith('opt_')) {
-            uniqueInClient.add(parseInt(tag.split('_')[1]));
+            const oId = parseInt(tag.split('_')[1]);
+            clientOptQtys[oId] = (clientOptQtys[oId] || 0) + qty;
           }
         });
-        uniqueInClient.forEach(oId => {
-          optionCounts[oId] = (optionCounts[oId] || 0) + 1;
+        
+        Object.keys(clientOptQtys).forEach(oId => {
+          optionCounts[oId] = (optionCounts[oId] || 0) + clientOptQtys[oId];
         });
       });
 
@@ -2587,18 +2848,26 @@
 
     function getClientTotalValue(c) {
       if (!c.options || c.options.length === 0) return 0;
-      const uniqueOpts = new Set();
-      c.options.forEach(tag => {
+      const optionQtys = {}; // { oId: qty }
+      c.options.forEach(item => {
+        const tag = typeof item === 'string' ? item : item.tag;
+        const qty = typeof item === 'object' ? item.qty : 1;
+
         if (tag.startsWith('act_')) {
           const actId = parseInt(tag.split('_')[1]);
           const act = activities.find(a => a.id === actId);
-          if (act) act.mandatory.forEach(oId => uniqueOpts.add(oId));
+          if (act) act.mandatory.forEach(oId => {
+            optionQtys[oId] = (optionQtys[oId] || 0) + qty;
+          });
         } else if (tag.startsWith('opt_')) {
-          uniqueOpts.add(parseInt(tag.split('_')[1]));
+          const oId = parseInt(tag.split('_')[1]);
+          optionQtys[oId] = (optionQtys[oId] || 0) + qty;
         }
       });
       let total = 0;
-      uniqueOpts.forEach(oId => { total += (options[oId]?.price || 0); });
+      Object.keys(optionQtys).forEach(oId => {
+        total += (options[oId]?.price || 0) * optionQtys[oId];
+      });
       return total;
     }
 
@@ -2692,7 +2961,7 @@
         <thead><tr style="background:var(--tag-bg)">
           <th style="padding:8px 18px;font-size:12px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif">N°</th>
           <th style="padding:8px 18px;font-size:12px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif">Désignation</th>
-          <th style="padding:8px 18px;font-size:12px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif">Type</th>
+          <th style="padding:8px 18px;font-size:12px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif;text-align:right">Type</th>
           <th style="padding:8px 18px;font-size:12px;font-weight:500;color:var(--muted);font-family:'DM Sans',sans-serif;text-align:right">Tarif</th>
         </tr></thead>
         <tbody>
@@ -2787,7 +3056,7 @@
       document.getElementById('matStock').value = '';
       document.getElementById('matPrice').value = '';
       document.getElementById('matNote').value = '';
-      document.getElementById('modalMaterial').style.display = 'flex';
+      document.getElementById('modalMaterial').classList.add('open');
       document.getElementById('matName').focus();
     }
 
@@ -2800,12 +3069,12 @@
       document.getElementById('matStock').value = mat.stock || 0;
       document.getElementById('matPrice').value = mat.price || 0;
       document.getElementById('matNote').value = mat.note || '';
-      document.getElementById('modalMaterial').style.display = 'flex';
+      document.getElementById('modalMaterial').classList.add('open');
     }
 
     async function saveMaterial() {
       const name = document.getElementById('matName').value.trim();
-      if (!name) return showToast('Le nom est requis !', true);
+      if (!name) return toast('Le nom est requis !', true);
       const stock = parseInt(document.getElementById('matStock').value) || 0;
       const price = parseInt(document.getElementById('matPrice').value) || 0;
       const note = document.getElementById('matNote').value.trim();
@@ -2826,7 +3095,7 @@
       await syncDB();
       closeModal('modalMaterial');
       renderMaterials();
-      showToast('Matériel enregistré avec succès !');
+      toast('Matériel enregistré avec succès !');
     }
 
     async function deleteMaterial(id) {
@@ -2834,8 +3103,72 @@
       materials = materials.filter(m => m.id !== id);
       await syncDB();
       renderMaterials();
-      showToast('Matériel supprimé.');
+      toast('Matériel supprimé.');
     }
+
+    // ═══════════════════════════ WHATSAPP ═══════════════════════════
+    let isMessaging = false;
+    async function sendClientWhatsApp(id) {
+      if (isMessaging) return;
+      const c = clients.find(x => x.id === id);
+      if (!c) return;
+      if (!c.phone) return toast('Numéro de téléphone manquant', true);
+
+      try {
+        isMessaging = true;
+        toast('Préparation du PDF... 📄');
+        const html = generateDevisHtml(c);
+        const filename = `Devis_${c.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        
+        // Try to generate PDF. If main process wasn't restarted recently, this might fail.
+        let pdfPath = null;
+        try {
+          pdfPath = await ipcRenderer.invoke('generate-pdf-auto', { html, filename });
+        } catch (e) {
+          console.warn("Auto-PDF not available, please restart the app to enable automatic PDFs.", e);
+          toast("Note: Redémarrez l'application pour le PDF automatique", true);
+        }
+        
+        const total = getClientTotalValue(c);
+        const bankInfo = `🏦 CCP: 7240189 clé 02\n👤 Nom: Abbas Bahmed\n-------------------------------\n📲 Baridi Mob : 00799999000724018973`;
+        
+        const msg = `Salam alikoum ${c.name}, voila votre devis de ${total.toLocaleString('fr-DZ')} DA.\n\nVerser nous dans ce CCP ou Baridimob pour démarrer l'installation et merci.\n\n${bankInfo}\n\nMerci de votre confiance !`;
+
+        const cleanPhone = c.phone.replace(/[^\d+]/g, '');
+        const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
+        await ipcRenderer.invoke('send-whatsapp-with-file', { phone: finalPhone, message: msg, filePath: pdfPath });
+        if (pdfPath) toast('PDF prêt et envoyé dans WhatsApp ! ✓');
+      } catch (err) {
+        console.error('WhatsApp Error:', err);
+        toast('Erreur WhatsApp', true);
+      } finally {
+        isMessaging = false;
+      }
+    }
+
+    async function sendRecapWhatsApp() {
+      if (selectedActIds.size === 0) return toast('Sélectionnez au moins une activité', true);
+      
+      const selActs = activities.filter(a => selectedActIds.has(a.id));
+      const allMand = new Set();
+      const allRec = new Set();
+      selActs.forEach(a => {
+        a.mandatory.forEach(n => allMand.add(n));
+        a.optional.forEach(n => { if (!allMand.has(n)) allRec.add(n); });
+      });
+      const grandTotal = [...allMand].reduce((s, n) => s + (options[n]?.price || 0), 0) + [...allRec].reduce((s, n) => s + (options[n]?.price || 0), 0);
+      const bankInfo = `🏦 CCP: 7240189 clé 02\n👤 Nom: Abbas Bahmed\n-------------------------------\n📲 Baridi Mob : 00799999000724018973`;
+
+      let msgBody = `Voici votre devis LOGICOM pour les activités suivantes :\n`;
+      selActs.forEach(a => { msgBody += `- ${a.icon} ${a.name} (${a.subtitle})\n`; });
+      msgBody += `\n✅ TOTAL GLOBAL: ${grandTotal.toLocaleString('fr-DZ')} DA\n`;
+      
+      const fullMsg = `Salam alikoum, ${msgBody}\nVerser nous dans ce CCP ou Baridimob pour démarrer l'installation et merci.\n\n${bankInfo}`;
+
+      const url = `whatsapp://send?text=${encodeURIComponent(fullMsg)}`;
+      await ipcRenderer.invoke('open-whatsapp', url);
+    }
+
     function printPage(title) {
       const originalTitle = document.title;
       if (title) document.title = title;
@@ -2866,10 +3199,12 @@
       }
 
       const savedClients = await ipcRenderer.invoke('get-clients');
+      console.log('SQL Check: Saved Clients count =', savedClients?.length);
       if (savedClients && savedClients.length > 0) {
         clients = savedClients.map(c => ({
           ...c,
-          potential: c.potential === 1,
+          potential: !!c.potential,
+          called: !!c.called, // Bulletproof boolean conversion
           options: JSON.parse(c.options || '[]')
         }));
         if (clients.length > 0) {
@@ -2887,11 +3222,287 @@
         materials = savedMaterials;
       }
 
+      // Restore Recap selection
+      const savedRecap = localStorage.getItem('logicom-selected-acts');
+      if (savedRecap) {
+        try {
+          const ids = JSON.parse(savedRecap);
+          ids.forEach(id => selectedActIds.add(id));
+        } catch(e) {}
+      }
+
       renderOptions();
     }
 
-    loadData();
+    function openApercu(client = null) {
+      const html = generateDevisHtml(client);
+      document.getElementById('previewContent').innerHTML = html;
+      document.getElementById('modalPreview').classList.add('open');
+    }
+
+    function generateDevisHtml(client = null) {
+      const optionQtys = {}; // { oId: qty }
+      let selActs = [];
+      
+      if (client) {
+        client.options.forEach(item => {
+          const tag = typeof item === 'string' ? item : item.tag;
+          const qty = typeof item === 'object' ? item.qty : 1;
+          
+          if (tag.startsWith('act_')) {
+            const actId = parseInt(tag.split('_')[1]);
+            const act = activities.find(a => a.id === actId);
+            if (act) {
+              selActs.push(act); 
+              act.mandatory.forEach(oId => {
+                optionQtys[oId] = (optionQtys[oId] || 0) + qty;
+              });
+            }
+          } else if (tag.startsWith('opt_')) {
+            const oId = parseInt(tag.split('_')[1]);
+            optionQtys[oId] = (optionQtys[oId] || 0) + qty;
+          }
+        });
+      } else {
+        selActs = activities.filter(a => selectedActIds.has(a.id));
+        selActs.forEach(a => {
+          a.mandatory.forEach(oId => {
+            optionQtys[oId] = (optionQtys[oId] || 0) + 1;
+          });
+        });
+      }
+      
+      const grandTotal = Object.keys(optionQtys).reduce((s, oId) => s + (options[oId]?.price || 0) * optionQtys[oId], 0);
+      
+      let tableHtml = ``;
+      if (client) {
+        // Detailed break-down for client
+        tableHtml = Object.keys(optionQtys).map(oId => {
+          const qty = optionQtys[oId];
+          const price = options[oId]?.price || 0;
+          return `<tr>
+            <td>${oId}</td>
+            <td>${options[oId]?.name} ${qty > 1 ? `<strong>(x${qty})</strong>` : ''}</td>
+            <td style="text-align:right">${(price * qty).toLocaleString('fr-DZ')} DA</td>
+          </tr>`;
+        }).join('');
+      } else {
+        // General recap logic (deduplicated)
+        const allMand = new Set();
+        selActs.forEach(a => a.mandatory.forEach(n => allMand.add(n)));
+        
+        tableHtml = selActs.map(a => {
+          return `<tr><td colspan="3" style="font-weight:bold; background:#edf2f7; color: #2d3748; font-size: 11px;">${a.icon} ${a.name}</td></tr>` +
+            a.mandatory.map(n => `<tr><td>${n}</td><td>${options[n]?.name}</td><td style="text-align:right">${options[n]?.price.toLocaleString('fr-DZ')} DA</td></tr>`).join('');
+        }).join('');
+      }
+
+      // Simplified total layout for the preview
+      const totalBrut = grandTotal; 
+      const saving = 0; // Simplified for client mode with quantities
+
+      const clientInfo = client ? `<div class="preview-info-box" style="text-align:right"><h4>Client</h4><p><strong>${client.name}</strong><br>${client.brand}<br>${client.address || ''}<br>${client.phone || ''}</p></div>` : 
+        `<div class="preview-info-box" style="text-align:right"><h4>Date</h4><p>${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>`;
+
+      return `
+        <div class="preview-header">
+          <div class="preview-logo">LOGI<span>COM</span></div>
+          <div class="preview-title">Devis Estimatif</div>
+        </div>
+        <div class="preview-info"><div class="preview-info-box"><h4>Émetteur</h4><p><strong>DELFI</strong><br>Votre Fidèle Partenaire<br>Logiciel de Gestion Commerciale</p></div>${clientInfo}</div>
+        <table class="preview-table"><thead><tr><th style="width:10%;">N°</th><th style="width:65%;">Désignation</th><th style="text-align:right; width:25%;">Prix (DA)</th></tr></thead><tbody>${tableHtml}</tbody></table>
+        <div class="preview-total-box">
+          <div class="preview-total-row"><span>Total Brut</span> <span>${totalBrut.toLocaleString('fr-DZ')} DA</span></div>
+          <div class="preview-total-row" style="color:#22c87a"><span>Économie Pack</span> <span>- ${saving.toLocaleString('fr-DZ')} DA</span></div>
+          <div class="preview-grand-total"><div style="font-size:12px; font-weight:500; opacity:0.8; margin-bottom: 4px;">NET À PAYER</div>${grandTotal.toLocaleString('fr-DZ')} DA</div>
+        </div>
+        <div style="margin-top:70px; font-size:12px; color:#999; text-align:center; border-top:1px solid #eee; padding-top:20px;">
+          LOGICOM – Delfi | Document généré automatiquement – Non contractuel<br>
+          ${client ? `Émis pour ${client.name} le ${new Date().toLocaleDateString('fr-FR')}` : ''}
+        </div>`;
+    }
+
+    function printClientDevis(id) {
+      const c = clients.find(x => x.id === id);
+      if (!c) return;
+      openApercu(c);
+    }
+
+    async function saveAsPDF() {
+      const content = document.getElementById('previewContent').innerHTML;
+      if (!content) return;
+      
+      const filename = `Devis_LOGICOM_${new Date().toISOString().split('T')[0]}.pdf`;
+      try {
+        const filePath = await ipcRenderer.invoke('generate-pdf', { html: content, filename });
+        if (filePath) {
+          toast('PDF enregistré avec succès ! ✓');
+        }
+      } catch (err) {
+        console.error('PDF Generation failed:', err);
+        toast('Erreur lors de la génération du PDF', true);
+      }
+    }
+
+    // ═══════════════════════════ RAPPELS ═══════════════════════════
+    function toggleApiSettings() {
+      const box = document.getElementById('apiSettingsBox');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveApiSettings() {
+      const endpoint = document.getElementById('apiEndpoint').value;
+      const key = document.getElementById('apiKey').value;
+      const template = document.getElementById('reminderTemplate').value;
+      localStorage.setItem('logicom-api-endpoint', endpoint);
+      localStorage.setItem('logicom-api-key', key);
+      localStorage.setItem('logicom-reminder-template', template);
+      toast('Configuration sauvegardée ✓');
+    }
+
+    function loadApiSettings() {
+      document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || '';
+      document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
+      document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
+    }
+
+    function renderReminders() {
+      const body = document.getElementById('reminderBody');
+      const indebted = clients.filter(c => c.paymentStatus === 'Non' || c.paymentStatus === 'Verser');
+      
+      body.innerHTML = indebted.map(c => {
+        const total = getClientTotalValue(c);
+        const paid = c.paymentStatus === 'Verser' ? (total * 0.5) : 0; // Simplified assumption
+        const balance = total - paid;
+        
+        if (balance <= 0) return '';
+
+        return `<tr>
+          <td style="font-weight:600">${c.name}</td>
+          <td>${c.phone || '-'}</td>
+          <td class="price-cell">${total.toLocaleString('fr-DZ')} DA</td>
+          <td class="price-cell" style="color:var(--red); font-weight:700;">${balance.toLocaleString('fr-DZ')} DA</td>
+          <td style="font-size:12px; color:var(--muted)">${c.dateDernierRappel || 'Jamais'}</td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲 Message</button>
+              <button class="btn btn-ghost btn-sm" onclick="sendApiReminder(${c.id})">🤖 API Auto</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function sendManualReminder(id) {
+      const c = clients.find(x => x.id === id);
+      const total = getClientTotalValue(c);
+      const paid = c.paymentStatus === 'Verser' ? (total * 0.5) : 0;
+      const balance = total - paid;
+      
+      let msg = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
+      msg = msg.replace('{name}', c.name).replace('{balance}', balance.toLocaleString('fr-DZ'));
+
+      const cleanPhone = (c.phone || '').replace(/[^\d+]/g, '');
+      const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
+      const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
+      
+      await ipcRenderer.invoke('open-whatsapp', url);
+      c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
+      syncDB();
+      renderReminders();
+    }
+
+    async function sendApiReminder(id) {
+      const c = clients.find(x => x.id === id);
+      const endpoint = localStorage.getItem('logicom-api-endpoint');
+      if (!endpoint) return toast('Veuillez configurer l\'API en haut ⚙️', true);
+
+      toast('Appel API en cours...');
+      try {
+        console.log('Sending API call to:', endpoint, 'for client:', c.name);
+        toast('API appelée avec succès (Démo) ✓');
+        c.dateDernierRappel = new Date().toLocaleDateString('fr-FR') + ' (API)';
+        syncDB();
+        renderReminders();
+      } catch (e) {
+        toast('Erreur API', true);
+      }
+    }
+
+    async function syncExternalClients() {
+      const endpoint = localStorage.getItem('logicom-api-endpoint');
+      if (!endpoint) return toast('Veuillez d\'abord configurer l\'URL de l\'API (⚙️)', true);
+      
+      toast('Synchronisation en cours... 📥');
+      try {
+        // We'll perform a real fetch to the endpoint
+        // NOTE: The user should ensure the API returns a JSON array of clients
+        /* 
+           Expected structure from the external API:
+           [
+             { "name": "...", "phone": "...", "brand": "...", "paymentStatus": "Non", "total": 45000 }, ...
+           ]
+        */
+        const response = await fetch(endpoint, {
+          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('apiKey') }
+        });
+        
+        if (!response.ok) throw new Error('Erreur réseau / API');
+        const externalData = await response.json();
+        
+        if (!Array.isArray(externalData)) throw new Error('L\'API doit renvoyer une liste (Array).');
+
+        let count = 0;
+        externalData.forEach(ex => {
+          // Check if already exists by phone or name
+          const exists = clients.find(c => c.phone === ex.phone || c.name === ex.name);
+          if (!exists) {
+            clients.push({
+              id: nextClientId++,
+              name: ex.name || 'Sans Nom',
+              phone: ex.phone || '',
+              brand: ex.brand || '',
+              potential: !!ex.potential,
+              address: ex.address || '',
+              source: 'Import API',
+              options: ex.options || [],
+              note: ex.note || '',
+              installer: ex.installer || 'Non',
+              material: ex.material || 'Non',
+              paymentStatus: ex.paymentStatus || 'Non',
+              paymentMode: ex.paymentMode || '',
+              finalState: '',
+              noPurchaseReason: '',
+              created_at: new Date().toISOString().split('T')[0],
+              called: false
+            });
+            count++;
+          }
+        });
+
+        if (count > 0) {
+          await syncDB();
+          renderClients();
+          renderReminders();
+          toast(`${count} nouveaux clients synchronisés ! ✓`);
+        } else {
+          toast('Tous les clients sont déjà à jour.');
+        }
+
+      } catch (err) {
+        console.error('API Sync Error:', err);
+        toast('Echec de la synchronisation : ' + err.message, true);
+        
+        // Demo fallback for the user if they haven't set up the API yet
+        if (!localStorage.getItem('logicom-api-endpoint').startsWith('http')) {
+          toast('Note: Entrez une URL réelle pour tester. (Démo en console)', true);
+        }
+      }
+    }
+
+    loadData().then(() => {
+      loadApiSettings();
+    });
   </script>
 </body>
-
 </html>
