@@ -1691,6 +1691,13 @@
         </div>
         <div class="stat-card">
           <div class="stat-header">
+            <div class="sl">CA Clients Installés</div>
+            <div class="stat-icon"><i data-lucide="check-circle-2"></i></div>
+          </div>
+          <div class="sv green" id="statCaInstalle">0 DA</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
             <div class="sl">Reste à Recouvrer</div>
             <div class="stat-icon"><i data-lucide="trending-down"></i></div>
           </div>
@@ -2663,11 +2670,12 @@
       setVal('statMaterialCount', materialClientsCount);
       setVal('statZeroDebt', paidClients);
 
-      let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0;
+      let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0, caInstalle = 0;
       clients.forEach(c => {
         const val = getClientTotalValue(c);
         totalGlobal += val;
         if (c.installer === 'Oui') {
+          caInstalle += val;
           if (c.paymentStatus === 'Non') resteRecouvrer += val;
           else if (c.paymentStatus === 'Verser') resteRecouvrer += (val * 0.5); 
         } else {
@@ -2676,6 +2684,7 @@
       });
 
       setVal('statTotalGlobal', Math.round(totalGlobal).toLocaleString('fr-DZ') + ' DA');
+      setVal('statCaInstalle', Math.round(caInstalle).toLocaleString('fr-DZ') + ' DA');
       setVal('statResteRecouvrer', Math.round(resteRecouvrer).toLocaleString('fr-DZ') + ' DA');
       setVal('statManqueGagner', Math.round(manqueGagner).toLocaleString('fr-DZ') + ' DA');
 
