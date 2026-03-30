@@ -1,7 +1,7 @@
 const initSqlJs = require('sql.js');
 const fs = require('fs');
 const path = require('path');
-const { ipcMain, app } = require('electron');
+const { ipcMain, app, Notification } = require('electron');
 
 let db;
 let SQL;
@@ -171,4 +171,51 @@ function registerIpcHandlers() {
     ipcMain.handle('save-materials', (event, materialsArray) => saveAll(event, { materials: materialsArray }));
 }
 
-module.exports = { initDB, registerIpcHandlers };
+async function addClientManually(clientData) {
+    const { BrowserWindow } = require('electron');
+    try {
+        const sql = `INSERT INTO clients (name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const stmt = db.prepare(sql);
+        const now = new Date().toISOString().split('T')[0];
+        
+        stmt.run([
+            clientData.name || 'Nouveau Client',
+            clientData.phone || '',
+            clientData.brand || '',
+            1,
+            '',
+            'Telegram',
+            '[]',
+            '',
+            'Non',
+            'Non',
+            'Non',
+            '',
+            '',
+            '',
+            now,
+            0
+        ]);
+        stmt.free();
+        saveToFile();
+        
+        console.log('Client saved via Telegram bot:', clientData.name);
+        
+        // Show Native Notification
+        if (Notification.isSupported()) {
+            new Notification({
+                title: 'LOGICOM - Nouveau Client 🔔',
+                body: `Un nouveau client "${clientData.name}" vient de s'inscrire via Telegram.`
+            }).show();
+        }
+        
+        // Notify all windows to refresh
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('refresh-clients');
+        });
+    } catch (err) {
+        console.error('FAILED to save client via Telegram:', err);
+    }
+}
+
+module.exports = { initDB, registerIpcHandlers, addClientManually };

@@ -2,6 +2,7 @@ const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const { initDB, registerIpcHandlers } = require('./db')
+const { initTelegram } = require('./telegram')
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -159,11 +160,17 @@ ipcMain.handle('send-whatsapp-with-file', async (event, { phone, message, filePa
   }
 });
 
+ipcMain.handle('update-telegram-config', (event, data) => {
+  const { updateConfig } = require('./telegram');
+  return updateConfig(data);
+});
+
 app.whenReady().then(async () => {
   console.log('App ready, initializing DB...');
   await initDB()
   console.log('DB Initialized!');
   registerIpcHandlers()
+  initTelegram()
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })

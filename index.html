@@ -26,7 +26,7 @@
       --card: #111e35;
       --border: #1e3155;
       --green: #4ade80;
-      --red: #f87171;
+      --red: #FF6347;
       --tag-bg: #162040;
       --danger: rgba(224, 64, 64, 0.15);
       --header-bg: linear-gradient(135deg, #0a1628, #0f2a50, #1a4fa0);
@@ -46,7 +46,7 @@
       --card: #ffffff;
       --border: #cbd5e1;
       --green: #22c55e;
-      --red: #ef4444;
+      --red: #FF6347;
       --tag-bg: #f8fafc;
       --danger: rgba(220, 38, 38, 0.1);
       --header-bg: linear-gradient(135deg, #ffffff, #f1f5f9, #e2e8f0);
@@ -314,13 +314,16 @@
     }
 
     .btn-danger {
-      background: var(--danger);
-      color: var(--red);
-      border: 1px solid rgba(224, 64, 64, .3);
+      background: rgba(255, 99, 71, 0.15);
+      color: #FF6347;
+      border: 1px solid rgba(255, 99, 71, 0.4);
     }
 
     .btn-danger:hover {
-      background: rgba(224, 64, 64, .25);
+      background: #FF6347;
+      color: white;
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 5px 15px rgba(255, 99, 71, 0.3);
     }
 
     .btn-ghost {
@@ -816,18 +819,18 @@
 
     /* Client Row Highlighting */
     tr.client-paid td {
-      background: #0d3824 !important; /* Dark Green */
-      color: #ffffff !important;
+      background: rgba(74, 222, 128, 0.12) !important; /* Very Light Green */
+      color: var(--green) !important;
     }
     tr.client-unpaid td {
-      background: #58151c !important; /* Dark Red */
-      color: #ffffff !important;
+      background: rgba(255, 99, 71, 0.25) !important; /* Stronger Tomato */
+      color: var(--red) !important;
     }
     tr.client-paid:hover td {
-      background: #114a30 !important;
+      background: rgba(74, 222, 128, 0.3) !important;
     }
     tr.client-unpaid:hover td {
-      background: #6e1a23 !important;
+      background: rgba(255, 99, 71, 0.4) !important;
     }
 
     .toast {
@@ -1421,13 +1424,23 @@
     @media print {
       body { background: white !important; color: black !important; padding: 0 !important; margin: 0 !important; }
       
-      /* Aggressive hiding of all non-preview elements */
       header, .tabs, .theme-toggle, .toolbar, .toast, .modal-header, .modal-footer, 
-      .overlay:not(#modalPreview), .container, .sidebar, .btn, .nav, .panel, .main {
+      .overlay:not(#modalPreview), .btn, .nav, .sidebar {
+        display: none !important;
+      }
+
+      /* If preview modal is open, hide everything else */
+      .overlay.open#modalPreview ~ .container,
+      .overlay.open#modalPreview ~ header,
+      body:has(#modalPreview.open) .container {
         display: none !important;
       }
       
       #modalPreview {
+        display: none; /* Hide by default in print unless it's open */
+      }
+
+      #modalPreview.open {
         display: block !important;
         position: static !important;
         background: white !important;
@@ -1435,10 +1448,9 @@
         height: auto !important;
         opacity: 1 !important;
         visibility: visible !important;
-        z-index: 99999 !important;
       }
       
-      #modalPreview .modal {
+      #modalPreview.open .modal {
         display: block !important;
         width: 100% !important;
         max-width: none !important;
@@ -1450,112 +1462,294 @@
         position: static !important;
       }
       
-      #modalPreview .modal-body {
+      #modalPreview.open .modal-body {
         overflow: visible !important;
         padding: 0 !important;
+        background: white !important;
       }
       
       .preview-page {
         margin: 0 !important;
-        padding: 1cm !important; /* Proper margin for A4 paper */
+        padding: 0 !important; /* Let the printer handle margins or use the 2.5cm/2cm already defined if it fits */
         box-shadow: none !important;
         border: none !important;
         width: 100% !important;
-        min-height: auto !important;
+        height: auto !important;
       }
     }
     .print-only { display: none; }
 
-    /* ───── PREVIEW MODAL ───── */
+    /* ───── PREVIEW MODAL ENHANCED ───── */
     #modalPreview .modal {
-      max-width: 850px;
-      height: 90vh;
+      max-width: 950px;
+      height: 95vh;
       display: flex;
       flex-direction: column;
+      border-radius: 20px;
+      border: 1px solid var(--border);
     }
     #modalPreview .modal-body {
       padding: 0;
       flex: 1;
       overflow-y: auto;
-      background: #f0f0f0;
+      background: #f8fafc; /* Lighter, clean background */
     }
     .preview-page {
       background: white;
-      width: 100%;
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 30px 40px;
-      min-height: auto;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      color: #333;
+      width: 210mm; /* A4 Width */
+      min-height: 297mm; /* A4 Height */
+      margin: 40px auto;
+      padding: 2.5cm 2cm;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+      color: #1e293b;
       font-family: 'DM Sans', sans-serif;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
     }
+    
+    /* Decorative element for PDF */
+    .preview-page::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 8px;
+      background: linear-gradient(90deg, #1a4fa0, #e8a020);
+    }
+
     .preview-header {
       display: flex;
       justify-content: space-between;
-      border-bottom: 2px solid #333;
-      padding-bottom: 15px;
-      margin-bottom: 20px;
+      align-items: flex-start;
+      margin-bottom: 50px;
+      padding-bottom: 30px;
+      border-bottom: 1px solid #e2e8f0;
     }
-    .preview-logo {
+    
+    .preview-logo-area {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .preview-logo-icon {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+
+    .preview-logo-text {
       font-family: 'Syne', sans-serif;
       font-weight: 800;
-      font-size: 24px;
+      font-size: 28px;
+      letter-spacing: -0.5px;
+      color: #0f172a;
     }
-    .preview-logo span { color: #1a4fa0; }
-    .preview-title {
-      font-size: 20px;
-      font-weight: 700;
-      text-transform: uppercase;
+    
+    .preview-logo-text span {
+      color: #1a4fa0;
+    }
+
+    .preview-title-area {
       text-align: right;
     }
-    .preview-info {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 25px;
-    }
-    .preview-info-box h4 {
-      font-size: 11px;
+
+    .preview-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1;
+      margin-bottom: 8px;
       text-transform: uppercase;
-      color: #777;
-      margin-bottom: 5px;
+      letter-spacing: 1px;
     }
+    
+    .preview-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .preview-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 50px;
+    }
+    
+    .preview-info-box h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #1a4fa0;
+      margin-bottom: 12px;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 5px;
+      display: inline-block;
+    }
+    
+    .preview-info-box p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #334155;
+    }
+
     .preview-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 25px;
+      margin-bottom: 40px;
     }
+    
     .preview-table th {
-      background: #f5f5f5;
-      padding: 8px 12px;
-      border-bottom: 2px solid #eee;
+      background: #f8fafc;
+      padding: 14px 15px;
       text-align: left;
+      font-family: 'Syne', sans-serif;
       font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid #e2e8f0;
     }
+    
     .preview-table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid #eee;
+      padding: 14px 15px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+      color: #1e293b;
+    }
+    
+    .preview-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .preview-table tr.category-row td {
+      background: #f1f5f9;
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 8px 15px;
+    }
+
+    .preview-footer-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 40px;
+      margin-top: 20px;
+    }
+
+    .preview-bank-info {
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .preview-bank-info h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    
+    .bank-details {
       font-size: 13px;
+      color: #334155;
+      line-height: 1.6;
     }
+
     .preview-total-box {
-      margin-left: auto;
-      width: 280px;
-      border-top: 2px solid #333;
-      padding-top: 15px;
+      background: #0f172a;
+      color: white;
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
     }
+    
     .preview-total-row {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 13px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      opacity: 0.8;
     }
+    
+    .preview-total-row.saving {
+      color: #4ade80;
+      opacity: 1;
+      font-weight: 600;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 12px;
+    }
+
     .preview-grand-total {
-      background: #333;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .preview-grand-total-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 5px;
+    }
+    
+    .preview-grand-total-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
       color: white;
-      padding: 12px 15px;
-      font-size: 18px;
+      letter-spacing: -1px;
+    }
+
+    .preview-status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 11px;
       font-weight: 700;
-      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 10px;
+    }
+    .status-regle { background: #4ade80; color: #064e3b; }
+    .status-verser { background: #f4c060; color: #78350f; }
+    .status-non { background: #FF6347; color: white; }
+
+    .preview-bottom-note {
+      margin-top: 80px;
+      padding-top: 30px;
+      border-top: 1px solid #f1f5f9;
+      text-align: center;
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+    
+    .stamp-placeholder {
+      width: 120px;
+      height: 120px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #94a3b8;
+      margin: 0 auto 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
   </style>
 </head>
@@ -1568,7 +1762,7 @@
       <span id="themeLabel">Mode Sombre</span>
     </div>
     <h1>
-      <img src="photo_2026-03-11_13-50-24.jpg" class="logo-img" alt="Logo">
+      <img src="logo.png" class="logo-img" alt="Logo">
       <span class="logo-text">LOGI<span>COM</span></span>
     </h1>
     <div class="logo-badge">DELFI – Votre Fidèle Partenaire</div>
@@ -1836,6 +2030,10 @@
           <div class="field"><label>Endpoint API</label><input type="text" id="apiEndpoint" placeholder="https://api.example.com/send"></div>
           <div class="field"><label>Clé API / Token</label><input type="password" id="apiKey" placeholder="Votre token secret..."></div>
         </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
+          <div class="field"><label>Telegram Bot Token</label><input type="password" id="tgToken" placeholder="ex: 123456:ABC-DEF..."></div>
+          <div class="field" style="display:flex; flex-direction:column; justify-content:flex-end;"><p style="font-size:10px; color:var(--muted)">Pour recevoir les nouveaux clients via Telegram.</p></div>
+        </div>
         <div class="field" style="margin-top:15px;">
           <label>Modèle de Message Reminder</label>
           <textarea id="reminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !</textarea>
@@ -1980,6 +2178,11 @@
         <div class="field">
           <label>Activités & Options choisies</label>
           <div id="clOptions" style="display:flex; flex-direction:column; gap:6px; max-height:150px; overflow-y:auto; background:var(--tag-bg); border:1px solid var(--border); padding:10px; border-radius:8px;">
+          </div>
+        </div>
+        <div class="field">
+          <label>Matériels à ajouter au devis</label>
+          <div id="clMaterials" style="display:flex; flex-direction:column; gap:6px; max-height:150px; overflow-y:auto; background:var(--tag-bg); border:1px solid var(--border); padding:10px; border-radius:8px;">
           </div>
         </div>
       </div>
@@ -2188,11 +2391,12 @@
       <td>${o.name}</td>
       <td class="price-cell">${o.price.toLocaleString('fr-DZ')} DA</td>
       <td>
-        <button class="btn btn-ghost btn-sm" onclick="openEditOption(${k})">✏️ Modifier</button>
-        <button class="btn btn-danger btn-sm" style="margin-left:6px" onclick="deleteOption(${k})">🗑 Supprimer</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEditOption(${k})">✏️</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:6px" onclick="deleteOption(${k})" title="Supprimer">🗑</button>
       </td>
     </tr>`;
       }).join('');
+      if (window.lucide) window.lucide.createIcons();
     }
 
     function openAddOption() {
@@ -2468,44 +2672,62 @@
       <td>
         <div style="display:flex; gap:4px">
           <button class="btn btn-ghost btn-sm" onclick="printClientDevis(${c.id})" title="Imprimer le devis">🖨️</button>
-          <button class="btn btn-ghost btn-sm" onclick="openEditClient(${c.id})">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteClient(${c.id})">🗑</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditClient(${c.id})" title="Modifier">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteClient(${c.id})" title="Supprimer" style="border: 1px solid #FF6347; background: rgba(255, 99, 71, 0.1);">🗑</button>
         </div>
       </td>
     </tr>`;
       }).join('');
+      if (window.lucide) window.lucide.createIcons();
     }
 
     function initClientOptionsSelect() {
       const container = document.getElementById('clOptions');
       let html = `<div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">🏢 Activités</div>`;
       html += activities.map(a => `
-        <div class="cl-opt-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+        <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
-            <input type="checkbox" value="act_${a.id}" class="cl-opt-cb" onchange="toggleQtyInput(this)">
+            <input type="checkbox" value="act_${a.id}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this)">
             <span>${a.name}</span>
           </label>
-          <input type="number" class="cl-opt-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="act_${a.id}">
+          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="act_${a.id}">
         </div>
       `).join('');
       
       html += `<div style="font-size:11px; font-weight:700; color:var(--muted); margin:12px 0 4px; text-transform:uppercase;">📋 Options Individuelles</div>`;
       html += Object.keys(options).map(Number).sort((a,b)=>a-b).map(k => `
-        <div class="cl-opt-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+        <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
-            <input type="checkbox" value="opt_${k}" class="cl-opt-cb" onchange="toggleQtyInput(this)">
+            <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this)">
             <span>${k} — ${options[k].name}</span>
           </label>
-          <input type="number" class="cl-opt-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}">
+          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}">
         </div>
       `).join('');
       
       container.innerHTML = html;
     }
 
+    function initClientMaterialsSelect() {
+      const container = document.getElementById('clMaterials');
+      if (!container) return;
+      let html = `<div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">💻 Matériel En Stock</div>`;
+      html += materials.map(m => `
+        <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
+            <input type="checkbox" value="mat_${m.id}" class="cl-mat-cb cl-cb" onchange="toggleQtyInput(this)">
+            <span>${m.name}</span>
+          </label>
+          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="mat_${m.id}">
+        </div>
+      `).join('');
+      if (materials.length === 0) html += `<div style="font-size:11px; color:var(--muted)">Aucun matériel disponible</div>`;
+      container.innerHTML = html;
+    }
+
     function toggleQtyInput(cb) {
-      const row = cb.closest('div');
-      const qtyInp = row.querySelector('.cl-opt-qty');
+      const row = cb.closest('.cl-row');
+      const qtyInp = row.querySelector('.cl-qty');
       if (qtyInp) qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
     }
 
@@ -2529,6 +2751,7 @@
       togglePaymentMode();
       toggleNoPurchaseReason();
       initClientOptionsSelect();
+      initClientMaterialsSelect();
       document.getElementById('modalClient').classList.add('open');
     }
 
@@ -2555,11 +2778,13 @@
       toggleNoPurchaseReason();
 
       initClientOptionsSelect();
-      const checkboxes = document.querySelectorAll('.cl-opt-cb');
+      initClientMaterialsSelect();
+      
+      const checkboxes = document.querySelectorAll('.cl-cb');
       checkboxes.forEach(cb => {
         const item = c.options && c.options.find(o => (typeof o === 'string' ? o : o.tag) === cb.value);
         cb.checked = !!item;
-        const qtyInp = cb.closest('div').querySelector('.cl-opt-qty');
+        const qtyInp = cb.closest('.cl-row').querySelector('.cl-qty');
         if (qtyInp) {
           qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
           qtyInp.value = (item && typeof item === 'object') ? item.qty : 1;
@@ -2585,9 +2810,9 @@
       const createdAt = document.getElementById('clDate').value;
       const called = document.getElementById('clCalled').checked;
 
-      const checkboxes = document.querySelectorAll('.cl-opt-cb:checked');
+      const checkboxes = document.querySelectorAll('.cl-cb:checked');
       const selectedOpts = Array.from(checkboxes).map(cb => {
-        const qtyInp = cb.closest('div').querySelector('.cl-opt-qty');
+        const qtyInp = cb.closest('.cl-row').querySelector('.cl-qty');
         return { tag: cb.value, qty: parseInt(qtyInp.value) || 1 };
       });
 
@@ -2783,7 +3008,7 @@
                 labels: ['Installé', 'Attente'],
                 datasets: [{ 
                   data: [installedClients, Math.max(0, totalClients - installedClients)],
-                  backgroundColor: [grad(ctx1, '#32f6a1', '#0d5a3a'), grad(ctx1, '#ff5a5a', '#701a1a')],
+                  backgroundColor: [grad(ctx1, '#32f6a1', '#0d5a3a'), grad(ctx1, '#FF6347', '#b91c1c')],
                   borderWidth: 1,
                   borderColor: 'rgba(255, 255, 255, 0.1)',
                   hoverOffset: 20
@@ -2804,7 +3029,7 @@
                 labels: ['Réglé', 'Verser', 'Non'],
                 datasets: [{
                   data: [paidClients, partialPaid, notPaid],
-                  backgroundColor: [grad(ctx2, '#32f6a1', '#147a4a'), grad(ctx2, '#f4c060', '#966810'), grad(ctx2, '#ff5a5a', '#8a2020')],
+                  backgroundColor: [grad(ctx2, '#32f6a1', '#147a4a'), grad(ctx2, '#f4c060', '#966810'), grad(ctx2, '#FF6347', '#b91c1c')],
                   borderWidth: 1,
                   borderColor: 'rgba(255, 255, 255, 0.1)',
                   borderRadius: 0,
@@ -2842,7 +3067,7 @@
                 labels: ['Avec Matériel', 'Sans Matériel'],
                 datasets: [{ 
                   data: [materialClientsCount, Math.max(0, totalClients - materialClientsCount)],
-                  backgroundColor: [grad(ctxm, '#32f6a1', '#147a4a'), grad(ctxm, '#ffb830', '#966810')],
+                  backgroundColor: [grad(ctxm, '#32f6a1', '#147a4a'), grad(ctxm, '#FF6347', '#b91c1c')],
                   borderWidth: 1,
                   borderColor: 'rgba(255, 255, 255, 0.1)',
                   hoverOffset: 20
@@ -2858,6 +3083,8 @@
     function getClientTotalValue(c) {
       if (!c.options || c.options.length === 0) return 0;
       const optionQtys = {}; // { oId: qty }
+      const materialQtys = {}; // { mId: qty }
+
       c.options.forEach(item => {
         const tag = typeof item === 'string' ? item : item.tag;
         const qty = typeof item === 'object' ? item.qty : 1;
@@ -2871,11 +3098,17 @@
         } else if (tag.startsWith('opt_')) {
           const oId = parseInt(tag.split('_')[1]);
           optionQtys[oId] = (optionQtys[oId] || 0) + qty;
+        } else if (tag.startsWith('mat_')) {
+          const mId = parseInt(tag.split('_')[1]);
+          materialQtys[mId] = (materialQtys[mId] || 0) + qty;
         }
       });
       let total = 0;
       Object.keys(optionQtys).forEach(oId => {
         total += (options[oId]?.price || 0) * optionQtys[oId];
+      });
+      Object.keys(materialQtys).forEach(mId => {
+        total += (materials.find(m => m.id == mId)?.price || 0) * materialQtys[mId];
       });
       return total;
     }
@@ -3257,7 +3490,6 @@
         client.options.forEach(item => {
           const tag = typeof item === 'string' ? item : item.tag;
           const qty = typeof item === 'object' ? item.qty : 1;
-          
           if (tag.startsWith('act_')) {
             const actId = parseInt(tag.split('_')[1]);
             const act = activities.find(a => a.id === actId);
@@ -3282,52 +3514,135 @@
       }
       
       const grandTotal = Object.keys(optionQtys).reduce((s, oId) => s + (options[oId]?.price || 0) * optionQtys[oId], 0);
+      const materialQtys = {};
       
-      let tableHtml = ``;
+      if (client) {
+        client.options.forEach(item => {
+          const tag = typeof item === 'string' ? item : item.tag;
+          const qty = typeof item === 'object' ? item.qty : 1;
+          if (tag.startsWith('mat_')) {
+            const mId = parseInt(tag.split('_')[1]);
+            materialQtys[mId] = (materialQtys[mId] || 0) + qty;
+          }
+        });
+      }
+      
+      const materialsTotal = Object.keys(materialQtys).reduce((s, mId) => s + (materials.find(m => m.id == mId)?.price || 0) * materialQtys[mId], 0);
+
+      let tableRows = ``;
       if (client) {
         // Detailed break-down for client
-        tableHtml = Object.keys(optionQtys).map(oId => {
+        tableRows = Object.keys(optionQtys).map(oId => {
           const qty = optionQtys[oId];
           const price = options[oId]?.price || 0;
           return `<tr>
-            <td>${oId}</td>
-            <td>${options[oId]?.name} ${qty > 1 ? `<strong>(x${qty})</strong>` : ''}</td>
-            <td style="text-align:right">${(price * qty).toLocaleString('fr-DZ')} DA</td>
+            <td style="color:#64748b; font-weight:700;">${oId}</td>
+            <td><strong>${options[oId]?.name}</strong></td>
+            <td style="text-align:center">${qty}</td>
+            <td style="text-align:right; font-weight:700;">${(price * qty).toLocaleString('fr-DZ')} DA</td>
           </tr>`;
         }).join('');
+
+        if (Object.keys(materialQtys).length > 0) {
+          tableRows += `<tr class="category-row"><td colspan="4">💻 Matériels & Articles de Stock</td></tr>`;
+          tableRows += Object.keys(materialQtys).map(mId => {
+            const qty = materialQtys[mId];
+            const mat = materials.find(m => m.id == mId);
+            const price = mat?.price || 0;
+            return `<tr>
+              <td style="color:#64748b; font-weight:700;">M-${mId}</td>
+              <td><strong>${mat?.name || 'Matériel Inconnu'}</strong></td>
+              <td style="text-align:center">${qty}</td>
+              <td style="text-align:right; font-weight:700;">${(price * qty).toLocaleString('fr-DZ')} DA</td>
+            </tr>`;
+          }).join('');
+        }
       } else {
-        // General recap logic (deduplicated)
-        const allMand = new Set();
-        selActs.forEach(a => a.mandatory.forEach(n => allMand.add(n)));
-        
-        tableHtml = selActs.map(a => {
-          return `<tr><td colspan="3" style="font-weight:bold; background:#edf2f7; color: #2d3748; font-size: 11px;">${a.icon} ${a.name}</td></tr>` +
-            a.mandatory.map(n => `<tr><td>${n}</td><td>${options[n]?.name}</td><td style="text-align:right">${options[n]?.price.toLocaleString('fr-DZ')} DA</td></tr>`).join('');
+        tableRows = selActs.map(a => {
+          return `<tr class="category-row"><td colspan="4">${a.icon || '📦'} ${a.name || 'Activité'}</td></tr>` +
+            a.mandatory.map(n => `<tr>
+              <td style="color:#64748b; font-weight:700;">${n}</td>
+              <td><strong>${options[n]?.name || 'Option'}</strong></td>
+              <td style="text-align:center">1</td>
+              <td style="text-align:right; font-weight:700;">${(options[n]?.price || 0).toLocaleString('fr-DZ')} DA</td>
+            </tr>`).join('');
         }).join('');
       }
 
-      // Simplified total layout for the preview
-      const totalBrut = grandTotal; 
-      const saving = 0; // Simplified for client mode with quantities
-
-      const clientInfo = client ? `<div class="preview-info-box" style="text-align:right"><h4>Client</h4><p><strong>${client.name}</strong><br>${client.brand}<br>${client.address || ''}<br>${client.phone || ''}</p></div>` : 
-        `<div class="preview-info-box" style="text-align:right"><h4>Date</h4><p>${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>`;
+      const finalTotal = grandTotal + materialsTotal;
+      const bankInfo = `7240189 clé 02 (CCP)<br>Nom: Abbas Bahmed<br>Baridi Mob: 00799999000724018973`;
 
       return `
         <div class="preview-header">
-          <div class="preview-logo">LOGI<span>COM</span></div>
-          <div class="preview-title">Devis Estimatif</div>
+          <div class="preview-logo-area">
+            <img src="logo.png" class="preview-logo-icon" alt="Logo">
+            <div class="preview-logo-text">LOGI<span>COM</span></div>
+          </div>
+          <div class="preview-title-area">
+            <div class="preview-title">Devis Estimatif</div>
+            <div class="preview-subtitle">N° ${client ? 'CL-' + client.id : 'RECAP'}-${new Date().getTime().toString().slice(-6)}</div>
+            ${client ? (
+              client.paymentStatus === 'Régler' ? '<div class="preview-status-badge status-regle">Solfé / Payé</div>' : 
+              client.paymentStatus === 'Verser' ? '<div class="preview-status-badge status-verser">Acompte Versé</div>' : 
+              '<div class="preview-status-badge status-non">Non Payé</div>'
+            ) : ''}
+          </div>
         </div>
-        <div class="preview-info"><div class="preview-info-box"><h4>Émetteur</h4><p><strong>DELFI</strong><br>Votre Fidèle Partenaire<br>Logiciel de Gestion Commerciale</p></div>${clientInfo}</div>
-        <table class="preview-table"><thead><tr><th style="width:10%;">N°</th><th style="width:65%;">Désignation</th><th style="text-align:right; width:25%;">Prix (DA)</th></tr></thead><tbody>${tableHtml}</tbody></table>
-        <div class="preview-total-box">
-          <div class="preview-total-row"><span>Total Brut</span> <span>${totalBrut.toLocaleString('fr-DZ')} DA</span></div>
-          <div class="preview-total-row" style="color:#22c87a"><span>Économie Pack</span> <span>- ${saving.toLocaleString('fr-DZ')} DA</span></div>
-          <div class="preview-grand-total"><div style="font-size:12px; font-weight:500; opacity:0.8; margin-bottom: 4px;">NET À PAYER</div>${grandTotal.toLocaleString('fr-DZ')} DA</div>
+
+        <div class="preview-info">
+          <div class="preview-info-box">
+            <h4>Prestataire</h4>
+            <p><strong>DELFI</strong><br>Votre Fidèle Partenaire<br>Solutions de Gestion Commerciale<br>Algérie</p>
+          </div>
+          <div class="preview-info-box" style="text-align:right">
+            <h4>Destinataire</h4>
+            ${client ? `<p><strong>${client.name}</strong><br>${client.brand || 'Particulier'}<br>${client.address || 'Algérie'}<br>${client.phone || ''}</p>` : 
+            `<p><strong>Récapitulatif de Solutions</strong><br>Dossier Interactif<br>${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>`}
+          </div>
         </div>
-        <div style="margin-top:70px; font-size:12px; color:#999; text-align:center; border-top:1px solid #eee; padding-top:20px;">
-          LOGICOM – Delfi | Document généré automatiquement – Non contractuel<br>
-          ${client ? `Émis pour ${client.name} le ${new Date().toLocaleDateString('fr-FR')}` : ''}
+
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th style="width:10%;">Réf.</th>
+              <th style="width:55%;">Désignation des Solutions</th>
+              <th style="width:10%; text-align:center">Qté</th>
+              <th style="width:25%; text-align:right">Total (DA)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+
+        <div class="preview-footer-layout">
+          <div class="preview-bank-info">
+            <h4>Détails de Paiement (CCP/BaridiMob)</h4>
+            <div class="bank-details">${bankInfo}</div>
+            <div style="margin-top:20px; font-size:11px; color:#64748b;">
+              * Veuillez mentionner le nom du client lors du virement.
+            </div>
+          </div>
+          <div class="preview-total-box">
+            <div class="preview-total-row">
+              <span>Total Brut H.T</span>
+              <span>${finalTotal.toLocaleString('fr-DZ')} DA</span>
+            </div>
+            <div class="preview-total-row">
+              <span>TVA (0%)</span>
+              <span>0 DA</span>
+            </div>
+            <div class="preview-grand-total">
+              <div class="preview-grand-total-label">Net de votre investissement</div>
+              <div class="preview-grand-total-value">${finalTotal.toLocaleString('fr-DZ')} DA</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-bottom-note">
+          <div class="stamp-placeholder">Cachet & Signature</div>
+          LOGICOM – Delfi | Document généré numériquement le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}<br>
+          Ce devis est valable pour une durée de 30 jours à compter de sa date d'émission.
         </div>`;
     }
 
@@ -3363,9 +3678,14 @@
       const endpoint = document.getElementById('apiEndpoint').value;
       const key = document.getElementById('apiKey').value;
       const template = document.getElementById('reminderTemplate').value;
+      const tgToken = document.getElementById('tgToken').value;
+
       localStorage.setItem('logicom-api-endpoint', endpoint);
       localStorage.setItem('logicom-api-key', key);
       localStorage.setItem('logicom-reminder-template', template);
+      localStorage.setItem('logicom-tg-token', tgToken);
+      
+      ipcRenderer.invoke('update-telegram-config', { token: tgToken });
       toast('Configuration sauvegardée ✓');
     }
 
@@ -3373,6 +3693,7 @@
       document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || '';
       document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
       document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
+      document.getElementById('tgToken').value = localStorage.getItem('logicom-tg-token') || '';
     }
 
     function renderReminders() {
@@ -3508,6 +3829,43 @@
         }
       }
     }
+
+    // ═══════════════════════════ KEYBOARD SHORTCUTS ═══════════════════════════
+    document.addEventListener('keydown', (e) => {
+      // Shortcut: Press 'Control' to open 'Add Client' when on Clients tab
+      if (e.key === 'Control') {
+        const clientPanel = document.getElementById('p2');
+        if (clientPanel && clientPanel.classList.contains('active')) {
+          if (!document.querySelector('.overlay.open')) {
+            openAddClient();
+          }
+        }
+      }
+
+      // Shortcut: Press 'Escape' (Echap) to close any open modal
+      if (e.key === 'Escape') {
+        const openOverlays = document.querySelectorAll('.overlay.open');
+        openOverlays.forEach(o => o.classList.remove('open'));
+      }
+    });
+
+    // ═══════════════════════════ REFRESH LISTENERS ═══════════════════════════
+    ipcRenderer.on('refresh-clients', async () => {
+      // Authentic Shopify Ka-ching sound
+      const audio = new Audio('https://raw.githubusercontent.com/Shubham-73/Shopify-Chime/master/shopify_chime.mp3'); 
+      audio.play().catch(e=>console.log('Audio play failed:', e));
+
+      const savedClients = await ipcRenderer.invoke('get-clients');
+      clients = savedClients.map(c => ({
+          ...c,
+          potential: !!c.potential,
+          called: !!c.called,
+          options: JSON.parse(c.options || '[]')
+      }));
+      renderClients();
+      renderReminders();
+      toast('Nouveau client ajouté via Telegram ! 🔔');
+    });
 
     loadData().then(() => {
       loadApiSettings();
