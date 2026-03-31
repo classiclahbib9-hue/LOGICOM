@@ -186,7 +186,7 @@ async function addClientManually(clientData) {
             '',
             'Telegram',
             '[]',
-            '',
+            clientData.note || '',
             'Non',
             'Non',
             'Non',

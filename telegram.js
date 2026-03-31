@@ -34,7 +34,7 @@ function initTelegram() {
         const parts = text.split(/\s+/).filter(p => p.trim());
         if (parts.length === 0) return;
 
-        let phone = '', name = '', brand = '';
+        let phone = '', name = '', brand = '', note = '';
 
         // First part is always assumed to be the phone number
         phone = parts[0];
@@ -46,10 +46,18 @@ function initTelegram() {
         
         if (separator) {
             const splitChar = separator[0];
-            const nameBrand = rest.split(splitChar);
-            name = nameBrand[0].trim();
-            brand = nameBrand[1] ? nameBrand[1].trim() : '';
+            const nameBrandNote = rest.split(splitChar).map(p => p.trim());
+            name = nameBrandNote[0] || '';
+            brand = nameBrandNote[1] || '';
+            note = nameBrandNote.slice(2).join(` ${splitChar} `) || ''; 
         } else {
+            // Check for explicit "obs:" or "note:"
+            const obsMatch = rest.match(/(?:obs:|note:)\s*(.*)/i);
+            if (obsMatch) {
+                note = obsMatch[1].trim();
+                rest = rest.replace(/(?:obs:|note:).*/i, '').trim();
+            }
+
             // Default: PHONE NAME... BRAND
             const words = rest.split(/\s+/).filter(w => w.trim());
             if (words.length === 1) {
@@ -63,9 +71,9 @@ function initTelegram() {
         }
         
         if (phone) {
-            console.log('Final Parsed Client:', { phone, name, brand });
-            await addClientManually({ phone, name, brand });
-            bot.sendMessage(msg.chat.id, `✅ Client Synchronisé !\n👤 **Nom**: ${name}\n📞 **Tel**: ${phone}\n🏢 **Domaine**: ${brand || '-'}`);
+            console.log('Final Parsed Client:', { phone, name, brand, note });
+            await addClientManually({ phone, name, brand, note });
+            bot.sendMessage(msg.chat.id, `✅ Client Synchronisé !\n📞 **Tel**: ${phone}\n👤 **Nom**: ${name}\n🏢 **Domaine**: ${brand || '-'}\n📝 **Observation**: ${note || '-'}`);
         }
     });
 
