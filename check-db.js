@@ -1,14 +1,19 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('C:\\Users\\PC\\AppData\\Roaming\\logicom-desktop\\logicom.db');
+const initSqlJs = require('sql.js');
+const fs = require('fs');
+const path = require('path');
 
-db.serialize(() => {
-  db.all('SELECT count(*) as count FROM options', (err, rows) => {
-    console.log('Options count:', rows);
-  });
-  db.all('SELECT count(*) as count FROM activities', (err, rows) => {
-    console.log('Activities count:', rows);
-  });
-  db.all('SELECT count(*) as count FROM clients', (err, rows) => {
-    console.log('Clients count:', rows);
-  });
-});
+async function check() {
+    const SQL = await initSqlJs();
+    const dbPath = 'C:\\Users\\PC\\AppData\\Roaming\\logicom-desktop\\logicom.db';
+    console.log("Checking DB at " + dbPath);
+    if (!fs.existsSync(dbPath)) {
+        console.log("DB not found at " + dbPath);
+        return;
+    }
+    const filebuffer = fs.readFileSync(dbPath);
+    const db = new SQL.Database(filebuffer);
+    const res = db.exec("PRAGMA table_info(clients)");
+    console.log(JSON.stringify(res, null, 2));
+}
+
+check();

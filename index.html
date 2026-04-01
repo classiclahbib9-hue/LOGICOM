@@ -832,6 +832,32 @@
     tr.client-unpaid:hover td {
       background: rgba(255, 99, 71, 0.4) !important;
     }
+    tr.client-trial td {
+      background: rgba(138, 48, 144, 0.12) !important; /* Very Light Purple */
+      color: #c050d0 !important;
+    }
+    tr.client-trial-ended td {
+      background: rgba(232, 160, 32, 0.12) !important; /* Very Light Orange */
+      color: var(--accent) !important;
+      border-left: 4px solid var(--accent);
+    }
+    tr.client-trial:hover td {
+      background: rgba(138, 48, 144, 0.25) !important;
+    }
+    tr.client-trial-ended:hover td {
+      background: rgba(232, 160, 32, 0.25) !important;
+    }
+    .trial-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-left: 5px;
+    }
+    .trial-active { background: #c050d0; color: white; }
+    .trial-ended { background: var(--accent); color: var(--navy); }
 
     .toast {
       position: fixed;
@@ -1533,15 +1559,15 @@
     }
     
     .preview-logo-icon {
-      width: 80px;
-      height: 80px;
+      width: 40px;
+      height: 40px;
       object-fit: contain;
     }
 
     .preview-logo-text {
       font-family: 'Syne', sans-serif;
       font-weight: 800;
-      font-size: 28px;
+      font-size: 24px;
       letter-spacing: -0.5px;
       color: #0f172a;
     }
@@ -1835,6 +1861,12 @@
             <option value="Oui">Matériel : Oui</option>
             <option value="Non">Matériel : Non</option>
           </select>
+          <select id="filterTrial" onchange="renderClients()" style="background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans',sans-serif; padding:10px; border-radius:8px; outline:none; cursor:pointer;">
+            <option value="">Version Test (Tous)</option>
+            <option value="Active">Test : En cours</option>
+            <option value="Ended">Test : Terminé</option>
+            <option value="None">Client Normal</option>
+          </select>
           <div style="display:flex; align-items:center; gap:5px; background:var(--card); border:1px solid var(--border); padding:5px 10px; border-radius:8px;">
             <label style="font-size:11px; color:var(--muted); font-family:'Syne'">Du:</label>
             <input type="date" id="filterDateStart" onchange="renderClients()" style="background:transparent; border:none; color:var(--text); font-family:'DM Sans'; outline:none; font-size:13px;">
@@ -1903,6 +1935,13 @@
             <div class="stat-icon"><i data-lucide="alert-circle"></i></div>
           </div>
           <div class="sv red" id="statManqueGagner">0 DA</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="sl">Clients en Test (30j)</div>
+            <div class="stat-icon"><i data-lucide="flask-conical"></i></div>
+          </div>
+          <div class="sv" style="color:#c050d0" id="statTrialCount">0</div>
         </div>
         <div class="stat-card">
           <div class="stat-header">
@@ -2044,8 +2083,28 @@
       </div>
 
       <div class="table-container">
+        <table style="margin-bottom: 20px;">
+          <thead>
+            <tr>
+              <th colspan="6" style="background:rgba(138,48,144,0.1); color:#c050d0; padding:12px; font-size:14px; text-transform:uppercase;">⏳ Suivi des Versions de Test (30 Jours)</th>
+            </tr>
+            <tr>
+              <th>Client</th>
+              <th>Téléphone</th>
+              <th>Début Test</th>
+              <th>Jours Restants</th>
+              <th>Statut</th>
+              <th width="200">Action</th>
+            </tr>
+          </thead>
+          <tbody id="trialReminderBody"></tbody>
+        </table>
+
         <table>
           <thead>
+            <tr>
+              <th colspan="6" style="background:rgba(255,99,71,0.1); color:var(--red); padding:12px; font-size:14px; text-transform:uppercase;">💰 Relances & Dettes (Paiements)</th>
+            </tr>
             <tr>
               <th>Client</th>
               <th>Téléphone</th>
@@ -2162,6 +2221,17 @@
             <option value="Facture">Facture</option>
           </select>
         </div>
+        <div style="background:var(--tag-bg); padding:15px; border-radius:10px; border:1px solid var(--border); margin-top:10px;">
+          <h4 style="font-family:'Syne'; font-size:12px; color:var(--accent); margin-bottom:10px; text-transform:uppercase;">Version de Test (30 Jours)</h4>
+          <div class="field" style="flex-direction:row; align-items:center; gap:12px; background:rgba(138,48,144,0.1); padding:10px; border-radius:8px; border:1px solid rgba(138,48,144,0.3);">
+            <input type="checkbox" id="clIsTrial" style="width:24px; height:24px; cursor:pointer;" onchange="document.getElementById('trialDateBox').style.display = this.checked ? 'block' : 'none'; if(this.checked) toast('Période de test activée ✓')">
+            <label style="margin-bottom:0; cursor:pointer; font-weight:700; color:#c050d0;" for="clIsTrial">ACTIVER LA VERSION DE TEST</label>
+          </div>
+          <div class="field" id="trialDateBox" style="display:none; margin-top:10px;">
+            <label>Date de début du test</label>
+            <input type="date" id="clTrialStartDate">
+          </div>
+        </div>
         <div class="field"><label>État final client</label><input type="text" id="clFinalState" placeholder="ex: Client satisfait"></div>
         <div class="field"><label>Date d'entrée</label><input type="date" id="clDate"></div>
         <div class="field"><label>Adresse locale</label><input type="text" id="clAddress"
@@ -2238,6 +2308,26 @@
   <script>
     // ═══════════════════════════ DATA ═══════════════════════════
     const { ipcRenderer } = require('electron');
+    const path = require('path');
+    const fs = require('fs');
+
+    // Pre-load logo to avoid broken images in PDF
+    let logoDataUrl = '';
+    try {
+      const possiblePaths = [
+        path.join(__dirname, 'logo.png'),
+        path.join(process.cwd(), 'logo.png'),
+        path.join(process.cwd(), 'resources', 'logo.png')
+      ];
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          const logoBuffer = fs.readFileSync(p);
+          logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+          console.log('Logo loaded from:', p);
+          break;
+        }
+      }
+    } catch(e) { console.error('Logo load failed:', e); }
 
     let options = {
       1: { name: "Achats / Ventes / Règlements / Sauvegardes", price: 45000 },
@@ -2275,6 +2365,40 @@
       40: { name: "Synchronisation WEB", price: 35000 },
       44: { name: "Production / Fabrication", price: 60000 },
       45: { name: "Synchronisation cloud", price: 30000 },
+      // MODULES
+      101: { name: "Poste Réseau", price: 17000 },
+      102: { name: "Borne des Prix", price: 6000 },
+      103: { name: "Dossiers Supplémentaires (35%)", price: 0 },
+      104: { name: "Copie Externe pour Consultation (16%)", price: 0 },
+      105: { name: "Copie Externe Achats +Trésor.+Etats (30%)", price: 0 },
+      106: { name: "Copie Externe Ventes +Trésor.+Etats (30%)", price: 0 },
+      107: { name: "Copie Externe pour consolidation inventaire", price: 8000 },
+      108: { name: "2ème Dossier dans 2ème PC (consultation)", price: 3000 },
+      109: { name: "2ème Dossier dans 2ème PC (copie de modif.)", price: 4000 },
+      110: { name: "Transfert de Données vers Logicom/exercice", price: 6000 },
+      111: { name: "Support Technique / Année", price: 15000 },
+      112: { name: "Activation Poste Secours / 10 Jours", price: 4000 },
+      113: { name: "Activation Poste pour Formation / 10 Jours", price: 2000 },
+      114: { name: "TSPlus : TSPlus Système Edition", price: 12000 },
+      115: { name: "TSPlus : TSPlus Printer Edition", price: 14000 },
+      116: { name: "TSPlus : TSPlus Web Edition", price: 16000 },
+      // APPLICATIONS
+      201: { name: "App Android Livraison DELYV V2", price: 25000 },
+      202: { name: "App Desktop Suivi/Tracking ADMIN-FLOTTE", price: 50000 },
+      203: { name: "Poste Supplémentaire ADMIN-FLOTTE", price: 7000 },
+      204: { name: "App Android Vente Réseau DELPOS V2", price: 13000 },
+      205: { name: "App Android d'Inventaire DELINV", price: 7000 },
+      206: { name: "App Android d'Achat DELACHA V1", price: 14000 },
+      207: { name: "App Android Borne des Prix", price: 5500 },
+      208: { name: "App Android Transfert Entrepôt DELTRANS", price: 5000 },
+      209: { name: "App Desktop Impression Chèques PRINT-CHECK", price: 2500 },
+      // AUTRES LOGICIELS
+      301: { name: "Logiciel ABS Mono Dossier", price: 24000 },
+      302: { name: "Logiciel ABS Multi Dossiers", price: 30000 },
+      303: { name: "Suivi Associés & Bilan Mono Dossier", price: 14000 },
+      304: { name: "Suivi Associés & Bilan Multi Dossiers", price: 18000 },
+      305: { name: "Suivi Salaires Bilan Mono Dossier", price: 14000 },
+      306: { name: "Suivi Salaires Bilan Multi Dossiers", price: 18000 },
     };
 
     let activities = [
@@ -2337,8 +2461,6 @@
 
     let isSaving = false;
     async function syncDB() {
-      if (isSaving) return; // Prevent overlapping saves
-      isSaving = true;
       try {
         const optsArray = Object.keys(options).map(id => ({
           id: Number(id),
@@ -2353,13 +2475,12 @@
           materials: materials
         };
         
-        await ipcRenderer.invoke('save-all', data);
-        console.log('Data saved successfully');
+        // Immediate call to main process for disk write
+        const result = await ipcRenderer.invoke('save-all', data);
+        if (result) console.log('DISK SYNC: All changes permanently saved.');
       } catch (err) {
-        console.error('Save failed:', err);
-        toast('Erreur de sauvegarde : ' + err.message, true);
-      } finally {
-        isSaving = false;
+        console.error('CRITICAL SYNC FAILURE:', err);
+        toast('Erreur Critique de Sauvegarde : ' + err.message, true);
       }
     }
 
@@ -2610,6 +2731,7 @@
       const fInstall = document.getElementById('filterInstall').value;
       const fPayment = document.getElementById('filterPayment').value;
       const fMaterial = document.getElementById('filterMaterial').value;
+      const fTrial = document.getElementById('filterTrial').value;
       const fDateStart = document.getElementById('filterDateStart').value;
       const fDateEnd = document.getElementById('filterDateEnd').value;
 
@@ -2629,6 +2751,12 @@
         if (fMaterial === 'Oui') matchMaterial = c.material === 'Oui';
         else if (fMaterial === 'Non') matchMaterial = c.material !== 'Oui';
 
+        let matchTrial = true;
+        const trialInfo = getTrialInfo(c);
+        if (fTrial === 'Active') matchTrial = trialInfo.status === 1;
+        else if (fTrial === 'Ended') matchTrial = trialInfo.status === 2;
+        else if (fTrial === 'None') matchTrial = !c.trialStatus || c.trialStatus === 0;
+
         let matchDate = true;
         if (c.created_at) {
           if (fDateStart && c.created_at < fDateStart) matchDate = false;
@@ -2637,12 +2765,19 @@
           matchDate = false;
         }
 
-        return matchQ && matchInstall && matchPayment && matchMaterial && matchDate;
+        return matchQ && matchInstall && matchPayment && matchMaterial && matchDate && matchTrial;
       });
       document.getElementById('clientBody').innerHTML = filtered.map(c => {
         const potLabel = c.potential ? '<span style="color:var(--green)">Oui</span>' : '<span style="color:var(--muted)">Non</span>';
         const paid = c.paymentStatus === 'Verser' || c.paymentStatus === 'Régler';
-        const rowClass = paid ? 'client-paid' : (c.paymentStatus === 'Non' ? 'client-unpaid' : '');
+        
+        const trialInfo = getTrialInfo(c);
+        let rowClass = paid ? 'client-paid' : (c.paymentStatus === 'Non' ? 'client-unpaid' : '');
+        if (trialInfo.status === 1) rowClass = 'client-trial';
+        if (trialInfo.status === 2) rowClass = 'client-trial-ended';
+
+        const trialBadge = trialInfo.status === 1 ? '<span class="trial-badge trial-active">TEST EN COURS</span>' : 
+                          (trialInfo.status === 2 ? '<span class="trial-badge trial-ended">TEST TERMINÉ</span>' : '');
 
         const installLabel = c.installer === 'Oui' ? '<span style="color:var(--green)">Oui</span>' : '<span style="color:var(--muted)">Non</span>';
         const materialLabel = c.material === 'Oui' ? '<span style="color:var(--green)">Oui</span>' : '<span style="color:var(--muted)">Non</span>';
@@ -2655,7 +2790,7 @@
 
         return `<tr class="${rowClass}">
       <td><span class="num-badge">${c.id}</span></td>
-      <td>${c.name}</td>
+      <td>${c.name} ${trialBadge}</td>
       <td style="text-align:center"><input type="checkbox" ${c.called ? 'checked' : ''} onclick="toggleCalled(${c.id})" style="width:18px; height:18px; cursor:pointer;"></td>
       <td>${c.phone}</td>
       <td>${c.brand}</td>
@@ -2748,6 +2883,9 @@
       document.getElementById('clNoPurchaseReason').value = '';
       document.getElementById('clDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('clCalled').checked = false;
+      document.getElementById('clIsTrial').checked = false;
+      document.getElementById('clTrialStartDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('trialDateBox').style.display = 'none';
       togglePaymentMode();
       toggleNoPurchaseReason();
       initClientOptionsSelect();
@@ -2774,6 +2912,9 @@
       document.getElementById('clNoPurchaseReason').value = c.noPurchaseReason || '';
       document.getElementById('clDate').value = c.created_at || '';
       document.getElementById('clCalled').checked = c.called || false;
+      document.getElementById('clIsTrial').checked = c.trialStatus && c.trialStatus > 0;
+      document.getElementById('clTrialStartDate').value = c.trialStartDate || '';
+      document.getElementById('trialDateBox').style.display = (c.trialStatus && c.trialStatus > 0) ? 'block' : 'none';
       togglePaymentMode();
       toggleNoPurchaseReason();
 
@@ -2809,6 +2950,8 @@
       const noPurchaseReason = document.getElementById('clNoPurchaseReason').value.trim();
       const createdAt = document.getElementById('clDate').value;
       const called = document.getElementById('clCalled').checked;
+      const trialStatus = document.getElementById('clIsTrial').checked ? 1 : 0;
+      const trialStartDate = document.getElementById('clTrialStartDate').value;
 
       const checkboxes = document.querySelectorAll('.cl-cb:checked');
       const selectedOpts = Array.from(checkboxes).map(cb => {
@@ -2824,8 +2967,9 @@
         c.potential = potential; c.address = address; c.source = source; c.options = selectedOpts;
         c.installer = installer; c.material = material; c.paymentStatus = paymentStatus; c.paymentMode = paymentMode; c.finalState = finalState; c.noPurchaseReason = noPurchaseReason;
         c.created_at = createdAt; c.called = called;
+        c.trialStatus = trialStatus; c.trialStartDate = trialStartDate;
       } else {
-        clients.push({ id: nextClientId++, name, phone, brand, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called });
+        clients.push({ id: nextClientId++, name, phone, brand, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate });
       }
 
       closeModal('modalClient');
@@ -2849,6 +2993,20 @@
         renderClients(); // UI first for speed
         await syncDB();
       }
+    }
+
+    function getTrialInfo(c) {
+      if (!c.trialStatus || c.trialStatus === 0) return { status: 0 };
+      if (!c.trialStartDate) return { status: 1, daysLeft: 30 };
+      
+      const start = new Date(c.trialStartDate);
+      const today = new Date();
+      const diffTime = today - start;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const daysLeft = 30 - diffDays;
+      
+      if (daysLeft <= 0) return { status: 2, daysLeft: 0 };
+      return { status: 1, daysLeft: daysLeft };
     }
 
     // ═══════════════════════════ UTILS ═══════════════════════════
@@ -2894,6 +3052,7 @@
       setVal('statNotInstalledCount', totalClients - installedClients);
       setVal('statMaterialCount', materialClientsCount);
       setVal('statZeroDebt', paidClients);
+      setVal('statTrialCount', clients.filter(c => c.trialStatus && c.trialStatus > 0).length);
 
       let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0, caInstalle = 0;
       clients.forEach(c => {
@@ -3424,15 +3583,29 @@
       const savedActs = await ipcRenderer.invoke('get-activities');
 
       if (savedOpts.length > 0 || savedActs.length > 0) {
-        // Override defaults with DB
-        options = {};
-        savedOpts.forEach(o => { options[o.id] = { name: o.name, price: o.price }; });
+        let newDetected = false;
+        const initialOptCount = Object.keys(options).length;
+        
+        // Merge DB over Defaults (preserves user custom prices but keeps new hardcoded options)
+        savedOpts.forEach(o => { 
+          options[o.id] = { name: o.name, price: o.price }; 
+        });
+        
+        const finalOptCount = Object.keys(options).length;
+        if (finalOptCount > savedOpts.length) {
+            newDetected = true;
+            console.log("New options detected in code. Synchronizing...");
+        }
 
         activities = savedActs.map(a => ({
           ...a,
           mandatory: JSON.parse(a.mandatory || '[]'),
           optional: JSON.parse(a.optional || '[]')
         }));
+        
+        if (newDetected) {
+            syncDB(); // Lock new options into DB immediately
+        }
 
         // update nextActId
         if (activities.length > 0) {
@@ -3446,8 +3619,10 @@
         clients = savedClients.map(c => ({
           ...c,
           potential: !!c.potential,
-          called: !!c.called, // Bulletproof boolean conversion
-          options: JSON.parse(c.options || '[]')
+          called: !!c.called,
+          options: JSON.parse(c.options || '[]'),
+          trialStatus: Number(c.trialStatus || 0),
+          trialStartDate: c.trialStartDate || ''
         }));
         if (clients.length > 0) {
           nextClientId = Math.max(...clients.map(c => c.id)) + 1;
@@ -3534,17 +3709,23 @@
         // Detailed break-down for client
         tableRows = Object.keys(optionQtys).map(oId => {
           const qty = optionQtys[oId];
-          const price = options[oId]?.price || 0;
+          const opt = options[oId];
+          if (!opt) {
+            console.warn(`Option ID ${oId} found in client but NOT in global options list.`);
+            return '';
+          }
+          const price = opt.price || 0;
           return `<tr>
             <td style="color:#64748b; font-weight:700;">${oId}</td>
-            <td><strong>${options[oId]?.name}</strong></td>
+            <td><strong>${opt.name}</strong></td>
             <td style="text-align:center">${qty}</td>
+            <td style="text-align:right">${price.toLocaleString('fr-DZ')} DA</td>
             <td style="text-align:right; font-weight:700;">${(price * qty).toLocaleString('fr-DZ')} DA</td>
           </tr>`;
         }).join('');
 
         if (Object.keys(materialQtys).length > 0) {
-          tableRows += `<tr class="category-row"><td colspan="4">💻 Matériels & Articles de Stock</td></tr>`;
+          tableRows += `<tr class="category-row"><td colspan="5">💻 Matériels & Articles de Stock</td></tr>`;
           tableRows += Object.keys(materialQtys).map(mId => {
             const qty = materialQtys[mId];
             const mat = materials.find(m => m.id == mId);
@@ -3553,19 +3734,24 @@
               <td style="color:#64748b; font-weight:700;">M-${mId}</td>
               <td><strong>${mat?.name || 'Matériel Inconnu'}</strong></td>
               <td style="text-align:center">${qty}</td>
+              <td style="text-align:right">${price.toLocaleString('fr-DZ')} DA</td>
               <td style="text-align:right; font-weight:700;">${(price * qty).toLocaleString('fr-DZ')} DA</td>
             </tr>`;
           }).join('');
         }
       } else {
         tableRows = selActs.map(a => {
-          return `<tr class="category-row"><td colspan="4">${a.icon || '📦'} ${a.name || 'Activité'}</td></tr>` +
-            a.mandatory.map(n => `<tr>
-              <td style="color:#64748b; font-weight:700;">${n}</td>
-              <td><strong>${options[n]?.name || 'Option'}</strong></td>
-              <td style="text-align:center">1</td>
-              <td style="text-align:right; font-weight:700;">${(options[n]?.price || 0).toLocaleString('fr-DZ')} DA</td>
-            </tr>`).join('');
+          return `<tr class="category-row"><td colspan="5">${a.icon || '📦'} ${a.name || 'Activité'}</td></tr>` +
+            a.mandatory.map(n => {
+              const price = options[n]?.price || 0;
+              return `<tr>
+                <td style="color:#64748b; font-weight:700;">${n}</td>
+                <td><strong>${options[n]?.name || 'Option'}</strong></td>
+                <td style="text-align:center">1</td>
+                <td style="text-align:right">${price.toLocaleString('fr-DZ')} DA</td>
+                <td style="text-align:right; font-weight:700;">${price.toLocaleString('fr-DZ')} DA</td>
+              </tr>`;
+            }).join('');
         }).join('');
       }
 
@@ -3575,7 +3761,7 @@
       return `
         <div class="preview-header">
           <div class="preview-logo-area">
-            <img src="logo.png" class="preview-logo-icon" alt="Logo">
+            <img src="${logoDataUrl || 'logo.png'}" class="preview-logo-icon" alt="Logo">
             <div class="preview-logo-text">LOGI<span>COM</span></div>
           </div>
           <div class="preview-title-area">
@@ -3605,9 +3791,10 @@
           <thead>
             <tr>
               <th style="width:10%;">Réf.</th>
-              <th style="width:55%;">Désignation des Solutions</th>
-              <th style="width:10%; text-align:center">Qté</th>
-              <th style="width:25%; text-align:right">Total (DA)</th>
+              <th style="width:42%;">Désignation des Solutions</th>
+              <th style="width:8%; text-align:center">Qté</th>
+              <th style="width:20%; text-align:right">P.U. (DA)</th>
+              <th style="width:20%; text-align:right">Total (DA)</th>
             </tr>
           </thead>
           <tbody>
@@ -3698,15 +3885,15 @@
 
     function renderReminders() {
       const body = document.getElementById('reminderBody');
-      const indebted = clients.filter(c => c.paymentStatus === 'Non' || c.paymentStatus === 'Verser');
+      const trialBody = document.getElementById('trialReminderBody');
       
+      // 1. Debt Reminders
+      const indebted = clients.filter(c => c.paymentStatus === 'Non' || c.paymentStatus === 'Verser');
       body.innerHTML = indebted.map(c => {
         const total = getClientTotalValue(c);
-        const paid = c.paymentStatus === 'Verser' ? (total * 0.5) : 0; // Simplified assumption
+        const paid = c.paymentStatus === 'Verser' ? (total * 0.5) : 0;
         const balance = total - paid;
-        
         if (balance <= 0) return '';
-
         return `<tr>
           <td style="font-weight:600">${c.name}</td>
           <td>${c.phone || '-'}</td>
@@ -3721,6 +3908,42 @@
           </td>
         </tr>`;
       }).join('');
+
+      // 2. Trial Reminders
+      const trials = clients.filter(c => c.trialStatus && c.trialStatus > 0);
+      trialBody.innerHTML = trials.map(c => {
+        const info = getTrialInfo(c);
+        const statusBadge = info.status === 1 ? `<span class="trial-badge trial-active">EN COURS (${info.daysLeft}j)</span>` : `<span class="trial-badge trial-ended">TERMINÉ</span>`;
+        const actionBtn = info.status === 2 ? `<button class="btn btn-primary btn-sm" onclick="sendTrialFollowUp(${c.id})">📲 Contacter (Bilan Test)</button>` : `<button class="btn btn-ghost btn-sm" onclick="sendTrialFollowUp(${c.id})">📲 Relance</button>`;
+        
+        return `<tr>
+          <td style="font-weight:600">${c.name}</td>
+          <td>${c.phone || '-'}</td>
+          <td style="font-size:12px;">${c.trialStartDate || '-'}</td>
+          <td style="font-weight:bold; color:${info.daysLeft < 5 ? 'var(--red)' : 'var(--text)'}">${info.daysLeft} Jours</td>
+          <td>${statusBadge}</td>
+          <td>${actionBtn}</td>
+        </tr>`;
+      }).join('');
+      
+      if (trials.length === 0) trialBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted)">Aucune version de test active.</td></tr>';
+    }
+
+    async function sendTrialFollowUp(id) {
+      const c = clients.find(x => x.id === id);
+      const info = getTrialInfo(c);
+      let msg = "";
+      
+      if (info.status === 2) {
+        msg = `Salam alikoum ${c.name}, votre période de test de 30 jours pour LOGICOM est terminée. Qu'en avez-vous pensé ? Avez-vous pris une décision pour la version complète ?`;
+      } else {
+        msg = `Salam alikoum ${c.name}, comment se passe votre test de LOGICOM ? Il vous reste ${info.daysLeft} jours. Avez-vous des questions ?`;
+      }
+
+      const cleanPhone = (c.phone || '').replace(/[^\d+]/g, '');
+      const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
+      const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
+      await ipcRenderer.invoke('open-whatsapp', url);
     }
 
     async function sendManualReminder(id) {
@@ -3860,12 +4083,20 @@
           ...c,
           potential: !!c.potential,
           called: !!c.called,
-          options: JSON.parse(c.options || '[]')
+          options: JSON.parse(c.options || '[]'),
+          trialStatus: Number(c.trialStatus || 0),
+          trialStartDate: c.trialStartDate || ''
       }));
       renderClients();
       renderReminders();
       toast('Nouveau client ajouté via Telegram ! 🔔');
     });
+
+    // AUTO-SAVE every 2 minutes for extra safety
+    setInterval(() => {
+      console.log('--- AUTO-SAVE ---');
+      syncDB();
+    }, 120000);
 
     loadData().then(() => {
       loadApiSettings();

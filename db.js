@@ -49,7 +49,8 @@ async function initDB() {
             name TEXT, phone TEXT, brand TEXT, potential INTEGER, address TEXT, source TEXT, 
             options TEXT, note TEXT, installer TEXT, material TEXT, paymentStatus TEXT, 
             paymentMode TEXT, finalState TEXT, noPurchaseReason TEXT, created_at TEXT, 
-            called INTEGER DEFAULT 0, dateDernierRappel TEXT
+            called INTEGER DEFAULT 0, dateDernierRappel TEXT,
+            trialStatus INTEGER DEFAULT 0, trialStartDate TEXT
           )
         `);
 
@@ -63,6 +64,8 @@ async function initDB() {
         try { db.run("ALTER TABLE clients ADD COLUMN created_at TEXT"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN called INTEGER DEFAULT 0"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN dateDernierRappel TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN trialStatus INTEGER DEFAULT 0"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN trialStartDate TEXT"); } catch(e){}
 
         db.run(`
           CREATE TABLE IF NOT EXISTS materials (
@@ -139,10 +142,10 @@ function registerIpcHandlers() {
 
             if (data.clients) {
                 db.run('DELETE FROM clients');
-                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                 const stmt = db.prepare(sql);
                 for (const c of data.clients) {
-                    stmt.run([c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source, JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non', c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '', c.created_at || '', (c.called?1:0), c.dateDernierRappel || '']);
+                    stmt.run([c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source, JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non', c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '', c.created_at || '', (c.called?1:0), c.dateDernierRappel || '', (c.trialStatus || 0), c.trialStartDate || '']);
                 }
                 stmt.free();
             }
@@ -174,7 +177,7 @@ function registerIpcHandlers() {
 async function addClientManually(clientData) {
     const { BrowserWindow } = require('electron');
     try {
-        const sql = `INSERT INTO clients (name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const sql = `INSERT INTO clients (name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, trialStatus, trialStartDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const stmt = db.prepare(sql);
         const now = new Date().toISOString().split('T')[0];
         
@@ -194,7 +197,9 @@ async function addClientManually(clientData) {
             '',
             '',
             now,
-            0
+            0,
+            0,
+            ''
         ]);
         stmt.free();
         saveToFile();

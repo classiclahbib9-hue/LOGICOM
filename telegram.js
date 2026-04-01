@@ -2,17 +2,24 @@ const TelegramBot = require('node-telegram-bot-api');
 const { addClientManually } = require('./db');
 const fs = require('fs');
 const path = require('path');
-const { app } = require('electron');
+const { app, Notification } = require('electron');
 
-const configPath = path.join(app.getPath('userData'), 'telegram-config.json');
+function getConfigPath() {
+    return path.join(app.getPath('userData'), 'telegram-config.json');
+}
+
 let currentBot = null;
 
 function initTelegram() {
     let config = { token: '', active: false };
+    const configPath = getConfigPath();
+
     if (fs.existsSync(configPath)) {
         try {
             config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        } catch (e) {}
+        } catch (e) {
+            console.error('Error reading telegram config:', e);
+        }
     }
 
     if (!config.token) {
@@ -21,68 +28,106 @@ function initTelegram() {
     }
 
     if (currentBot) {
-        currentBot.stopPolling();
+        try {
+            currentBot.stopPolling();
+        } catch (e) {}
     }
 
-    const bot = new TelegramBot(config.token, { polling: true });
-    currentBot = bot;
+    console.log('Initializing Telegram Bot with token:', config.token.substring(0, 5) + '...');
+    
+    try {
+        const bot = new TelegramBot(config.token, { polling: true });
+        currentBot = bot;
 
-    bot.on('message', async (msg) => {
-        const text = msg.text;
-        if (!text) return;
+        bot.on('polling_error', (error) => {
+            console.error('Telegram Polling Error:', error.code, error.message);
+        });
 
-        const parts = text.split(/\s+/).filter(p => p.trim());
-        if (parts.length === 0) return;
+        bot.on('message', async (msg) => {
+            const text = msg.text;
+            if (!text) return;
 
-        let phone = '', name = '', brand = '', note = '';
-
-        // First part is always assumed to be the phone number
-        phone = parts[0];
-        if (!phone.match(/^\d{8,14}$/)) return;
-
-        // Try to find a separator (comma, hyphen, or pipe)
-        let rest = text.substring(text.indexOf(phone) + phone.length).trim();
-        const separator = rest.match(/[,|-]/);
-        
-        if (separator) {
-            const splitChar = separator[0];
-            const nameBrandNote = rest.split(splitChar).map(p => p.trim());
-            name = nameBrandNote[0] || '';
-            brand = nameBrandNote[1] || '';
-            note = nameBrandNote.slice(2).join(` ${splitChar} `) || ''; 
-        } else {
-            // Check for explicit "obs:" or "note:"
-            const obsMatch = rest.match(/(?:obs:|note:)\s*(.*)/i);
-            if (obsMatch) {
-                note = obsMatch[1].trim();
-                rest = rest.replace(/(?:obs:|note:).*/i, '').trim();
+            // Simple "is the bot alive?" check
+            if (text.toLowerCase() === '/start' || text.toLowerCase() === 'help' || text.toLowerCase() === 'aide') {
+                bot.sendMessage(msg.chat.id, '🤖 **BOT LOGICOM ACTIF**\n\nEnvoyez un message contenant :\n`06XXXXXXXX Nom Entreprise Note`\n\nLe bot détectera automatiquement le numéro et créera le client.');
+                return;
             }
 
-            // Default: PHONE NAME... BRAND
-            const words = rest.split(/\s+/).filter(w => w.trim());
-            if (words.length === 1) {
-                name = words[0];
-            } else if (words.length > 1) {
-                brand = words[words.length - 1];
-                name = words.slice(0, words.length - 1).join(' ');
-            } else {
-                name = 'Nouveau Client Telegram';
-            }
-        }
-        
-        if (phone) {
-            console.log('Final Parsed Client:', { phone, name, brand, note });
-            await addClientManually({ phone, name, brand, note });
-            bot.sendMessage(msg.chat.id, `✅ Client Synchronisé !\n📞 **Tel**: ${phone}\n👤 **Nom**: ${name}\n🏢 **Domaine**: ${brand || '-'}\n📝 **Observation**: ${note || '-'}`);
-        }
-    });
+            const parts = text.split(/\s+/).filter(p => p.trim());
+            if (parts.length === 0) return;
 
-    console.log('Telegram Bot initialized!');
+            // Find the first part that looks like a phone number (8 to 14 digits)
+            const phoneIndex = parts.findIndex(p => p.match(/^\d{8,14}$/));
+            
+            if (phoneIndex === -1) {
+                console.log('No phone number detected in message:', text);
+                return;
+            }
+
+            const phone = parts[phoneIndex];
+            let name = '', brand = '', note = '';
+
+            // Everything before the phone is part of the name
+            const beforePhone = parts.slice(0, phoneIndex);
+            // Everything after the phone
+            const afterPhone = parts.slice(phoneIndex + 1);
+
+            if (beforePhone.length > 0) {
+                name = beforePhone.join(' ');
+            }
+
+            if (afterPhone.length > 0) {
+                // If it contains a separator like '-' or '|', use it for Note
+                const afterText = afterPhone.join(' ');
+                const separatorMatch = afterText.match(/[-|]/);
+                
+                if (separatorMatch) {
+                    const sep = separatorMatch[0];
+                    const splitAfter = afterText.split(sep).map(s => s.trim());
+                    if (!name) name = splitAfter[0];
+                    else brand = splitAfter[0];
+                    note = splitAfter.slice(1).join(` ${sep} `);
+                } else {
+                    // No separator: assume Last Word is Brand, middle words are Name (if name not set)
+                    if (!name) {
+                        if (afterPhone.length === 1) {
+                            name = afterPhone[0];
+                        } else {
+                            brand = afterPhone[afterPhone.length - 1];
+                            name = afterPhone.slice(0, afterPhone.length - 1).join(' ');
+                        }
+                    } else {
+                        // Name already set from beforePhone, so everything after is Brand + Note
+                        brand = afterPhone[0];
+                        note = afterPhone.slice(1).join(' ');
+                    }
+                }
+            }
+
+            if (!name) name = 'Client ' + phone;
+
+            console.log('Telegram sync detected:', { phone, name, brand, note });
+            
+            try {
+                await addClientManually({ phone, name, brand, note });
+                bot.sendMessage(msg.chat.id, `✅ **Client Synchronisé !**\n\n📞 **Tel**: ${phone}\n👤 **Nom**: ${name}\n🏢 **Domaine**: ${brand || '-'}\n📝 **Note**: ${note || '-'}`);
+            } catch (err) {
+                console.error('Error saving client from Telegram:', err);
+                bot.sendMessage(msg.chat.id, '❌ Erreur lors de la synchronisation avec la base de données.');
+            }
+        });
+
+        console.log('Telegram Bot is now polling...');
+    } catch (err) {
+        console.error('Critical Telegram initialization error:', err);
+    }
 }
 
 function updateConfig(newConfig) {
+    const configPath = getConfigPath();
     fs.writeFileSync(configPath, JSON.stringify(newConfig));
     initTelegram();
 }
 
 module.exports = { initTelegram, updateConfig };
+
