@@ -5,7 +5,7 @@ const { ipcMain, app, Notification } = require('electron');
 
 let db;
 let SQL;
-const dbPath = path.join(app.getPath('userData'), 'logicom.db');
+const dbPath = path.join(__dirname, 'test.db');
 
 function safeLog(...args) {} // Logging disabled
 
