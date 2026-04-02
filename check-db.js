@@ -2,18 +2,21 @@ const initSqlJs = require('sql.js');
 const fs = require('fs');
 const path = require('path');
 
-async function check() {
-    const SQL = await initSqlJs();
-    const dbPath = path.join(__dirname, 'test.db');
-    console.log("Checking DB at " + dbPath);
-    if (!fs.existsSync(dbPath)) {
-        console.log("DB not found at " + dbPath);
-        return;
+async function check(dbPath) {
+    const SQL = await initSqlJs({
+        locateFile: file => path.join(__dirname, 'node_modules', 'sql.js', 'dist', file)
+    });
+    if (fs.existsSync(dbPath)) {
+        const filebuffer = fs.readFileSync(dbPath);
+        const db = new SQL.Database(filebuffer);
+        const res = db.exec('SELECT COUNT(*) FROM clients');
+        console.log(`DB Path: ${dbPath}`);
+        console.log(`Client Count: ${res[0].values[0][0]}`);
+    } else {
+        console.log(`DB Path: ${dbPath} NOT FOUND`);
     }
-    const filebuffer = fs.readFileSync(dbPath);
-    const db = new SQL.Database(filebuffer);
-    const res = db.exec("PRAGMA table_info(clients)");
-    console.log(JSON.stringify(res, null, 2));
 }
 
-check();
+check('c:/Users/PC/software/LOGICOM/test.db').then(() => {
+    check('C:/Users/PC/Desktop/test-db');
+});
