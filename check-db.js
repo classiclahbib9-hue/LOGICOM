@@ -4,7 +4,7 @@ const path = require('path');
 
 async function check() {
     const SQL = await initSqlJs();
-    const dbPath = 'C:\\Users\\PC\\AppData\\Roaming\\logicom-desktop\\logicom.db';
+    const dbPath = path.join(__dirname, 'test.db');
     console.log("Checking DB at " + dbPath);
     if (!fs.existsSync(dbPath)) {
         console.log("DB not found at " + dbPath);
