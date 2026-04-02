@@ -24,7 +24,7 @@
         "productName": "LOGICOM",
         "npmRebuild": false,
         "win": {
-            "target": "nsis"
+            "target": ["nsis", "zip", "portable"]
         },
         "nsis": {
             "oneClick": true,
