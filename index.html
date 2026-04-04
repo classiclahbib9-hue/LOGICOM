@@ -39,8 +39,8 @@
       --blue: #2563eb;
       --accent: #d97706;
       --accent2: #b45309;
-      --light: #1a202c;
-      --white: #1a202c;
+      --light: #f8fafc;
+      --white: #ffffff;
       --text: #334155;
       --muted: #64748b;
       --card: #ffffff;
@@ -96,12 +96,30 @@
       color: var(--navy);
       font-family: 'Syne', sans-serif;
       font-weight: 800;
-      font-size: 12px;
-      letter-spacing: 4px;
+      font-size: 11px;
+      letter-spacing: 3px;
       text-transform: uppercase;
-      padding: 4px 16px;
-      border-radius: 2px;
-      margin-bottom: 14px;
+      padding: 6px 0;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      width: 700px; /* Stretched width */
+      max-width: 90vw;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(232, 160, 32, 0.2);
+      mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
+    
+    .logo-badge span {
+      display: inline-block;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: marqueeBadge 15s linear infinite;
+    }
+
+    @keyframes marqueeBadge {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-100%, 0); }
     }
 
     header h1 {
@@ -1383,6 +1401,78 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes ring {
+      0% { transform: rotate(0deg); }
+      5% { transform: rotate(25deg); }
+      10% { transform: rotate(-25deg); }
+      15% { transform: rotate(20deg); }
+      20% { transform: rotate(-20deg); }
+      25% { transform: rotate(15deg); }
+      30% { transform: rotate(-15deg); }
+      35% { transform: rotate(10deg); }
+      40% { transform: rotate(-10deg); }
+      45% { transform: rotate(5deg); }
+      50% { transform: rotate(-5deg); }
+      55% { transform: rotate(0deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    .ring-bell {
+      display: inline-block;
+      animation: ring 2s ease-in-out infinite;
+      transform-origin: center top;
+      margin-right: 8px;
+    }
+
+    /* PREMIUM TOOLBAR ENHANCEMENT */
+    .premium-input {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      padding: 10px 14px;
+      border-radius: 8px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .premium-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(232, 160, 32, 0.1);
+    }
+
+    .premium-select {
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      padding: 10px;
+      border-radius: 8px;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .premium-select:focus {
+      border-color: var(--accent);
+    }
+
+    .date-filter-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 8px;
+      min-width: 160px;
+      transition: all 0.2s;
+    }
+
+    .date-filter-box:focus-within {
+      border-color: var(--accent);
+    }
+
     /* ───── ANALYTICS SECTION ───── */
     .dashboard-section {
       margin-top: 40px;
@@ -1801,8 +1891,7 @@
       <img src="logo.png" class="logo-img" alt="Logo">
       <span class="logo-text">LOGI<span>COM</span></span>
     </h1>
-    <div class="logo-badge">DELFI – Votre Fidèle Partenaire</div>
-    <p>Éditeur interactif — Gérez vos options et activités librement</p>
+    <div class="logo-badge"><span>DELFI – Votre Fidèle Partenaire &nbsp; • &nbsp; DELFI – Votre Fidèle Partenaire &nbsp; • &nbsp; DELFI – Votre Fidèle Partenaire &nbsp; • &nbsp; DELFI – Votre Fidèle Partenaire</span></div>
   </header>
 
   <div class="tabs no-print">
@@ -1812,7 +1901,7 @@
     <div class="tab" onclick="switchTab(3)">📈 Dashboard</div>
     <div class="tab" onclick="switchTab(4)">📊 Devis & Récap</div>
     <div class="tab" onclick="switchTab(5)">💻 Matériel</div>
-    <div class="tab" onclick="switchTab(6)">🔔 Rappels</div>
+    <div class="tab" onclick="switchTab(6)"><span class="ring-bell">🔔</span> Rappels <span id="alertBadge" style="display:none; background:#ff4444; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; font-weight:bold; box-shadow:0 0 10px rgba(255,0,0,0.5)">!</span></div>
   </div>
 
   <div class="container">
@@ -1855,51 +1944,46 @@
         <button class="btn btn-primary" style="background:#1e3155; color:white; font-family:'Syne'; font-weight:700; border:none; height:42px; padding:0 24px; border-radius:10px; box-shadow:0 10px 20px rgba(0,0,0,0.2);" onclick="openAddClient()">＋ AJOUTER UN CLIENT</button>
         <div class="filter-bar" style="display:flex; gap:8px; flex-wrap:wrap; flex:1; align-items:center;">
           <input type="text" id="searchClient" placeholder="🔍 Nom ou Marque…" oninput="renderClients()" 
-            style="min-width:180px; flex:1.5; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans', sans-serif; padding:10px 14px; border-radius:8px; outline:none;">
+            class="premium-input" style="min-width:180px; flex:1.5;">
           <input type="text" id="searchPhone" placeholder="📞 Téléphone…" oninput="renderClients()" 
-            style="min-width:140px; flex:1; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans', sans-serif; padding:10px 14px; border-radius:8px; outline:none;">
+            class="premium-input" style="min-width:140px; flex:1;">
           
-          <select id="filterCategory" onchange="renderClients()" 
-            style="min-width:130px; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans', sans-serif; padding:10px; border-radius:8px; outline:none; cursor:pointer;">
+          <select id="filterCategory" onchange="renderClients()" class="premium-select" style="min-width:130px;">
             <option value="">Type (Tous)</option>
             <option value="Nouveau">Nouveau Prospect</option>
             <option value="Existant">Client Existant</option>
           </select>
           
-          <select id="filterInstall" onchange="renderClients()" 
-            style="min-width:130px; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans', sans-serif; padding:10px; border-radius:8px; outline:none; cursor:pointer;">
+          <select id="filterInstall" onchange="renderClients()" class="premium-select" style="min-width:130px;">
             <option value="">Installation (Tous)</option>
             <option value="Oui">Installé : Oui</option>
             <option value="Non">Installé : Non</option>
           </select>
           
-          <select id="filterPayment" onchange="renderClients()" 
-            style="min-width:130px; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans', sans-serif; padding:10px; border-radius:8px; outline:none; cursor:pointer;">
+          <select id="filterPayment" onchange="renderClients()" class="premium-select" style="min-width:130px;">
             <option value="">Paiement (Tous)</option>
             <option value="Oui">Paiement : Oui</option>
             <option value="Non">Paiement : Non</option>
           </select>
           
-          <select id="filterMaterial" onchange="renderClients()" 
-            style="min-width:130px; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans', sans-serif; padding:10px; border-radius:8px; outline:none; cursor:pointer;">
+          <select id="filterMaterial" onchange="renderClients()" class="premium-select" style="min-width:130px;">
             <option value="">Matériel (Tous)</option>
             <option value="Oui">Matériel : Oui</option>
             <option value="Non">Matériel : Non</option>
           </select>
           
-          <select id="filterTrial" onchange="renderClients()" 
-            style="min-width:130px; background:var(--card); border:1px solid var(--border); color:var(--text); font-family:'DM Sans', sans-serif; padding:10px; border-radius:8px; outline:none; cursor:pointer;">
+          <select id="filterTrial" onchange="renderClients()" class="premium-select" style="min-width:130px;">
             <option value="">Version Test (Tous)</option>
             <option value="Active">Test : En cours</option>
             <option value="Ended">Test : Terminé</option>
             <option value="None">Client Normal</option>
           </select>
 
-          <div style="display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); padding:5px 12px; border-radius:8px; min-width:160px;">
+          <div class="date-filter-box">
             <label style="font-size:11px; color:var(--muted); font-family:'Syne'; font-weight:700;">DU</label>
             <input type="date" id="filterDateStart" onchange="renderClients()" style="background:transparent; border:none; color:var(--text); font-family:'DM Sans'; outline:none; font-size:13px; width:100%;">
           </div>
-          <div style="display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); padding:5px 12px; border-radius:8px; min-width:160px;">
+          <div class="date-filter-box">
             <label style="font-size:11px; color:var(--muted); font-family:'Syne'; font-weight:700;">AU</label>
             <input type="date" id="filterDateEnd" onchange="renderClients()" style="background:transparent; border:none; color:var(--text); font-family:'DM Sans'; outline:none; font-size:13px; width:100%;">
           </div>
@@ -1924,6 +2008,7 @@
               <th>Remarque</th>
               <th>Total (DA)</th>
               <th>Date</th>
+              <th>Par</th>
               <th>WhatsApp</th>
               <th width="120">Actions</th>
             </tr>
@@ -2088,7 +2173,7 @@
     <!-- ══ PANEL 7 : RAPPELS (CREDITS) ══ -->
     <div class="panel" id="p6">
       <div class="toolbar">
-        <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🔔 Relances & Dettes</h2>
+        <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;"><span class="ring-bell">🔔</span> Relances & Dettes</h2>
         <div style="flex:1"></div>
         <button class="btn btn-primary" onclick="syncExternalClients()">📥 Sync des Clients API</button>
         <button class="btn btn-ghost" onclick="toggleApiSettings()">⚙️ Config API</button>
@@ -2311,7 +2396,10 @@
           </div>
         </div>
         <div class="field">
-          <label>Matériels à ajouter au devis</label>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label>Matériels à ajouter au devis</label>
+            <button class="btn btn-primary btn-sm" onclick="openAddMaterialFromClient()" style="height:24px; font-size:10px; padding:0 8px; background:var(--accent); border-color:var(--accent); color:var(--navy); font-weight:700;">＋ NOUVEAU MATÉRIEL</button>
+          </div>
           <div id="clMaterials" style="display:flex; flex-direction:column; gap:6px; max-height:150px; overflow-y:auto; background:var(--tag-bg); border:1px solid var(--border); padding:10px; border-radius:8px;">
           </div>
         </div>
@@ -2871,6 +2959,7 @@
       <td style="font-size:11px; color:var(--muted); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${c.noPurchaseReason || c.finalState || ''}">${c.noPurchaseReason || c.finalState || '-'}</td>
       <td class="price-cell">${totalVal.toLocaleString('fr-DZ')} DA</td>
       <td>${displayDate}</td>
+      <td style="font-size:11px; font-weight:700; color:var(--accent)">${c.added_by ? '@' + c.added_by : 'Direct'}</td>
       <td>
         <button class="btn btn-ghost btn-sm" style="color:#25D366; border-color:#25D366; padding:0 8px;" onclick="sendClientWhatsApp(${c.id})">📲 WhatsApp</button>
       </td>
@@ -2916,16 +3005,30 @@
     function initClientMaterialsSelect() {
       const container = document.getElementById('clMaterials');
       if (!container) return;
+      
+      // Save current selections to restore them after refresh
+      const currentSelections = {};
+      container.querySelectorAll('.cl-mat-cb:checked').forEach(cb => {
+        const row = cb.closest('.cl-row');
+        const qtyInp = row.querySelector('.cl-qty');
+        currentSelections[cb.value] = parseInt(qtyInp.value) || 1;
+      });
+
       let html = `<div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">💻 Matériel En Stock</div>`;
-      html += materials.map(m => `
-        <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
-            <input type="checkbox" value="mat_${m.id}" class="cl-mat-cb cl-cb" onchange="toggleQtyInput(this)">
-            <span>${m.name}</span>
-          </label>
-          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="mat_${m.id}">
-        </div>
-      `).join('');
+      html += materials.map(m => {
+        const tag = `mat_${m.id}`;
+        const isChecked = currentSelections[tag] !== undefined;
+        const qty = currentSelections[tag] || 1;
+        return `
+          <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
+              <input type="checkbox" value="${tag}" class="cl-mat-cb cl-cb" onchange="toggleQtyInput(this)" ${isChecked ? 'checked' : ''}>
+              <span>${m.name}</span>
+            </label>
+            <input type="number" class="cl-qty" value="${qty}" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); ${isChecked ? 'visibility:visible' : 'visibility:hidden'};" data-tag="${tag}">
+          </div>
+        `;
+      }).join('');
       if (materials.length === 0) html += `<div style="font-size:11px; color:var(--muted)">Aucun matériel disponible</div>`;
       container.innerHTML = html;
     }
@@ -3089,8 +3192,9 @@
         c.installer = installer; c.material = material; c.paymentStatus = paymentStatus; c.paymentMode = paymentMode; c.finalState = finalState; c.noPurchaseReason = noPurchaseReason;
         c.created_at = createdAt; c.called = called;
         c.trialStatus = trialStatus; c.trialStartDate = trialStartDate; c.trialPeriod = trialPeriod;
+        // c.added_by remains the same
       } else {
-        clients.push({ id: nextClientId++, name, phone, brand, category, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate, trialPeriod: trialPeriod });
+        clients.push({ id: nextClientId++, name, phone, brand, category, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate, trialPeriod: trialPeriod, added_by: 'Direct' });
       }
 
       closeModal('modalClient');
@@ -3129,6 +3233,36 @@
       
       if (daysLeft <= 0) return { status: 2, daysLeft: 0 };
       return { status: 1, daysLeft: daysLeft };
+    }
+
+    let notifiedTrials = new Set();
+    function checkExpiredTrials() {
+      if (!clients) return;
+      const expired = clients.filter(c => {
+        const info = getTrialInfo(c);
+        return info.status === 2; // Ended
+      });
+
+      const badge = document.getElementById('alertBadge');
+      if (badge) {
+          badge.style.display = (expired.length > 0) ? 'inline-block' : 'none';
+          if (expired.length > 0) badge.textContent = expired.length;
+      }
+
+      expired.forEach(c => {
+        if (!notifiedTrials.has(c.id)) {
+          notifiedTrials.add(c.id);
+          // Native OS Notification via JS API
+          try {
+              new window.Notification('LOGICOM - Alerte Test Terminé 🔔', {
+                body: `La période de test de "${c.name}" est expirée.`,
+                timeoutType: 'never'
+              });
+          } catch(e) { console.error("Notification UI error:", e); }
+          
+          toast(`⚠️ Test de "${c.name}" terminé !`, true);
+        }
+      });
     }
 
     // ═══════════════════════════ UTILS ═══════════════════════════
@@ -3618,7 +3752,15 @@
       await syncDB();
       closeModal('modalMaterial');
       renderMaterials();
+      
+      // Also refresh the materials selection list in the client modal if it's open
+      initClientMaterialsSelect();
+      
       toast('Matériel enregistré avec succès !');
+    }
+
+    function openAddMaterialFromClient() {
+      openAddMaterial();
     }
 
     async function deleteMaterial(id) {
@@ -3876,7 +4018,8 @@
           trialStatus: Number(c.trialStatus || 0),
           trialStartDate: c.trialStartDate || '',
           trialPeriod: Number(c.trialPeriod || 15),
-          category: c.category || 'Nouveau'
+          category: c.category || 'Nouveau',
+          added_by: c.added_by || ''
         }));
         if (clients.length > 0) {
           nextClientId = Math.max(...clients.map(c => c.id)) + 1;
@@ -4339,7 +4482,8 @@
           called: !!c.called,
           options: JSON.parse(c.options || '[]'),
           trialStatus: Number(c.trialStatus || 0),
-          trialStartDate: c.trialStartDate || ''
+          trialStartDate: c.trialStartDate || '',
+          added_by: c.added_by || ''
       }));
       renderClients();
       renderReminders();
@@ -4354,6 +4498,8 @@
 
     loadData().then(() => {
       loadApiSettings();
+      checkExpiredTrials();
+      setInterval(checkExpiredTrials, 60000); // Check every minute
     });
   </script>
 </body>
