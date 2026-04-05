@@ -805,6 +805,28 @@
       justify-content: flex-end;
     }
 
+    /* Client Modal Horizontal Layout */
+    #modalClient .modal {
+      max-width: 850px;
+    }
+    #modalClient .modal-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px 24px;
+      align-items: start;
+    }
+    #modalClient .modal-body > div:first-child,
+    #modalClient .modal-body > div[style*="background:var(--tag-bg)"],
+    #modalClient .modal-body > .field:nth-last-child(1),
+    #modalClient .modal-body > .field:nth-last-child(2),
+    #noPurchaseBox,
+    #paymentModeBox {
+      grid-column: span 2;
+    }
+    #modalClient .modal-body .field {
+      margin-bottom: 0px;
+    }
+
     /* ───── COLORS ───── */
     .c0 {
       background: linear-gradient(135deg, #1a4fa0, #2a6fd0);
@@ -2286,8 +2308,8 @@
         <h3 id="modalClientTitle">Ajouter un client</h3>
         <button class="modal-close" onclick="closeModal('modalClient')">✕</button>
       </div>
-      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-        <div style="display:flex; gap:10px; margin-bottom:20px; background:var(--tag-bg); padding:10px; border-radius:12px;">
+      <div class="modal-body" style="max-height: 85vh; overflow-y: auto;">
+        <div style="display:flex; gap:10px; margin-bottom:5px; background:var(--tag-bg); padding:10px; border-radius:12px;">
            <button id="btnTypeNormal" class="btn btn-ghost" onclick="setClientType('normal')" style="flex:1; border:1px solid var(--border); font-family:'Syne'; font-weight:700;">👤 NORMAL</button>
            <button id="btnTypeTest" class="btn btn-ghost" onclick="setClientType('test')" style="flex:1; border:1px solid var(--border); font-family:'Syne'; font-weight:700;">🧪 EN TEST (DEMO)</button>
         </div>
@@ -2392,6 +2414,7 @@
         </div>
         <div class="field">
           <label>Activités & Options choisies</label>
+          <input type="text" id="srchOpt" placeholder="Rechercher une activité/option..." style="height:32px; font-size:12px; margin-bottom:8px; border-radius:6px; background:var(--card); border:1px solid var(--border); color:var(--text); padding:0 10px;" oninput="filterClientList('clOptions', this.value)">
           <div id="clOptions" style="display:flex; flex-direction:column; gap:6px; max-height:150px; overflow-y:auto; background:var(--tag-bg); border:1px solid var(--border); padding:10px; border-radius:8px;">
           </div>
         </div>
@@ -2400,6 +2423,7 @@
             <label>Matériels à ajouter au devis</label>
             <button class="btn btn-primary btn-sm" onclick="openAddMaterialFromClient()" style="height:24px; font-size:10px; padding:0 8px; background:var(--accent); border-color:var(--accent); color:var(--navy); font-weight:700;">＋ NOUVEAU MATÉRIEL</button>
           </div>
+          <input type="text" id="srchMat" placeholder="Rechercher un matériel..." style="height:32px; font-size:12px; margin-top:8px; margin-bottom:8px; border-radius:6px; background:var(--card); border:1px solid var(--border); color:var(--text); padding:0 10px;" oninput="filterClientList('clMaterials', this.value)">
           <div id="clMaterials" style="display:flex; flex-direction:column; gap:6px; max-height:150px; overflow-y:auto; background:var(--tag-bg); border:1px solid var(--border); padding:10px; border-radius:8px;">
           </div>
         </div>
@@ -3080,6 +3104,17 @@
       if (qtyInp) qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
     }
 
+    function filterClientList(containerId, query) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const rows = container.querySelectorAll('.cl-row');
+      const q = query.toLowerCase().trim();
+      rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(q) ? 'flex' : 'none';
+      });
+    }
+
     function openAddClient() {
       editClientKey = null;
       document.getElementById('modalClientTitle').textContent = 'Ajouter un client';
@@ -3106,6 +3141,8 @@
       document.getElementById('trialDateBox').style.display = 'none';
       togglePaymentMode();
       toggleNoPurchaseReason();
+      document.getElementById('srchOpt').value = '';
+      document.getElementById('srchMat').value = '';
       initClientOptionsSelect();
       initClientMaterialsSelect();
       document.getElementById('modalClient').classList.add('open');
@@ -3139,7 +3176,8 @@
       document.getElementById('trialDateBox').style.display = isTrial ? 'block' : 'none';
       togglePaymentMode();
       toggleNoPurchaseReason();
-
+      document.getElementById('srchOpt').value = '';
+      document.getElementById('srchMat').value = '';
       initClientOptionsSelect();
       initClientMaterialsSelect();
       
