@@ -253,6 +253,12 @@ function registerIpcHandlers() {
     ipcMain.handle('save-acts',      (event, activitiesArray)=> saveAll(event, { activities: activitiesArray }));
     ipcMain.handle('save-clients',   (event, clientsArray)   => saveAll(event, { clients: clientsArray }));
     ipcMain.handle('save-materials', (event, materialsArray) => saveAll(event, { materials: materialsArray }));
+
+    // Synchronous force-save used by renderer's beforeunload handler
+    ipcMain.on('force-save-sync', (event) => {
+        try { saveToFile(); event.returnValue = true; }
+        catch(e) { console.error('force-save-sync error:', e); event.returnValue = false; }
+    });
 }
 
 async function addClientManually(clientData) {
@@ -313,4 +319,9 @@ async function addClientManually(clientData) {
     }
 }
 
-module.exports = { initDB, registerIpcHandlers, addClientManually };
+// Called synchronously from main process before-quit
+function forceSave() {
+    if (db) saveToFile();
+}
+
+module.exports = { initDB, registerIpcHandlers, addClientManually, forceSave };

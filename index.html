@@ -311,6 +311,59 @@
     }
 
     /* THEME TOGGLE */
+    /* ── Save status indicator ── */
+    .save-indicator {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 20px;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+      letter-spacing: .4px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .save-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      transition: background 0.3s;
+    }
+    .save-idle {
+      background: transparent;
+      border-color: transparent;
+      color: var(--muted);
+      opacity: 0.6;
+    }
+    .save-idle .save-dot { background: #32f6a1; }
+    .save-saving {
+      background: rgba(232,160,32,0.12);
+      border-color: rgba(232,160,32,0.3);
+      color: var(--accent);
+      opacity: 1;
+    }
+    .save-saving .save-dot {
+      background: var(--accent);
+      animation: savePulse 0.7s ease-in-out infinite alternate;
+    }
+    .save-error {
+      background: rgba(255,99,71,0.12);
+      border-color: rgba(255,99,71,0.3);
+      color: #FF6347;
+      opacity: 1;
+    }
+    .save-error .save-dot { background: #FF6347; }
+    @keyframes savePulse {
+      from { transform: scale(1); opacity: 1; }
+      to   { transform: scale(1.5); opacity: 0.4; }
+    }
+
     .theme-toggle {
       position: absolute;
       top: 20px;
@@ -2029,6 +2082,9 @@
 <body>
 
   <header>
+    <div id="saveIndicator" class="save-indicator save-idle">
+      <span class="save-dot"></span><span class="save-label">Sauvegardé</span>
+    </div>
     <div class="theme-toggle" onclick="toggleTheme()">
       <span class="icon" id="themeIcon">🌙</span>
       <span id="themeLabel">Mode Sombre</span>
@@ -2771,25 +2827,29 @@
     initTheme();
 
     let isSaving = false;
+    function setSaveStatus(state, label) {
+      const el = document.getElementById('saveIndicator');
+      if (!el) return;
+      el.className = 'save-indicator save-' + state;
+      el.querySelector('.save-label').textContent = label;
+    }
+
     async function syncDB() {
+      setSaveStatus('saving', 'Sauvegarde...');
       try {
         const optsArray = Object.keys(options).map(id => ({
           id: Number(id),
           name: options[id].name,
           price: options[id].price
         }));
-        
-        const data = {
-          options: optsArray,
-          activities: activities,
-          clients: clients,
-          materials: materials
-        };
-        
-        // Immediate call to main process for disk write
+        const data = { options: optsArray, activities, clients, materials };
         const result = await ipcRenderer.invoke('save-all', data);
-        if (result) console.log('DISK SYNC: All changes permanently saved.');
+        if (result) {
+          setSaveStatus('idle', 'Sauvegardé');
+          console.log('DISK SYNC: All changes permanently saved.');
+        }
       } catch (err) {
+        setSaveStatus('error', 'Erreur de sauvegarde !');
         console.error('CRITICAL SYNC FAILURE:', err);
         toast('Erreur Critique de Sauvegarde : ' + err.message, true);
       }
@@ -2875,7 +2935,7 @@
       document.getElementById('modalOpt').classList.add('open');
     }
 
-    function saveOption() {
+    async function saveOption() {
       const num = parseInt(document.getElementById('optNum').value);
       const name = document.getElementById('optName').value.trim();
       const price = parseInt(document.getElementById('optPrice').value);
@@ -2884,11 +2944,11 @@
       options[num] = { name, price };
       closeModal('modalOpt');
       renderOptions();
-      syncDB();
+      await syncDB();
       toast(editOptKey ? 'Option modifiée ✓' : 'Option ajoutée ✓');
     }
 
-    function deleteOption(k) {
+    async function deleteOption(k) {
       if (!confirm(`Supprimer l'option ${k} — ${options[k].name} ?`)) return;
       delete options[k];
       // remove from all activities
@@ -2897,7 +2957,7 @@
         a.optional = a.optional.filter(x => x !== k);
       });
       renderOptions();
-      syncDB();
+      await syncDB();
       toast('Option supprimée');
     }
 
@@ -2973,7 +3033,7 @@
       document.getElementById(`t-r-${id}`).classList.toggle('on', t === 'r');
     }
 
-    function addOptToAct(id) {
+    async function addOptToAct(id) {
       const sel = document.getElementById(`sel-${id}`);
       const n = parseInt(sel.value);
       if (!n) { toast('Sélectionnez une option', true); return; }
@@ -2982,30 +3042,30 @@
       if (type === 'm') a.mandatory.push(n);
       else a.optional.push(n);
       renderActivities();
-      syncDB();
+      await syncDB();
       toast('Option ajoutée ✓');
     }
 
-    function removeOptFromAct(id, n, type) {
+    async function removeOptFromAct(id, n, type) {
       const a = activities.find(x => x.id === id);
       if (type === 'mandatory') a.mandatory = a.mandatory.filter(x => x !== n);
       else a.optional = a.optional.filter(x => x !== n);
       renderActivities();
-      syncDB();
+      await syncDB();
       toast('Option retirée');
     }
 
-    function updateNote(id, val) {
+    async function updateNote(id, val) {
       const a = activities.find(x => x.id === id);
-      if (a) { a.note = val; syncDB(); }
+      if (a) { a.note = val; await syncDB(); }
     }
 
-    function deleteAct(id) {
+    async function deleteAct(id) {
       const a = activities.find(x => x.id === id);
       if (!confirm(`Supprimer l'activité "${a.name}" ?`)) return;
       activities = activities.filter(x => x.id !== id);
       renderActivities();
-      syncDB();
+      await syncDB();
       toast('Activité supprimée');
     }
 
@@ -3357,7 +3417,7 @@
       document.getElementById('modalClient').classList.add('open');
     }
 
-    function saveClient() {
+    async function saveClient() {
       const name = document.getElementById('clName').value.trim();
       const phone = document.getElementById('clPhone').value.trim();
       const brand = document.getElementById('clBrand').value.trim();
@@ -3399,15 +3459,15 @@
 
       closeModal('modalClient');
       renderClients();
-      syncDB();
+      await syncDB();
       toast(editClientKey ? 'Client modifié ✓' : 'Client ajouté ✓');
     }
 
-    function deleteClient(id) {
+    async function deleteClient(id) {
       if (!confirm('Supprimer ce client ?')) return;
       clients = clients.filter(x => x.id !== id);
       renderClients();
-      syncDB();
+      await syncDB();
       toast('Client supprimé');
     }
 
@@ -4635,7 +4695,7 @@
       
       await ipcRenderer.invoke('open-whatsapp', url);
       c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
-      syncDB();
+      await syncDB();
       renderReminders();
     }
 
@@ -4649,7 +4709,7 @@
         console.log('Sending API call to:', endpoint, 'for client:', c.name);
         toast('API appelée avec succès (Démo) ✓');
         c.dateDernierRappel = new Date().toLocaleDateString('fr-FR') + ' (API)';
-        syncDB();
+        await syncDB();
         renderReminders();
       } catch (e) {
         toast('Erreur API', true);
@@ -4768,10 +4828,13 @@
     });
 
     // AUTO-SAVE every 2 minutes for extra safety
-    setInterval(() => {
-      console.log('--- AUTO-SAVE ---');
-      syncDB();
-    }, 120000);
+    // Auto-save every 30 seconds as a safety net
+    setInterval(() => { syncDB(); }, 30000);
+
+    // Force a synchronous disk flush when the window is about to close
+    window.addEventListener('beforeunload', () => {
+      try { ipcRenderer.sendSync('force-save-sync'); } catch(e) {}
+    });
 
     loadData().then(() => {
       loadApiSettings();

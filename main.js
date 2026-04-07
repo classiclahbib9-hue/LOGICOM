@@ -1,7 +1,7 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const path = require('path')
 const fs = require('fs')
-const { initDB, registerIpcHandlers } = require('./db')
+const { initDB, registerIpcHandlers, forceSave } = require('./db')
 const { initTelegram } = require('./telegram')
 
 function createWindow() {
@@ -244,3 +244,6 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })
+
+// ── Guaranteed save before the process exits ──
+app.on('before-quit', () => { try { forceSave(); } catch(e) { console.error('before-quit save failed:', e); } })
