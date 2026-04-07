@@ -1388,6 +1388,69 @@
     .stat-card .sv.red { color: var(--red); text-shadow: none; }
     .stat-card .sv.gold { color: var(--accent); text-shadow: none; }
 
+    /* ── Date Filter Bar ── */
+    .dash-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 10px;
+    }
+    .dash-preset {
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      background: transparent;
+      color: var(--muted);
+      transition: all .18s;
+      white-space: nowrap;
+    }
+    .dash-preset:hover { background: var(--tag-bg); color: var(--text); }
+    .dash-preset.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .dash-date-sep { color: var(--border); font-size: 18px; user-select: none; padding: 0 2px; }
+    .dash-date-input {
+      height: 30px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--tag-bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .18s;
+    }
+    .dash-date-input:focus { border-color: var(--accent); }
+    .dash-filter-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      white-space: nowrap;
+      margin-right: 2px;
+    }
+    #dashActiveRange {
+      font-size: 11px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+
     .chart-container {
       background-color: var(--card);
       border: 1px solid var(--border);
@@ -2042,7 +2105,21 @@
 
     <!-- ══ PANEL 5 : DASHBOARD ══ -->
     <div class="panel" id="p4">
-      <div class="toolbar" style="justify-content: flex-end;">
+      <div class="toolbar" style="justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+        <div class="dash-filter-bar">
+          <span class="dash-filter-label">📅 Période</span>
+          <button class="dash-preset active" data-preset="all"     onclick="setDashPreset('all')">Tout</button>
+          <button class="dash-preset"        data-preset="today"   onclick="setDashPreset('today')">Aujourd'hui</button>
+          <button class="dash-preset"        data-preset="week"    onclick="setDashPreset('week')">7 jours</button>
+          <button class="dash-preset"        data-preset="month"   onclick="setDashPreset('month')">Ce Mois</button>
+          <button class="dash-preset"        data-preset="quarter" onclick="setDashPreset('quarter')">Trimestre</button>
+          <button class="dash-preset"        data-preset="year"    onclick="setDashPreset('year')">Cette Année</button>
+          <span class="dash-date-sep">|</span>
+          <input type="date" id="dashDateFrom" class="dash-date-input" placeholder="Début" onchange="setDashCustomRange()">
+          <span style="color:var(--muted);font-size:13px;">→</span>
+          <input type="date" id="dashDateTo"   class="dash-date-input" placeholder="Fin"   onchange="setDashCustomRange()">
+          <span id="dashActiveRange"></span>
+        </div>
         <button class="btn btn-ghost" onclick="printPage('Tableau de Bord LOGICOM')">🖨 Imprimer Stats</button>
       </div>
       <div class="dashboard-grid">
@@ -3325,15 +3402,92 @@
 
     let installChart, paymentChart;
 
+    // ── Dashboard date filter state ──
+    let dashFilterFrom = null;   // 'YYYY-MM-DD' or null
+    let dashFilterTo   = null;   // 'YYYY-MM-DD' or null
+
+    function _isoToday() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function setDashPreset(preset) {
+      const now   = new Date();
+      const today = _isoToday();
+      let from = null, to = null, label = '';
+
+      if (preset === 'today') {
+        from = today; to = today; label = today;
+      } else if (preset === 'week') {
+        const d = new Date(now); d.setDate(d.getDate() - 6);
+        from = d.toISOString().split('T')[0]; to = today;
+        label = from + ' → ' + today;
+      } else if (preset === 'month') {
+        from = today.slice(0, 7) + '-01'; to = today;
+        label = today.slice(0, 7);
+      } else if (preset === 'quarter') {
+        const m = now.getMonth(); const qStart = m - (m % 3);
+        const d = new Date(now.getFullYear(), qStart, 1);
+        from = d.toISOString().split('T')[0]; to = today;
+        label = from + ' → ' + today;
+      } else if (preset === 'year') {
+        from = today.slice(0, 4) + '-01-01'; to = today;
+        label = today.slice(0, 4);
+      } else {
+        // 'all'
+        from = null; to = null; label = '';
+      }
+
+      dashFilterFrom = from; dashFilterTo = to;
+
+      // Reset custom inputs
+      document.getElementById('dashDateFrom').value = from || '';
+      document.getElementById('dashDateTo').value   = to   || '';
+      document.getElementById('dashActiveRange').textContent = label;
+
+      // Toggle active class
+      document.querySelectorAll('.dash-preset').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.preset === preset);
+      });
+
+      renderDashboard();
+    }
+
+    function setDashCustomRange() {
+      dashFilterFrom = document.getElementById('dashDateFrom').value || null;
+      dashFilterTo   = document.getElementById('dashDateTo').value   || null;
+
+      // Deactivate preset buttons
+      document.querySelectorAll('.dash-preset').forEach(btn => btn.classList.remove('active'));
+
+      const label = (dashFilterFrom || '…') + ' → ' + (dashFilterTo || '…');
+      document.getElementById('dashActiveRange').textContent =
+        (dashFilterFrom || dashFilterTo) ? label : '';
+
+      renderDashboard();
+    }
+
+    function getDashClients() {
+      if (!dashFilterFrom && !dashFilterTo) return clients;
+      return clients.filter(c => {
+        const d = (c.created_at || '').split('T')[0];
+        if (!d) return false;
+        if (dashFilterFrom && d < dashFilterFrom) return false;
+        if (dashFilterTo   && d > dashFilterTo)   return false;
+        return true;
+      });
+    }
+
     function renderDashboard() {
       if (!clients) return;
 
-      const totalClients = clients.length;
-      const installedClients = clients.filter(c => c.installer === 'Oui').length;
-      const materialClientsCount = clients.filter(c => c.material === 'Oui').length;
-      const paidClients = clients.filter(c => c.paymentStatus === 'Régler').length;
-      const partialPaid = clients.filter(c => c.paymentStatus === 'Verser').length;
-      const notPaid = clients.filter(c => c.paymentStatus === 'Non').length;
+      const fc = getDashClients();   // filtered client list
+
+      const totalClients         = fc.length;
+      const installedClients     = fc.filter(c => c.installer === 'Oui').length;
+      const materialClientsCount = fc.filter(c => c.material  === 'Oui').length;
+      const paidClients          = fc.filter(c => c.paymentStatus === 'Régler').length;
+      const partialPaid          = fc.filter(c => c.paymentStatus === 'Verser').length;
+      const notPaid              = fc.filter(c => c.paymentStatus === 'Non').length;
 
       // Stats Cards
       const setVal = (id, val) => {
@@ -3346,10 +3500,10 @@
       setVal('statNotInstalledCount', totalClients - installedClients);
       setVal('statMaterialCount', materialClientsCount);
       setVal('statZeroDebt', paidClients);
-      setVal('statTrialCount', clients.filter(c => c.trialStatus && c.trialStatus > 0).length);
+      setVal('statTrialCount', fc.filter(c => c.trialStatus && c.trialStatus > 0).length);
 
       let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0, caInstalle = 0;
-      clients.forEach(c => {
+      fc.forEach(c => {
         const val = getClientTotalValue(c);
         totalGlobal += val;
         if (c.installer === 'Oui') {
@@ -3367,7 +3521,7 @@
       setVal('statManqueGagner', Math.round(manqueGagner).toLocaleString('fr-DZ') + ' DA');
 
       const optionCounts = {};
-      clients.forEach(c => {
+      fc.forEach(c => {
         if (!c.options) return;
         const clientOptQtys = {}; // { oId: totalQtyForThisClient }
         c.options.forEach(item => {
