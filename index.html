@@ -236,17 +236,52 @@
       color: var(--muted);
       border-bottom: 2px solid transparent;
       margin-bottom: -1px;
-      transition: all .2s;
+      transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .tab.active {
       color: var(--text);
       font-weight: 600;
       border-bottom-color: var(--text);
+      background: rgba(26, 79, 160, 0.05); /* Very subtle highlight */
     }
 
     .tab:hover:not(.active) {
       color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+      transform: translateY(-1px);
+    }
+
+    /* Tab Icon Animation */
+    .tab span, .tab i {
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .tab:hover span, .tab:hover i {
+      transform: scale(1.25) rotate(5deg);
+    }
+
+    .tab.active span {
+      animation: tabPulse 2s infinite ease-in-out;
+    }
+
+    @keyframes tabPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    /* Specific animation for Devis & Recap Chart */
+    .tab[onclick*="switchTab(4)"]:hover span {
+      animation: chartGrow 0.5s ease-in-out;
+    }
+
+    @keyframes chartGrow {
+      0% { transform: scale(1) translateY(0); }
+      50% { transform: scale(1.2) translateY(-3px); }
+      100% { transform: scale(1.25) rotate(5deg); }
     }
 
     /* THEME TOGGLE */
@@ -1423,6 +1458,59 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* Animation Classes for Recap Tab */
+    .animate-fade-in { animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    .animate-scale-in { animation: fadeInScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+    .animate-slide-right { animation: slideInRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+    
+    .recap-note {
+      animation: slideUp 0.5s ease-out both;
+    }
+
+    .act-chip {
+      animation: fadeInScale 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+    }
+
+    .sel-act-block {
+      animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .summary-card {
+      animation: slideInRight 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .grand-total-box {
+      transition: all 0.3s ease;
+    }
+
+    .grand-total-box:hover {
+      transform: scale(1.02);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .gtv {
+      animation: bounce 2s infinite ease-in-out;
+      animation-play-state: paused;
+    }
+    .grand-total-box:hover .gtv {
+      animation-play-state: running;
+    }
+
     @keyframes ring {
       0% { transform: rotate(0deg); }
       5% { transform: rotate(25deg); }
@@ -2146,14 +2234,14 @@
       <div class="act-chips" id="recapChips"></div>
       <div class="recap-layout">
         <div id="recapBlocks"></div>
-        <div class="summary-card">
+        <div class="summary-card animate-slide-right">
           <div class="summary-head">
             <h3>📋 Devis LOGICOM</h3>
             <p>Récapitulatif par activité</p>
           </div>
           <div class="summary-rows" id="summaryRows"></div>
           <div id="dedupBox"></div>
-          <div class="grand-total-box">
+          <div class="grand-total-box animate-scale-in" style="animation-delay: 0.4s">
             <div class="gtl">Total à payer</div>
             <div class="gtv" id="grandTotalVal">0 DA</div>
             <div class="gts" id="grandTotalSub">Sélectionnez des activités</div>
@@ -2248,8 +2336,9 @@
               <th>Téléphone</th>
               <th>Total Devis</th>
               <th>Reste à Payer</th>
+              <th>Limite (Deadline)</th>
               <th>Dernière Relance</th>
-              <th width="200">Actions WhatsApp</th>
+              <th width="150">Actions</th>
             </tr>
           </thead>
           <tbody id="reminderBody"></tbody>
@@ -2370,6 +2459,29 @@
             <option value="Baridimob">Baridimob</option>
             <option value="Facture">Facture</option>
           </select>
+        </div>
+
+        <!-- 💰 SECTION DETTES & PAIEMENTS -->
+        <div style="background:rgba(232, 160, 32, 0.05); padding:15px; border-radius:10px; border:1px solid rgba(232, 160, 32, 0.2); margin-top:10px; grid-column: span 2;">
+          <h4 style="font-family:'Syne'; font-size:12px; color:var(--accent); margin-bottom:10px; text-transform:uppercase;">💰 Suivi des Paiements & Dettes</h4>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div class="field">
+              <label>Prix Négocié (Total)</label>
+              <input type="number" id="clNegotiatedPrice" placeholder="ex: 45000">
+            </div>
+            <div class="field">
+              <label>Montant Versé</label>
+              <input type="number" id="clPaidAmount" placeholder="ex: 20000">
+            </div>
+            <div class="field">
+              <label>Limite de Paiement (Deadline)</label>
+              <input type="date" id="clPaymentDeadline">
+            </div>
+            <div class="field" style="display:flex; flex-direction:row; align-items:center; gap:10px; padding-top:20px;">
+              <input type="checkbox" id="clAutoReminder" style="width:20px; height:20px; cursor:pointer;">
+              <label style="margin-bottom:0; cursor:pointer; font-weight:700; color:var(--accent);" for="clAutoReminder">🤖 RELANCE WHATSAPP AUTO</label>
+            </div>
+          </div>
         </div>
         <div style="background:var(--tag-bg); padding:15px; border-radius:10px; border:1px solid var(--border); margin-top:10px;">
           <h4 style="font-family:'Syne'; font-size:12px; color:var(--accent); margin-bottom:10px; text-transform:uppercase;">Version de Test</h4>
@@ -2659,12 +2771,35 @@
     // ═══════════════════════════ TABS ═══════════════════════════
     function switchTab(i) {
       document.querySelectorAll('.tab').forEach((t, j) => t.classList.toggle('active', i === j));
-      document.querySelectorAll('.panel').forEach((p, j) => p.classList.toggle('active', i === j));
+      const panels = document.querySelectorAll('.panel');
+      panels.forEach((p, j) => {
+        p.classList.toggle('active', i === j);
+        if (i === j) {
+          // Re-trigger animations by removing and adding a class or just letting the CSS handle it if the div was display:none
+          p.style.animation = 'none';
+          p.offsetHeight; /* trigger reflow */
+          p.style.animation = null;
+        }
+      });
+      
       if (i === 0) renderOptions();
       if (i === 1) renderActivities();
       if (i === 2) renderClients();
       if (i === 3) renderDashboard();
-      if (i === 4) renderRecap();
+      if (i === 4) {
+        renderRecap();
+        // Staggered animation for recap elements if they are rendered
+        setTimeout(() => {
+           const blocks = document.querySelectorAll('.sel-act-block');
+           blocks.forEach((b, idx) => {
+             b.style.animationDelay = (idx * 0.1) + 's';
+           });
+           const chips = document.querySelectorAll('.act-chip');
+           chips.forEach((c, idx) => {
+             c.style.animationDelay = (idx * 0.05) + 's';
+           });
+        }, 50);
+      }
       if (i === 5) renderMaterials();
       if (i === 6) renderReminders();
     }
@@ -3005,10 +3140,10 @@
       html += activities.map(a => `
         <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
-            <input type="checkbox" value="act_${a.id}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this)">
+            <input type="checkbox" value="act_${a.id}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); recalculateNegotiatedPrice();">
             <span>${a.name}</span>
           </label>
-          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="act_${a.id}">
+          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="act_${a.id}" oninput="recalculateNegotiatedPrice()">
         </div>
       `).join('');
       
@@ -3016,10 +3151,10 @@
       html += Object.keys(options).map(Number).sort((a,b)=>a-b).map(k => `
         <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
-            <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this)">
+            <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); recalculateNegotiatedPrice();">
             <span>${k} — ${options[k].name}</span>
           </label>
-          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}">
+          <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}" oninput="recalculateNegotiatedPrice()">
         </div>
       `).join('');
       
@@ -3046,10 +3181,10 @@
         return `
           <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
             <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
-              <input type="checkbox" value="${tag}" class="cl-mat-cb cl-cb" onchange="toggleQtyInput(this)" ${isChecked ? 'checked' : ''}>
+              <input type="checkbox" value="${tag}" class="cl-mat-cb cl-cb" onchange="toggleQtyInput(this); recalculateNegotiatedPrice();" ${isChecked ? 'checked' : ''}>
               <span>${m.name}</span>
             </label>
-            <input type="number" class="cl-qty" value="${qty}" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); ${isChecked ? 'visibility:visible' : 'visibility:hidden'};" data-tag="${tag}">
+            <input type="number" class="cl-qty" value="${qty}" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); ${isChecked ? 'visibility:visible' : 'visibility:hidden'};" data-tag="${tag}" oninput="recalculateNegotiatedPrice()">
           </div>
         `;
       }).join('');
@@ -3103,6 +3238,48 @@
       const qtyInp = row.querySelector('.cl-qty');
       if (qtyInp) qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
     }
+    
+    function recalculateNegotiatedPrice() {
+      const checkboxes = document.querySelectorAll('.cl-cb:checked');
+      const selectedOpts = Array.from(checkboxes).map(cb => {
+        const row = cb.closest('.cl-row');
+        const qtyInp = row.querySelector('.cl-qty');
+        return { tag: cb.value, qty: parseInt(qtyInp.value) || 1 };
+      });
+      
+      let total = 0;
+      const optionQtys = {}; // { oId: qty }
+      const materialQtys = {}; // { mId: qty }
+
+      selectedOpts.forEach(item => {
+        const tag = item.tag;
+        const qty = item.qty;
+
+        if (tag.startsWith('act_')) {
+          const actId = parseInt(tag.split('_')[1]);
+          const act = activities.find(a => a.id === actId);
+          if (act) act.mandatory.forEach(oId => {
+            optionQtys[oId] = (optionQtys[oId] || 0) + qty;
+          });
+        } else if (tag.startsWith('opt_')) {
+          const oId = parseInt(tag.split('_')[1]);
+          optionQtys[oId] = (optionQtys[oId] || 0) + qty;
+        } else if (tag.startsWith('mat_')) {
+          const mId = parseInt(tag.split('_')[1]);
+          materialQtys[mId] = (materialQtys[mId] || 0) + qty;
+        }
+      });
+      
+      Object.keys(optionQtys).forEach(oId => {
+        total += (options[oId]?.price || 0) * optionQtys[oId];
+      });
+      Object.keys(materialQtys).forEach(mId => {
+        total += (materials.find(m => m.id == mId)?.price || 0) * materialQtys[mId];
+      });
+
+      const priceInp = document.getElementById('clNegotiatedPrice');
+      if (priceInp) priceInp.value = total > 0 ? total : '';
+    }
 
     function filterClientList(containerId, query) {
       const container = document.getElementById(containerId);
@@ -3139,6 +3316,13 @@
       document.getElementById('clTrialPeriod').value = 15;
       syncTrialDates('start');
       document.getElementById('trialDateBox').style.display = 'none';
+      
+      document.getElementById('clNegotiatedPrice').value = '';
+      document.getElementById('clPaidAmount').value = '';
+      document.getElementById('clPaymentDeadline').value = '';
+      document.getElementById('clAutoReminder').checked = false;
+      
+      recalculateNegotiatedPrice();
       togglePaymentMode();
       toggleNoPurchaseReason();
       document.getElementById('srchOpt').value = '';
@@ -3174,6 +3358,12 @@
       document.getElementById('clTrialPeriod').value = c.trialPeriod || 15;
       syncTrialDates('start');
       document.getElementById('trialDateBox').style.display = isTrial ? 'block' : 'none';
+
+      document.getElementById('clNegotiatedPrice').value = c.negotiatedPrice || '';
+      document.getElementById('clPaidAmount').value = c.paidAmount || '';
+      document.getElementById('clPaymentDeadline').value = c.paymentDeadline || '';
+      document.getElementById('clAutoReminder').checked = !!c.autoReminder;
+
       togglePaymentMode();
       toggleNoPurchaseReason();
       document.getElementById('srchOpt').value = '';
@@ -3214,6 +3404,11 @@
       const trialStatus = document.getElementById('clIsTrial').checked ? 1 : 0;
       const trialStartDate = document.getElementById('clTrialStartDate').value;
       const trialPeriod = parseInt(document.getElementById('clTrialPeriod').value) || 15;
+      
+      const negotiatedPrice = parseInt(document.getElementById('clNegotiatedPrice').value) || 0;
+      const paidAmount = parseInt(document.getElementById('clPaidAmount').value) || 0;
+      const paymentDeadline = document.getElementById('clPaymentDeadline').value;
+      const autoReminder = document.getElementById('clAutoReminder').checked ? 1 : 0;
 
       const checkboxes = document.querySelectorAll('.cl-cb:checked');
       const selectedOpts = Array.from(checkboxes).map(cb => {
@@ -3230,9 +3425,10 @@
         c.installer = installer; c.material = material; c.paymentStatus = paymentStatus; c.paymentMode = paymentMode; c.finalState = finalState; c.noPurchaseReason = noPurchaseReason;
         c.created_at = createdAt; c.called = called;
         c.trialStatus = trialStatus; c.trialStartDate = trialStartDate; c.trialPeriod = trialPeriod;
+        c.negotiatedPrice = negotiatedPrice; c.paidAmount = paidAmount; c.paymentDeadline = paymentDeadline; c.autoReminder = autoReminder;
         // c.added_by remains the same
       } else {
-        clients.push({ id: nextClientId++, name, phone, brand, category, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate, trialPeriod: trialPeriod, added_by: 'Direct' });
+        clients.push({ id: nextClientId++, name, phone, brand, category, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate, trialPeriod: trialPeriod, added_by: 'Direct', negotiatedPrice, paidAmount, paymentDeadline, autoReminder });
       }
 
       closeModal('modalClient');
@@ -3572,9 +3768,10 @@
 
     function renderRecap() {
       // Build chips
-      const chips = activities.map(a => {
+      const chips = activities.map((a, idx) => {
         const sel = selectedActIds.has(a.id);
-        return `<div class="act-chip ${sel ? 'selected' : ''}" onclick="toggleActRecap(${a.id})">
+        const delay = (idx * 0.05).toFixed(2);
+        return `<div class="act-chip ${sel ? 'selected' : ''}" onclick="toggleActRecap(${a.id})" style="animation-delay: ${delay}s">
       <span class="chip-icon">${a.icon}</span>
       <span>${a.name}</span>
       <span class="chip-check">✓</span>
@@ -3586,7 +3783,7 @@
 
       if (selActs.length === 0) {
         document.getElementById('recapBlocks').innerHTML = `
-      <div class="empty-state">
+      <div class="empty-state animate-fade-in">
         <div class="es-icon">🎯</div>
         <p>Cliquez sur les activités ci-dessus<br>pour afficher le détail des options requises.</p>
       </div>`;
@@ -3618,12 +3815,14 @@
       let summaryHtml = '';
       let perActTotals = 0;
 
-      selActs.forEach(a => {
+      selActs.forEach((a, idx) => {
         const color = catColors[a.cat % catColors.length];
         const totalM = a.mandatory.reduce((s, n) => s + (options[n]?.price || 0), 0);
         const totalR = a.optional.reduce((s, n) => s + (options[n]?.price || 0), 0);
         const actTotal = totalM + totalR;
         perActTotals += actTotal;
+        
+        const delay = (idx * 0.1).toFixed(2);
 
         const mandRows = a.mandatory.map(n => {
           const o = options[n]; if (!o) return '';
@@ -3646,7 +3845,7 @@
         }).join('');
 
         blocksHtml += `
-    <div class="sel-act-block">
+    <div class="sel-act-block" style="animation-delay: ${delay}s">
       <div class="sel-act-head">
         <div class="sel-act-icon" style="background:linear-gradient(135deg,${color},${color}cc)">${a.icon}</div>
         <div class="sel-act-name">${a.name}<br><span style="font-family:'DM Sans';font-weight:300;font-size:11px;color:var(--muted)">${a.subtitle}</span></div>
@@ -3671,7 +3870,7 @@
       ${a.note ? '<div class="opt-note" style="padding:10px 18px 12px;font-size:11px;color:var(--accent);border-top:1px solid var(--border)">💡 ' + a.note + '</div>' : ''}
     </div>`;
 
-        summaryHtml += `<div class="sum-row">
+        summaryHtml += `<div class="sum-row animate-fade-in" style="animation-delay: ${(idx * 0.08).toFixed(2)}s">
       <div class="sum-act"><span class="sum-act-icon">${a.icon}</span>${a.name}</div>
       <div class="sum-price">${actTotal.toLocaleString('fr-DZ')} DA</div>
     </div>`;
@@ -3684,7 +3883,7 @@
       document.getElementById('summaryRows').innerHTML = summaryHtml;
 
       document.getElementById('dedupBox').innerHTML = saving > 0 ? `
-    <div class="dedup-box">
+    <div class="dedup-box animate-scale-in" style="animation-delay: 0.3s">
       <div class="dl">💚 Économie déduplication</div>
       <div class="dv">− ${saving.toLocaleString('fr-DZ')} DA</div>
       <div class="ds">${[...allMand].filter(n => selActs.filter(a => a.mandatory.includes(n)).length > 1).length + [...allRec].filter(n => selActs.filter(a => a.optional.includes(n)).length > 1).length} option(s) partagées comptées une seule fois</div>
@@ -4057,7 +4256,11 @@
           trialStartDate: c.trialStartDate || '',
           trialPeriod: Number(c.trialPeriod || 15),
           category: c.category || 'Nouveau',
-          added_by: c.added_by || ''
+          added_by: c.added_by || '',
+          negotiatedPrice: Number(c.negotiatedPrice || 0),
+          paidAmount: Number(c.paidAmount || 0),
+          paymentDeadline: c.paymentDeadline || '',
+          autoReminder: Number(c.autoReminder || 0)
         }));
         if (clients.length > 0) {
           nextClientId = Math.max(...clients.map(c => c.id)) + 1;
@@ -4318,27 +4521,84 @@
       document.getElementById('tgToken').value = localStorage.getItem('logicom-tg-token') || '';
     }
 
+    async function checkPaymentReminders() {
+      if (!clients) return;
+      const today = new Date().toISOString().split('T')[0];
+      const todayDisplay = new Date().toLocaleDateString('fr-FR');
+      
+      const dueClients = clients.filter(c => {
+        if (!c.autoReminder || !c.paymentDeadline) return false;
+        if (c.paymentDeadline > today) return false;
+        
+        const total = c.negotiatedPrice || getClientTotalValue(c);
+        const paid = c.paidAmount || 0;
+        const balance = total - paid;
+        if (balance <= 0) return false;
+        
+        // Avoid double reminders on the same day
+        if (c.dateDernierRappel && c.dateDernierRappel.includes(todayDisplay)) return false;
+        
+        return true;
+      });
+
+      if (dueClients.length === 0) return;
+
+      console.log(`ATTENTION: Found ${dueClients.length} clients for AUTO-REMINDER`);
+      
+      for (const c of dueClients) {
+        toast(`🤖 Relance Auto WhatsApp: ${c.name}...`);
+        const total = c.negotiatedPrice || getClientTotalValue(c);
+        const paid = c.paidAmount || 0;
+        const balance = total - paid;
+        
+        let msg = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
+        msg = msg.replace('{name}', c.name).replace('{balance}', balance.toLocaleString('fr-DZ')).replace('{deadline}', c.paymentDeadline);
+
+        const cleanPhone = (c.phone || '').replace(/[^\d+]/g, '');
+        const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
+        
+        try {
+          await ipcRenderer.invoke('send-whatsapp-with-file', { phone: finalPhone, message: msg });
+          c.dateDernierRappel = todayDisplay + ' (Auto)';
+          await syncDB();
+        } catch (e) {
+          console.error("Auto-reminder failed for", c.name, e);
+        }
+      }
+      renderReminders();
+    }
+
     function renderReminders() {
       const body = document.getElementById('reminderBody');
       const trialBody = document.getElementById('trialReminderBody');
       
       // 1. Debt Reminders
-      const indebted = clients.filter(c => c.paymentStatus === 'Non' || c.paymentStatus === 'Verser');
+      const indebted = clients.filter(c => {
+        const total = c.negotiatedPrice || getClientTotalValue(c);
+        const paid = c.paidAmount || 0;
+        return total - paid > 0;
+      });
+
       body.innerHTML = indebted.map(c => {
-        const total = getClientTotalValue(c);
-        const paid = c.paymentStatus === 'Verser' ? (total * 0.5) : 0;
+        const total = c.negotiatedPrice || getClientTotalValue(c);
+        const paid = c.paidAmount || 0;
         const balance = total - paid;
-        if (balance <= 0) return '';
-        return `<tr>
-          <td style="font-weight:600">${c.name}</td>
+        
+        const isOverdue = c.paymentDeadline && new Date(c.paymentDeadline) <= new Date().setHours(0,0,0,0);
+        const rowStyle = isOverdue ? 'background:rgba(255,99,71,0.05);' : '';
+        const deadlineColor = isOverdue ? 'color:var(--red); font-weight:700;' : 'color:var(--muted);';
+
+        return `<tr style="${rowStyle}">
+          <td style="font-weight:600">${c.name} ${c.autoReminder ? '🤖' : ''}</td>
           <td>${c.phone || '-'}</td>
           <td class="price-cell">${total.toLocaleString('fr-DZ')} DA</td>
           <td class="price-cell" style="color:var(--red); font-weight:700;">${balance.toLocaleString('fr-DZ')} DA</td>
+          <td style="font-size:12px; ${deadlineColor}">${c.paymentDeadline || '-'}</td>
           <td style="font-size:12px; color:var(--muted)">${c.dateDernierRappel || 'Jamais'}</td>
           <td>
             <div style="display:flex; gap:6px;">
-              <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲 Message</button>
-              <button class="btn btn-ghost btn-sm" onclick="sendApiReminder(${c.id})">🤖 API Auto</button>
+              <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲</button>
+              <button class="btn btn-ghost btn-sm" onclick="sendApiReminder(${c.id})" title="API Auto">🤖</button>
             </div>
           </td>
         </tr>`;
@@ -4383,8 +4643,8 @@
 
     async function sendManualReminder(id) {
       const c = clients.find(x => x.id === id);
-      const total = getClientTotalValue(c);
-      const paid = c.paymentStatus === 'Verser' ? (total * 0.5) : 0;
+      const total = c.negotiatedPrice || getClientTotalValue(c);
+      const paid = c.paidAmount || 0;
       const balance = total - paid;
       
       let msg = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
@@ -4537,7 +4797,9 @@
     loadData().then(() => {
       loadApiSettings();
       checkExpiredTrials();
-      setInterval(checkExpiredTrials, 60000); // Check every minute
+      checkPaymentReminders(); // Initial check
+      setInterval(checkExpiredTrials, 60000); // Check trials every minute
+      setInterval(checkPaymentReminders, 3600000); // Check payments every hour
     });
   </script>
 </body>

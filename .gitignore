@@ -1,7 +1,12 @@
 node_modules/
-#test.db
+test.db
+test.db.tmp
+backups/
 *.log
 .DS_Store
 .vscode/
 dist/
 release/
+.env
+supabase.env
+.claude/worktrees/

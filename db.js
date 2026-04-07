@@ -52,7 +52,11 @@ async function initDB() {
             called INTEGER DEFAULT 0, dateDernierRappel TEXT,
             trialStatus INTEGER DEFAULT 0, trialStartDate TEXT, trialPeriod INTEGER DEFAULT 15,
             category TEXT DEFAULT 'Nouveau',
-            added_by TEXT
+            added_by TEXT,
+            negotiatedPrice INTEGER DEFAULT 0,
+            paidAmount INTEGER DEFAULT 0,
+            paymentDeadline TEXT,
+            autoReminder INTEGER DEFAULT 0
           )
         `);
 
@@ -71,6 +75,10 @@ async function initDB() {
         try { db.run("ALTER TABLE clients ADD COLUMN trialPeriod INTEGER DEFAULT 15"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN category TEXT DEFAULT 'Nouveau'"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN added_by TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN negotiatedPrice INTEGER DEFAULT 0"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN paidAmount INTEGER DEFAULT 0"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN paymentDeadline TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN autoReminder INTEGER DEFAULT 0"); } catch(e){}
 
         db.run(`
           CREATE TABLE IF NOT EXISTS materials (
@@ -147,10 +155,17 @@ function registerIpcHandlers() {
 
             if (data.clients) {
                 db.run('DELETE FROM clients');
-                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                 const stmt = db.prepare(sql);
                 for (const c of data.clients) {
-                    stmt.run([c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source, JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non', c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '', c.created_at || '', (c.called?1:0), c.dateDernierRappel || '', (c.trialStatus || 0), c.trialStartDate || '', c.trialPeriod || 15, c.category || 'Nouveau', c.added_by || '']);
+                    stmt.run([
+                        c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source, 
+                        JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non', 
+                        c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '', 
+                        c.created_at || '', (c.called?1:0), c.dateDernierRappel || '', (c.trialStatus || 0), 
+                        c.trialStartDate || '', c.trialPeriod || 15, c.category || 'Nouveau', c.added_by || '',
+                        c.negotiatedPrice || 0, c.paidAmount || 0, c.paymentDeadline || '', (c.autoReminder?1:0)
+                    ]);
                 }
                 stmt.free();
             }
