@@ -6,16 +6,91 @@ const { ipcMain, app, Notification } = require('electron');
 let db;
 let SQL;
 const dbPath = path.join(__dirname, 'test.db');
+const backupDir = path.join(__dirname, 'backups');
+const MAX_BACKUPS = 5;
 
 function safeLog(...args) {} // Logging disabled
+
+// ─────────────────────────────────────────────────────────────
+//  ATOMIC WRITE — write to .tmp then rename to avoid partial writes
+// ─────────────────────────────────────────────────────────────
+function saveToFile() {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    const tmpPath = dbPath + '.tmp';
+    fs.writeFileSync(tmpPath, buffer);
+    fs.renameSync(tmpPath, dbPath);   // atomic on same filesystem
+}
+
+// ─────────────────────────────────────────────────────────────
+//  ROLLING BACKUPS — keep last MAX_BACKUPS snapshots
+// ─────────────────────────────────────────────────────────────
+function createBackup() {
+    if (!fs.existsSync(dbPath)) return;
+    try {
+        if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const backupPath = path.join(backupDir, `test.db.${timestamp}.bak`);
+        fs.copyFileSync(dbPath, backupPath);
+
+        // Prune old backups beyond MAX_BACKUPS
+        const backups = fs.readdirSync(backupDir)
+            .filter(f => f.endsWith('.bak'))
+            .sort()
+            .reverse();
+        backups.slice(MAX_BACKUPS).forEach(f => {
+            try { fs.unlinkSync(path.join(backupDir, f)); } catch (e) {}
+        });
+    } catch (err) {
+        console.error('Backup creation failed:', err);
+    }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  RECOVERY — load the most recent valid backup
+// ─────────────────────────────────────────────────────────────
+function loadFromBackup() {
+    if (!fs.existsSync(backupDir)) return null;
+    const backups = fs.readdirSync(backupDir)
+        .filter(f => f.endsWith('.bak'))
+        .sort()
+        .reverse();
+
+    for (const bak of backups) {
+        try {
+            const buf = fs.readFileSync(path.join(backupDir, bak));
+            const testDb = new SQL.Database(buf);
+            testDb.exec('SELECT 1 FROM sqlite_master LIMIT 1'); // quick sanity check
+            console.log(`Recovered from backup: ${bak}`);
+            return testDb;
+        } catch (e) {
+            console.error(`Backup ${bak} is also corrupt, trying next...`);
+        }
+    }
+    return null;
+}
 
 async function initDB() {
     SQL = await initSqlJs({
         locateFile: file => path.join(__dirname, 'node_modules', 'sql.js', 'dist', file)
     });
+
     if (fs.existsSync(dbPath)) {
-        const filebuffer = fs.readFileSync(dbPath);
-        db = new SQL.Database(filebuffer);
+        try {
+            const filebuffer = fs.readFileSync(dbPath);
+            db = new SQL.Database(filebuffer);
+            // Basic integrity check
+            db.exec('SELECT 1 FROM sqlite_master LIMIT 1');
+        } catch (err) {
+            console.error('Main DB corrupted or unreadable, attempting recovery...', err);
+            const recovered = loadFromBackup();
+            if (recovered) {
+                db = recovered;
+            } else {
+                console.error('No valid backup found. Starting with a fresh database.');
+                db = new SQL.Database();
+            }
+        }
     } else {
         db = new SQL.Database();
     }
@@ -46,9 +121,9 @@ async function initDB() {
         db.run(`
           CREATE TABLE IF NOT EXISTS clients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT, phone TEXT, brand TEXT, potential INTEGER, address TEXT, source TEXT, 
-            options TEXT, note TEXT, installer TEXT, material TEXT, paymentStatus TEXT, 
-            paymentMode TEXT, finalState TEXT, noPurchaseReason TEXT, created_at TEXT, 
+            name TEXT, phone TEXT, brand TEXT, potential INTEGER, address TEXT, source TEXT,
+            options TEXT, note TEXT, installer TEXT, material TEXT, paymentStatus TEXT,
+            paymentMode TEXT, finalState TEXT, noPurchaseReason TEXT, created_at TEXT,
             called INTEGER DEFAULT 0, dateDernierRappel TEXT,
             trialStatus INTEGER DEFAULT 0, trialStartDate TEXT, trialPeriod INTEGER DEFAULT 15,
             category TEXT DEFAULT 'Nouveau',
@@ -81,17 +156,12 @@ async function initDB() {
             note TEXT
           )
         `);
-        
-        saveToFile();
-    } catch (err) {
-        // Silently handle schema issues
-    }
-}
 
-function saveToFile() {
-    const data = db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(dbPath, buffer);
+        saveToFile();
+        createBackup();
+    } catch (err) {
+        console.error('Schema init error:', err);
+    }
 }
 
 function registerIpcHandlers() {
@@ -126,6 +196,9 @@ function registerIpcHandlers() {
     }
 
     async function saveAll(event, data) {
+        // ── Wrap everything in a single transaction so a crash mid-insert
+        //    rolls back cleanly instead of leaving tables half-empty. ──
+        db.run('BEGIN TRANSACTION');
         try {
             if (data.options) {
                 db.run('DELETE FROM options');
@@ -164,28 +237,32 @@ function registerIpcHandlers() {
                 stmt.free();
             }
 
-            saveToFile();
+            db.run('COMMIT');
+            saveToFile();         // atomic write to disk
+            createBackup();       // rolling backup after every successful save
             return true;
         } catch (err) {
-            console.error('SQL.JS Save Error:', err);
+            try { db.run('ROLLBACK'); } catch (e) {}
+            console.error('SQL.JS Save Error (rolled back):', err);
             throw err;
         }
     }
 
-    ipcMain.handle('save-all', (event, data) => saveAll(event, data));
-    ipcMain.handle('save-opts', (event, optionsArray) => saveAll(event, { options: optionsArray }));
-    ipcMain.handle('save-acts', (event, activitiesArray) => saveAll(event, { activities: activitiesArray }));
-    ipcMain.handle('save-clients', (event, clientsArray) => saveAll(event, { clients: clientsArray }));
+    ipcMain.handle('save-all',       (event, data)           => saveAll(event, data));
+    ipcMain.handle('save-opts',      (event, optionsArray)   => saveAll(event, { options: optionsArray }));
+    ipcMain.handle('save-acts',      (event, activitiesArray)=> saveAll(event, { activities: activitiesArray }));
+    ipcMain.handle('save-clients',   (event, clientsArray)   => saveAll(event, { clients: clientsArray }));
     ipcMain.handle('save-materials', (event, materialsArray) => saveAll(event, { materials: materialsArray }));
 }
 
 async function addClientManually(clientData) {
     const { BrowserWindow, Notification } = require('electron');
+    db.run('BEGIN TRANSACTION');
     try {
         const sql = `INSERT INTO clients (name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, trialStatus, trialStartDate, trialPeriod, category, added_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const stmt = db.prepare(sql);
         const now = new Date().toISOString().split('T')[0];
-        
+
         stmt.run([
             clientData.name || 'Nouveau Client',
             clientData.phone || '',
@@ -210,10 +287,13 @@ async function addClientManually(clientData) {
             clientData.addedBy || ''
         ]);
         stmt.free();
-        saveToFile();
-        
+
+        db.run('COMMIT');
+        saveToFile();   // atomic write
+        createBackup(); // snapshot
+
         console.log('Client saved via Telegram bot:', clientData.name);
-        
+
         // Show Native Notification
         if (Notification.isSupported()) {
             new Notification({
@@ -221,13 +301,15 @@ async function addClientManually(clientData) {
                 body: `Un nouveau client "${clientData.name}" vient de s'inscrire via Telegram.`
             }).show();
         }
-        
+
         // Notify all windows to refresh
         BrowserWindow.getAllWindows().forEach(win => {
             win.webContents.send('refresh-clients');
         });
     } catch (err) {
-        console.error('FAILED to save client via Telegram:', err);
+        try { db.run('ROLLBACK'); } catch (e) {}
+        console.error('FAILED to save client via Telegram (rolled back):', err);
+        throw err;
     }
 }
 

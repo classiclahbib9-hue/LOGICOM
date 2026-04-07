@@ -168,7 +168,15 @@ function initTelegram() {
 
 function updateConfig(newConfig) {
     const configPath = getConfigPath();
-    fs.writeFileSync(configPath, JSON.stringify(newConfig));
+    const tmpPath = configPath + '.tmp';
+    try {
+        fs.writeFileSync(tmpPath, JSON.stringify(newConfig, null, 2), 'utf8');
+        fs.renameSync(tmpPath, configPath);   // atomic replace
+    } catch (err) {
+        console.error('Failed to save Telegram config:', err);
+        try { fs.unlinkSync(tmpPath); } catch (e) {}
+        throw err;
+    }
     initTelegram();
 }
 
