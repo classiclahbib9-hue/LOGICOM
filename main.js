@@ -1,8 +1,11 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const path = require('path')
 const fs = require('fs')
-const { initDB, registerIpcHandlers, forceSave } = require('./db')
+const { initDB, registerIpcHandlers, forceSave, addClientManually, getClientByPhone, getOptionsAndActivities } = require('./db')
 const { initTelegram } = require('./telegram')
+const { initWhatsApp, destroyWhatsApp, getStatus: getWhatsAppStatus } = require('./whatsapp')
+const conversationManager = require('./agent/conversation-manager')
+const agentConfig = require('./agent/config')
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -238,7 +241,33 @@ app.whenReady().then(async () => {
   await initDB()
   console.log('DB Initialized!');
   registerIpcHandlers()
+
+  // Initialize the AI conversation manager
+  conversationManager.init({
+    addClientManually,
+    getClientByPhone,
+    getOptionsAndActivities
+  });
+
   initTelegram()
+
+  // Initialize WhatsApp if enabled
+  try { initWhatsApp(); } catch(e) { console.error('WhatsApp init error:', e); }
+
+  // ── Agent config IPC handlers ──
+  ipcMain.handle('get-agent-config', () => agentConfig.loadConfig());
+  ipcMain.handle('save-agent-config', (event, config) => {
+    const updated = agentConfig.updateConfig(config);
+    // Reinit Claude client if API key changed
+    if (config.claudeApiKey) conversationManager.reinit(config.claudeApiKey);
+    return updated;
+  });
+
+  // ── WhatsApp IPC handlers ──
+  ipcMain.handle('whatsapp-status', () => getWhatsAppStatus());
+  ipcMain.handle('whatsapp-connect', () => { initWhatsApp(); return true; });
+  ipcMain.handle('whatsapp-disconnect', () => { destroyWhatsApp(); return true; });
+
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })

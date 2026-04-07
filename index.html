@@ -2397,21 +2397,41 @@
       </div>
 
       <div id="apiSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
-        <h4 style="margin-bottom:15px; font-family:'Syne'; font-size:14px; color:var(--accent)">Configuration API WhatsApp (Automatique)</h4>
+        <h4 style="margin-bottom:15px; font-family:'Syne'; font-size:14px; color:var(--accent)">🤖 Agent IA (Darija) — Claude API</h4>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+          <div class="field"><label>Cle API Claude (Anthropic)</label><input type="password" id="claudeApiKey" placeholder="sk-ant-api03-..."></div>
+          <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end;"><p style="font-size:11px;color:var(--muted)">L'agent IA repond aux clients en Darija sur Telegram et WhatsApp. Obtenez votre cle sur <strong>console.anthropic.com</strong></p></div>
+        </div>
+
+        <h4 style="margin:20px 0 15px; font-family:'Syne'; font-size:14px; color:var(--accent)">💬 WhatsApp Bot</h4>
+        <div style="display:flex; align-items:center; gap:15px;">
+          <div>
+            <span style="font-size:12px; font-weight:600; color:var(--text)">Statut :</span>
+            <span id="waStatusLabel" style="font-size:12px; padding:3px 10px; border-radius:20px; background:rgba(255,99,71,0.15); color:#FF6347;">Deconnecte</span>
+          </div>
+          <button class="btn btn-primary btn-sm" id="waConnectBtn" onclick="connectWhatsApp()">Connecter WhatsApp</button>
+          <button class="btn btn-danger btn-sm" id="waDisconnectBtn" onclick="disconnectWhatsApp()" style="display:none;">Deconnecter</button>
+        </div>
+        <div id="waQrBox" style="display:none; margin-top:15px; padding:15px; background:white; border-radius:12px; text-align:center;">
+          <p style="font-size:11px; color:#333; margin-bottom:10px;">Scannez ce QR code avec WhatsApp :</p>
+          <canvas id="waQrCanvas" style="max-width:250px;"></canvas>
+        </div>
+
+        <h4 style="margin:20px 0 15px; font-family:'Syne'; font-size:14px; color:var(--accent)">Configuration API & Telegram</h4>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
           <div class="field"><label>Endpoint API</label><input type="text" id="apiEndpoint" placeholder="https://api.example.com/send"></div>
-          <div class="field"><label>Clé API / Token</label><input type="password" id="apiKey" placeholder="Votre token secret..."></div>
+          <div class="field"><label>Cle API / Token</label><input type="password" id="apiKey" placeholder="Votre token secret..."></div>
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
           <div class="field"><label>Telegram Bot Token</label><input type="password" id="tgToken" placeholder="ex: 123456:ABC-DEF..."></div>
           <div class="field" style="display:flex; flex-direction:column; justify-content:flex-end;"><p style="font-size:10px; color:var(--muted)">Pour recevoir les nouveaux clients via Telegram.</p></div>
         </div>
         <div class="field" style="margin-top:15px;">
-          <label>Modèle de Message Reminder</label>
-          <textarea id="reminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !</textarea>
+          <label>Modele de Message Reminder</label>
+          <textarea id="reminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name}, petit rappel concernant votre reste a payer de {balance} DA pour LOGICOM. Merci de nous contacter !</textarea>
         </div>
         <div style="margin-top:15px; display:flex; justify-content:flex-end;">
-          <button class="btn btn-primary btn-sm" onclick="saveApiSettings()">💾 Sauvegarder Config</button>
+          <button class="btn btn-primary btn-sm" onclick="saveApiSettings()">💾 Sauvegarder Tout</button>
         </div>
       </div>
 
@@ -4595,26 +4615,103 @@
       box.style.display = box.style.display === 'none' ? 'block' : 'none';
     }
 
-    function saveApiSettings() {
+    async function saveApiSettings() {
       const endpoint = document.getElementById('apiEndpoint').value;
       const key = document.getElementById('apiKey').value;
       const template = document.getElementById('reminderTemplate').value;
       const tgToken = document.getElementById('tgToken').value;
+      const claudeKey = document.getElementById('claudeApiKey').value;
 
       localStorage.setItem('logicom-api-endpoint', endpoint);
       localStorage.setItem('logicom-api-key', key);
       localStorage.setItem('logicom-reminder-template', template);
       localStorage.setItem('logicom-tg-token', tgToken);
-      
+
       ipcRenderer.invoke('update-telegram-config', { token: tgToken });
-      toast('Configuration sauvegardée ✓');
+
+      // Save Claude API key to agent config (secure, not in localStorage)
+      if (claudeKey) {
+        await ipcRenderer.invoke('save-agent-config', { claudeApiKey: claudeKey });
+      }
+
+      toast('Configuration sauvegardee ✓');
     }
 
-    function loadApiSettings() {
+    async function loadApiSettings() {
       document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || '';
       document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
-      document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
+      document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste a payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
       document.getElementById('tgToken').value = localStorage.getItem('logicom-tg-token') || '';
+
+      // Load agent config
+      try {
+        const agentCfg = await ipcRenderer.invoke('get-agent-config');
+        if (agentCfg?.claudeApiKey) {
+          document.getElementById('claudeApiKey').value = agentCfg.claudeApiKey;
+        }
+      } catch(e) {}
+
+      // Load WhatsApp status
+      updateWhatsAppStatus();
+    }
+
+    async function connectWhatsApp() {
+      await ipcRenderer.invoke('save-agent-config', { whatsappEnabled: true });
+      await ipcRenderer.invoke('whatsapp-connect');
+      toast('Connexion WhatsApp en cours... Scannez le QR code.');
+      document.getElementById('waQrBox').style.display = 'block';
+    }
+
+    async function disconnectWhatsApp() {
+      await ipcRenderer.invoke('whatsapp-disconnect');
+      await ipcRenderer.invoke('save-agent-config', { whatsappEnabled: false });
+      updateWhatsAppStatus();
+      toast('WhatsApp deconnecte.');
+    }
+
+    async function updateWhatsAppStatus() {
+      try {
+        const status = await ipcRenderer.invoke('whatsapp-status');
+        const label = document.getElementById('waStatusLabel');
+        const connectBtn = document.getElementById('waConnectBtn');
+        const disconnectBtn = document.getElementById('waDisconnectBtn');
+        if (!label) return;
+        if (status === 'ready') {
+          label.textContent = 'Connecte ✅';
+          label.style.background = 'rgba(50,246,161,0.15)';
+          label.style.color = '#32f6a1';
+          connectBtn.style.display = 'none';
+          disconnectBtn.style.display = '';
+          document.getElementById('waQrBox').style.display = 'none';
+        } else if (status === 'qr') {
+          label.textContent = 'En attente du scan...';
+          label.style.background = 'rgba(232,160,32,0.15)';
+          label.style.color = 'var(--accent)';
+        } else {
+          label.textContent = 'Deconnecte';
+          label.style.background = 'rgba(255,99,71,0.15)';
+          label.style.color = '#FF6347';
+          connectBtn.style.display = '';
+          disconnectBtn.style.display = 'none';
+          document.getElementById('waQrBox').style.display = 'none';
+        }
+      } catch(e) {}
+    }
+
+    // Listen for WhatsApp events from main process
+    if (typeof ipcRenderer !== 'undefined') {
+      ipcRenderer.on('whatsapp-qr', (event, qrData) => {
+        document.getElementById('waQrBox').style.display = 'block';
+        // Render QR as text fallback (qrcode lib renders on canvas in main)
+        const canvas = document.getElementById('waQrCanvas');
+        if (canvas && window.QRCode) {
+          QRCode.toCanvas(canvas, qrData, { width: 250 });
+        } else {
+          canvas.parentElement.innerHTML = '<p style="font-size:10px;color:#333;word-break:break-all;">' + qrData.substring(0, 100) + '...</p><p style="font-size:11px;color:#666;">Installez qrcode pour afficher le QR. Scannez depuis la console.</p>';
+        }
+        updateWhatsAppStatus();
+      });
+      ipcRenderer.on('whatsapp-status', () => updateWhatsAppStatus());
     }
 
     function renderReminders() {

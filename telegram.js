@@ -1,5 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { addClientManually } = require('./db');
+const { processMessage } = require('./agent/conversation-manager');
+const { loadConfig: loadAgentConfig } = require('./agent/config');
 const fs = require('fs');
 const path = require('path');
 const { app, Notification } = require('electron');
@@ -34,7 +36,7 @@ function initTelegram() {
     }
 
     console.log('Initializing Telegram Bot with token:', config.token.substring(0, 5) + '...');
-    
+
     try {
         const bot = new TelegramBot(config.token, { polling: true });
         currentBot = bot;
@@ -43,95 +45,24 @@ function initTelegram() {
             console.error('Telegram Polling Error:', error.code, error.message);
         });
 
-        const userStates = {}; // chatId -> { step: string, data: {} }
-
         bot.on('message', async (msg) => {
             const chatId = msg.chat.id;
             const text = msg.text;
             if (!text) return;
 
-            // --- COMMANDS ---
+            // --- /start or /help ---
             if (text === '/start' || text.toLowerCase().includes('aide') || text === '/help') {
-                bot.sendMessage(chatId, 
-                    `🤖 **BIENVENUE CHEZ LOGICOM** 🤖\n\n` +
-                    `Appuyez sur /nouveau pour ajouter un client étape par étape, ou envoyez directement :\n` +
-                    `\`NOM - TEL - MARQUE - NOTE\``
+                bot.sendMessage(chatId,
+                    `🤖 *MERHBA BIK F LOGICOM!* 🤖\n\n` +
+                    `Ana l'assistant automatique dyal DELFI. Goulili wach t7eb t3ref 3la LOGICOM!\n\n` +
+                    `Tqder aussi t'envoye directement :\n` +
+                    `\`NOM - TEL - MARQUE - NOTE\``,
+                    { parse_mode: 'Markdown' }
                 );
                 return;
             }
 
-            if (text === '/nouveau' || text.toLowerCase() === 'nouveau') {
-                userStates[chatId] = { step: 'WAITING_NAME', data: {} };
-                bot.sendMessage(chatId, "👤 **ÉTAPE 1/4**\nQuel est le **NOM COMPLET** du client ?", {
-                    reply_markup: { force_reply: true }
-                });
-                return;
-            }
-
-            // --- WIZARD STATE MACHINE ---
-            const state = userStates[chatId];
-            if (state && msg.reply_to_message) {
-                if (state.step === 'WAITING_NAME') {
-                    state.data.name = text.trim();
-                    state.step = 'WAITING_PHONE';
-                    bot.sendMessage(chatId, "📞 **ÉTAPE 2/4**\nQuel est son **NUMÉRO DE TÉLÉPHONE** ?", {
-                        reply_markup: { force_reply: true }
-                    });
-                    return;
-                }
-                
-                if (state.step === 'WAITING_PHONE') {
-                    const phone = text.replace(/\s/g, '');
-                    if (!phone.match(/^\d{8,14}$/)) {
-                        bot.sendMessage(chatId, "❌ **Numéro invalide !**\nVeuillez entrer entre 8 et 14 chiffres (ex: 0661223344).", {
-                            reply_markup: { force_reply: true }
-                        });
-                        return;
-                    }
-                    state.data.phone = phone;
-                    state.step = 'WAITING_BRAND';
-                    bot.sendMessage(chatId, "🏢 **ÉTAPE 3/4**\nQuelle est la **MARQUE / DOMAINE** ? (ou tapez 'Non' )", {
-                        reply_markup: { force_reply: true }
-                    });
-                    return;
-                }
-
-                if (state.step === 'WAITING_BRAND') {
-                    state.data.brand = (text.toLowerCase() === 'non') ? '' : text.trim();
-                    state.step = 'WAITING_NOTE';
-                    bot.sendMessage(chatId, "📝 **ÉTAPE 4/4**\nUne **OBSERVATION** ? (ou tapez 'Non')", {
-                        reply_markup: { force_reply: true }
-                    });
-                    return;
-                }
-
-                if (state.step === 'WAITING_NOTE') {
-                    const note = (text.toLowerCase() === 'non') ? '' : text.trim();
-                    const name = state.data.name;
-                    const phone = state.data.phone;
-                    const brand = state.data.brand;
-                    const addedBy = msg.from.username || msg.from.first_name || 'Inconnu';
-
-                    try {
-                        await addClientManually({ phone, name, brand, note, addedBy });
-                        bot.sendMessage(chatId, 
-                            `✅ **CLIENT ENREGISTRÉ AVEC SUCCÈS !**\n\n` +
-                            `👤 **Nom**: ${name}\n` +
-                            `📞 **Tel**: ${phone}\n` +
-                            `🏢 **Marque**: ${brand || '-'}\n` +
-                            `📝 **Note**: ${note || '-'}\n\n` +
-                            `👤 **Ajouté par**: @${addedBy}`,
-                            { parse_mode: 'Markdown' }
-                        );
-                    } catch (e) {
-                        bot.sendMessage(chatId, "❌ Erreur technique lors de l'enregistrement.");
-                    }
-                    delete userStates[chatId];
-                    return;
-                }
-            }
-
-            // --- SINGLE MESSAGE SHORTCUT ---
+            // --- Single-message shortcut (NOM - TEL - MARQUE - NOTE) ---
             if (text.includes('-')) {
                 const parts = text.split('-').map(p => p.trim()).filter(p => p);
                 if (parts.length >= 2) {
@@ -142,25 +73,48 @@ function initTelegram() {
                         const brand = parts[phoneIdx + 1] || '';
                         const note = parts.slice(phoneIdx + 2).join(' - ') || '';
                         const addedBy = msg.from.username || msg.from.first_name || 'Inconnu';
-                        
+
                         try {
-                            await addClientManually({ phone, name, brand, note, addedBy });
-                            bot.sendMessage(chatId, `✅ **Rapide : Client Enregistré !**\n👤 ${name} (${phone})`);
+                            await addClientManually({ phone, name, brand, note, addedBy, source: 'Telegram' });
+                            bot.sendMessage(chatId, `✅ *Tsjelt ya ${name}!*\n👤 ${name} (${phone})\nL'equipe ghadi yt3awdou m3ak!`, { parse_mode: 'Markdown' });
                         } catch (e) {
-                            bot.sendMessage(chatId, "❌ Erreur (Sync Rapide)");
+                            bot.sendMessage(chatId, "❌ Erreur technique. Renvoyez SVP.");
                         }
                         return;
                     }
                 }
             }
 
-            // --- DEFAULT FALLBACK ---
-            if (!state) {
-                bot.sendMessage(chatId, "❓ Je n'ai pas compris.\nTapez /nouveau pour démarrer la saisie guidée.");
+            // --- AI Agent (all other messages) ---
+            const agentConfig = loadAgentConfig();
+            if (agentConfig.claudeApiKey) {
+                try {
+                    bot.sendChatAction(chatId, 'typing');
+                    const userInfo = {
+                        username: msg.from.username || msg.from.first_name || 'Inconnu',
+                        firstName: msg.from.first_name || '',
+                        phone: ''
+                    };
+                    const response = await processMessage('telegram', chatId, text, userInfo);
+                    bot.sendMessage(chatId, response, { parse_mode: 'Markdown' }).catch(() => {
+                        // Retry without markdown if it fails
+                        bot.sendMessage(chatId, response);
+                    });
+                } catch (e) {
+                    console.error('Telegram AI error:', e);
+                    bot.sendMessage(chatId, "❌ Erreur technique. Renvoyez votre message SVP.");
+                }
+            } else {
+                // Fallback when no Claude API key is set
+                bot.sendMessage(chatId,
+                    "Merhba! L'assistant IA mch disponible dork.\n" +
+                    "Envoyez: `NOM - TEL - MARQUE` pour vous inscrire.",
+                    { parse_mode: 'Markdown' }
+                );
             }
         });
 
-        console.log('Telegram Bot is now polling...');
+        console.log('Telegram Bot is now polling (AI-powered)...');
     } catch (err) {
         console.error('Critical Telegram initialization error:', err);
     }
@@ -181,4 +135,3 @@ function updateConfig(newConfig) {
 }
 
 module.exports = { initTelegram, updateConfig };
-

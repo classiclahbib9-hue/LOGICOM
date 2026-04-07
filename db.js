@@ -275,7 +275,7 @@ async function addClientManually(clientData) {
             clientData.brand || '',
             1,
             '',
-            'Telegram',
+            clientData.source || 'Telegram',
             '[]',
             clientData.note || '',
             'Non',
@@ -324,4 +324,59 @@ function forceSave() {
     if (db) saveToFile();
 }
 
-module.exports = { initDB, registerIpcHandlers, addClientManually, forceSave };
+// Check if a client already exists by phone number (duplicate prevention)
+function getClientByPhone(phone) {
+    if (!db || !phone) return null;
+    try {
+        const stmt = db.prepare('SELECT * FROM clients WHERE phone = ? LIMIT 1');
+        stmt.bind([phone.replace(/\s/g, '')]);
+        if (stmt.step()) {
+            const cols = stmt.getColumnNames();
+            const vals = stmt.get();
+            const obj = {};
+            cols.forEach((col, i) => { obj[col] = vals[i]; });
+            stmt.free();
+            return obj;
+        }
+        stmt.free();
+    } catch (e) {
+        console.error('getClientByPhone error:', e);
+    }
+    return null;
+}
+
+// Return current options and activities from DB for the AI knowledge base
+function getOptionsAndActivities() {
+    if (!db) return null;
+    try {
+        const formatResult = (res) => {
+            if (!res || res.length === 0) return [];
+            const columns = res[0].columns;
+            return res[0].values.map(row => {
+                const obj = {};
+                columns.forEach((col, i) => { obj[col] = row[i]; });
+                return obj;
+            });
+        };
+        const opts = formatResult(db.exec('SELECT * FROM options'));
+        const acts = formatResult(db.exec('SELECT * FROM activities'));
+
+        // Convert options array to { id: { name, price } } map
+        const optionsMap = {};
+        for (const o of opts) optionsMap[o.id] = { name: o.name, price: o.price };
+
+        // Parse JSON fields in activities
+        const activitiesList = acts.map(a => ({
+            ...a,
+            mandatory: typeof a.mandatory === 'string' ? JSON.parse(a.mandatory) : (a.mandatory || []),
+            optional: typeof a.optional === 'string' ? JSON.parse(a.optional) : (a.optional || [])
+        }));
+
+        return { options: optionsMap, activities: activitiesList };
+    } catch (e) {
+        console.error('getOptionsAndActivities error:', e);
+        return null;
+    }
+}
+
+module.exports = { initDB, registerIpcHandlers, addClientManually, forceSave, getClientByPhone, getOptionsAndActivities };
