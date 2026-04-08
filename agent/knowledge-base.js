@@ -102,7 +102,15 @@ const COMPANY_INFO = {
   trial: {
     periods: [7, 15, 30],
     description: "Periode d'essai gratuite avant achat"
-  }
+  },
+  contact: {
+    alger: ["+213 (0)23-75-73-57", "+213 (0)23-75-73-60"],
+    ouest: ["+213 (0)41 28 40 57", "0552-29-77-49"],
+    sud: ["+213 (0)29 26 08 80", "0661-58-01-03"],
+    mobile: ["0555-68-79-08"],
+  },
+  youtube: "https://www.youtube.com/@DELFIVDZ",
+  abonnement: "Abonnement annuel pour le support technique et les mises a jour"
 };
 
 /**
@@ -122,7 +130,12 @@ function buildKnowledgeText(liveOptions, liveActivities) {
   text += `Paiement: ${COMPANY_INFO.payment.methods.join(', ')}\n`;
   text += `CCP: ${COMPANY_INFO.payment.ccp} - Nom: ${COMPANY_INFO.payment.ccpName}\n`;
   text += `Baridi Mob: ${COMPANY_INFO.payment.baridiMob}\n`;
-  text += `Essai gratuit: ${COMPANY_INFO.trial.periods.join(', ')} jours\n\n`;
+  text += `Essai gratuit: ${COMPANY_INFO.trial.periods.join(', ')} jours\n`;
+  text += `Chaine YouTube (tutoriels): ${COMPANY_INFO.youtube}\n`;
+  text += `Tel Alger: ${COMPANY_INFO.contact.alger.join(' / ')}\n`;
+  text += `Tel Ouest: ${COMPANY_INFO.contact.ouest.join(' / ')}\n`;
+  text += `Tel Sud: ${COMPANY_INFO.contact.sud.join(' / ')}\n`;
+  text += `Mobile: ${COMPANY_INFO.contact.mobile.join(' / ')}\n\n`;
 
   // Options / catalogue
   text += `== CATALOGUE DES OPTIONS (prix en DA) ==\n`;
@@ -146,18 +159,56 @@ function buildKnowledgeText(liveOptions, liveActivities) {
     text += `  Pack complet (avec recommandees): ${(mandTotal + optTotal).toLocaleString('fr-DZ')} DA\n\n`;
   }
 
+  // Tutorials from DELFI YouTube channel
+  text += `== TUTORIELS VIDEO (Chaine YouTube DELFI VDZ) ==\n`;
+  text += `Lien: https://www.youtube.com/@DELFIVDZ\n`;
+  text += `Tous les tutoriels sont gratuits et disponibles en arabe et francais.\n\n`;
+  text += `FORMATION COMPLETE LOGICOM (cours numerotes):\n`;
+  text += `  1. Introduction Logicom — presentation generale du logiciel\n`;
+  text += `  1.1 Creer un Tiers (client/fournisseur) — comment ajouter des partenaires commerciaux\n`;
+  text += `  1.2 Creer un Article — comment ajouter des produits au catalogue\n`;
+  text += `  1.3 Nouvel Achat — saisir une facture d'achat\n`;
+  text += `  1.4 Nouvelle Vente — creer et enregistrer une vente\n`;
+  text += `  1.5 Reglement — enregistrer un paiement client ou fournisseur\n`;
+  text += `  1.6.1 Recherche Avancee — trouver rapidement des documents et articles\n`;
+  text += `  1.6.2 Raccourcis Clavier (principes de base) — navigation rapide\n`;
+  text += `  1.6.3 Touche Clavier nouvelles fonctions\n`;
+  text += `  1.7.1 Archivage (sauvegarde) — sauvegarder la base de donnees\n`;
+  text += `  1.7.2 Consulter une sauvegarde — lire une archive\n`;
+  text += `  1.7.3 Restaurer une archive — recuperer des donnees\n`;
+  text += `  2.1 Caisse — gestion des operations de caisse\n`;
+  text += `  2.2 Banque — gestion des comptes bancaires\n`;
+  text += `  3. Importation — module d'importation de marchandises\n\n`;
+  text += `VIDEOS SPECIALISEES:\n`;
+  text += `  - Point de Vente (POS) — utilisation de la caisse en superette\n`;
+  text += `  - Raccourcis Clavier de Logicom — liste complete des raccourcis\n`;
+  text += `  - Questions frequemment posees (FAQ video) — reponses aux questions courantes de debut d'annee\n`;
+  text += `  - Procedure d'inventaire — comment faire le jord (inventaire) du stock\n`;
+  text += `  - Ajout de photo a un article — illustrer les produits\n`;
+  text += `  - Application Mobile Inventaire (DELINV) — faire l'inventaire sur telephone\n`;
+  text += `  - Video Archive (avant 5 ans) — consulter les anciennes donnees\n`;
+  text += `  - Abonnement Annuel — comment renouveler son abonnement support\n\n`;
+
   // FAQ
   text += `== FAQ ==\n`;
-  text += `- LOGICOM c'est quoi? Un logiciel de gestion commerciale pour les entreprises algeriennes.\n`;
-  text += `- Il gere quoi? Achats, ventes, stock, caisse, factures, clients, fournisseurs, tableaux de bord.\n`;
-  text += `- C'est pour quel secteur? Importation, production, alimentation, textile, quincaillerie, superette, etc.\n`;
-  text += `- Ya des apps mobile? Oui: DELYV (livraison), DELPOS (vente), DELINV (inventaire), DELACHA (achat).\n`;
+  text += `- LOGICOM c'est quoi? Un logiciel de gestion commerciale pour les entreprises algeriennes, fait par DELFI.\n`;
+  text += `- Il gere quoi? Achats, ventes, stock, caisse, banque, factures, clients, fournisseurs, tableaux de bord, inventaire.\n`;
+  text += `- C'est pour quel secteur? Importation, production, alimentation, textile, quincaillerie, superette, pieces detachees, papeterie.\n`;
+  text += `- Ya des apps mobile? Oui: DELYV (livraison), DELPOS (vente), DELINV (inventaire), DELACHA (achat), DELTRANS (transfert entrepot).\n`;
   text += `- Combien ca coute? Ca depend du secteur. Le pack de base commence a ~64,000 DA.\n`;
   text += `- Ya un essai gratuit? Oui, 7, 15 ou 30 jours.\n`;
-  text += `- Comment payer? Cash, CCP, ou Baridi Mob.\n`;
-  text += `- Support technique? 15,000 DA/an.\n`;
+  text += `- Comment payer? Cash, CCP (7240189 cle 02, Abbas Bahmed), ou Baridi Mob (00799999000724018973).\n`;
+  text += `- Support technique? 15,000 DA/an (abonnement annuel).\n`;
   text += `- Reseau? Oui, poste reseau a 17,000 DA par poste.\n`;
   text += `- Cloud? Oui, synchronisation cloud a 30,000 DA.\n`;
+  text += `- Comment faire une sauvegarde? Voir la video tutorial "Archivage" sur la chaine YouTube DELFI VDZ.\n`;
+  text += `- Comment faire l'inventaire? Voir la video "Procedure d'inventaire" sur YouTube. Y'a aussi l'app mobile DELINV (7,000 DA).\n`;
+  text += `- Comment utiliser le point de vente? Voir la video "Point de Vente" sur YouTube. Option "Ventes comptoir" a 15,000 DA.\n`;
+  text += `- Comment creer un article? Voir la video "Creer Article" sur YouTube (tutorial 1.2).\n`;
+  text += `- Comment faire un reglement? Voir la video "Reglement" sur YouTube (tutorial 1.5).\n`;
+  text += `- Wach kayen raccourcis clavier? Oui! Voir les videos "Raccourcis Clavier" sur YouTube.\n`;
+  text += `- Comment contacter DELFI? Tel Alger: 023-75-73-57, Ouest: 041-28-40-57, Sud: 029-26-08-80, Mobile: 0555-68-79-08.\n`;
+  text += `- Wach kayen formation? Oui, formation complete gratuite sur YouTube (chaine DELFI VDZ) + formation sur site possible.\n`;
 
   return text;
 }
