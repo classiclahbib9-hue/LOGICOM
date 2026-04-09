@@ -80,6 +80,9 @@ async function processMessage(platform, chatId, text, userInfo) {
     return "Merhba! L'assistant automatique mch disponible dork. Envoyez: NOM - TEL - MARQUE pour vous inscrire directement.";
   }
 
+  // Auto-init Claude client if key exists but client not yet initialized
+  try { initClient(config.claudeApiKey); } catch(e) {}
+
   const session = getSession(platform, chatId);
 
   // Add user message to history
@@ -130,13 +133,16 @@ async function processMessage(platform, chatId, text, userInfo) {
     return responseText;
 
   } catch (err) {
-    console.error(`AI Agent error (${platform}:${chatId}):`, err);
+    console.error(`AI Agent error (${platform}:${chatId}):`, err.message || err);
 
     // Remove failed message from history
     session.history.pop();
 
-    if (err.message?.includes('API key')) {
-      return "Erreur de configuration. L'equipe technique va regler ca inchallah.";
+    if (err.message?.includes('API key') || err.message?.includes('not initialized') || err.status === 401) {
+      return "Erreur de configuration API. L'equipe technique va regler ca inchallah. Envoyez: NOM - TEL - MARQUE pour s'inscrire directement.";
+    }
+    if (err.status === 429) {
+      return "Barcha messages dork! Renvoyez dans 1 minute SVP. 🙏";
     }
     return "Desole, y'a eu un probleme technique. Renvoyez votre message SVP, wla envoyez: NOM - TEL - MARQUE.";
   }
