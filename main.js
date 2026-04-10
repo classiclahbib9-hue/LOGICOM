@@ -228,9 +228,53 @@ ipcMain.handle('send-whatsapp-with-file', async (event, { phone, message, filePa
   }
 });
 
+ipcMain.handle('groq-chat', async (event, { apiKey, messages }) => {
+  console.log('[GroqChat] IPC received, key starts:', apiKey && apiKey.substring(0, 8));
+  const https = require('https');
+  const body = JSON.stringify({
+    model: 'llama-3.1-8b-instant',
+    max_tokens: 300,
+    messages
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.groq.com',
+      path: '/openai/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (res.statusCode !== 200) {
+            reject(new Error(json.error?.message || `HTTP ${res.statusCode}: ${data}`));
+          } else {
+            resolve(json.choices?.[0]?.message?.content || '...');
+          }
+        } catch(e) { reject(new Error('Parse error: ' + data)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+});
+
 ipcMain.handle('update-telegram-config', (event, data) => {
   const { updateConfig } = require('./telegram');
   return updateConfig(data);
+});
+
+ipcMain.handle('save-groq-key', (event, groqApiKey) => {
+  const configPath = require('path').join(app.getPath('userData'), 'groq-config.json');
+  fs.writeFileSync(configPath, JSON.stringify({ groqApiKey }));
 });
 
 app.whenReady().then(async () => {

@@ -2,7 +2,102 @@ const TelegramBot = require('node-telegram-bot-api');
 const { addClientManually } = require('./db');
 const fs = require('fs');
 const path = require('path');
+const https = require('https');
 const { app, Notification } = require('electron');
+
+const GROQ_SYSTEM_PROMPT = `أنت مساعد ذكي يفهم ويتكلم الدارجة المغربية والجزائرية والفرنسية.
+تعمل لدى شركة LOGICOM لبيع البرمجيات.
+جاوب دايما بالدارجة حسب لغة المستخدم. إذا كلمك بالفرنسية، جاوبه بالفرنسية.
+كون مختصر ومفيد. لا تكتب إجابات طويلة.
+الأوامر المتاحة في البوت: /nouveau لإضافة عميل.`;
+
+function getGroqKey() {
+    try {
+        const configPath = path.join(app.getPath('userData'), 'telegram-config.json');
+        if (fs.existsSync(configPath)) {
+            return JSON.parse(fs.readFileSync(configPath, 'utf8')).groqApiKey || '';
+        }
+    } catch(e) {}
+    return '';
+}
+
+function downloadBuffer(url) {
+    return new Promise((resolve, reject) => {
+        https.get(url, (res) => {
+            const chunks = [];
+            res.on('data', c => chunks.push(c));
+            res.on('end', () => resolve(Buffer.concat(chunks)));
+        }).on('error', reject);
+    });
+}
+
+function transcribeVoice(audioBuffer) {
+    return new Promise((resolve, reject) => {
+        const boundary = 'Boundary' + Date.now();
+        const header = Buffer.from(
+            `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="voice.ogg"\r\nContent-Type: audio/ogg\r\n\r\n`
+        );
+        const footer = Buffer.from(
+            `\r\n--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-large-v3-turbo` +
+            `\r\n--${boundary}\r\nContent-Disposition: form-data; name="language"\r\n\r\nar` +
+            `\r\n--${boundary}--\r\n`
+        );
+        const body = Buffer.concat([header, audioBuffer, footer]);
+        const req = https.request({
+            hostname: 'api.groq.com',
+            path: '/openai/v1/audio/transcriptions',
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + getGroqKey(),
+                'Content-Type': `multipart/form-data; boundary=${boundary}`,
+                'Content-Length': body.length
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                try { resolve(JSON.parse(data).text || ''); }
+                catch(e) { reject(new Error(data)); }
+            });
+        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
+}
+
+function askGroq(userMessage, history) {
+    return new Promise((resolve, reject) => {
+        const messages = [
+            { role: 'system', content: GROQ_SYSTEM_PROMPT },
+            ...history.slice(-8),
+            { role: 'user', content: userMessage }
+        ];
+        const body = JSON.stringify({ model: 'llama-3.1-8b-instant', max_tokens: 300, messages });
+        const req = https.request({
+            hostname: 'api.groq.com',
+            path: '/openai/v1/chat/completions',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + getGroqKey(),
+                'Content-Length': Buffer.byteLength(body)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    resolve(json.choices?.[0]?.message?.content || '...');
+                } catch(e) { reject(new Error(data)); }
+            });
+        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
+}
 
 function getConfigPath() {
     return path.join(app.getPath('userData'), 'telegram-config.json');
@@ -44,9 +139,33 @@ function initTelegram() {
         });
 
         const userStates = {}; // chatId -> { step: string, data: {} }
+        const chatHistories = {}; // chatId -> [{role, content}]
 
         bot.on('message', async (msg) => {
             const chatId = msg.chat.id;
+
+            // --- VOICE MESSAGE ---
+            if (msg.voice) {
+                const groqKey = getGroqKey();
+                if (!groqKey) { bot.sendMessage(chatId, "⚙️ Groq API Key manquante."); return; }
+                bot.sendChatAction(chatId, 'typing');
+                try {
+                    const fileLink = await bot.getFileLink(msg.voice.file_id);
+                    const audioBuffer = await downloadBuffer(fileLink);
+                    const transcribed = await transcribeVoice(audioBuffer);
+                    if (!transcribed) { bot.sendMessage(chatId, "❌ ما فهمتش الصوت، عاود مرة أخرى."); return; }
+                    const history = chatHistories[chatId] || [];
+                    const reply = await askGroq(transcribed, history);
+                    history.push({ role: 'user', content: transcribed });
+                    history.push({ role: 'assistant', content: reply });
+                    chatHistories[chatId] = history.slice(-16);
+                    bot.sendMessage(chatId, `🎙️ _"${transcribed}"_\n\n${reply}`, { parse_mode: 'Markdown' });
+                } catch(e) {
+                    bot.sendMessage(chatId, "❌ خطأ في الصوت: " + e.message);
+                }
+                return;
+            }
+
             const text = msg.text;
             if (!text) return;
 
@@ -154,9 +273,24 @@ function initTelegram() {
                 }
             }
 
-            // --- DEFAULT FALLBACK ---
+            // --- DEFAULT FALLBACK: ask Groq ---
             if (!state) {
-                bot.sendMessage(chatId, "❓ Je n'ai pas compris.\nTapez /nouveau pour démarrer la saisie guidée.");
+                const groqKey = getGroqKey();
+                if (!groqKey) {
+                    bot.sendMessage(chatId, "❓ Je n'ai pas compris.\nTapez /nouveau pour démarrer la saisie guidée.");
+                    return;
+                }
+                const history = chatHistories[chatId] || [];
+                bot.sendChatAction(chatId, 'typing');
+                try {
+                    const reply = await askGroq(text, history);
+                    history.push({ role: 'user', content: text });
+                    history.push({ role: 'assistant', content: reply });
+                    chatHistories[chatId] = history.slice(-16);
+                    bot.sendMessage(chatId, reply);
+                } catch(e) {
+                    bot.sendMessage(chatId, "❌ خطأ تقني: " + e.message);
+                }
             }
         });
 

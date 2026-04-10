@@ -1475,6 +1475,14 @@
 
     /* Animation Classes for Recap Tab */
     .animate-fade-in { animation: slideUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+    /* ═══ VOICE CHAT ═══ */
+    #voiceChatMessages::-webkit-scrollbar { width: 4px; }
+    #voiceChatMessages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .vc-msg { animation: slideUp 0.3s ease both; }
+    .vc-user { align-self: flex-end !important; background: var(--blue) !important; color: white !important; border-radius: 12px 12px 4px 12px !important; }
+    #voiceMicBtn.recording { background: var(--red) !important; animation: pulse-mic 1s infinite; }
+    @keyframes pulse-mic { 0%,100%{box-shadow:0 0 0 0 rgba(255,99,71,0.5)} 50%{box-shadow:0 0 0 12px rgba(255,99,71,0)} }
     .animate-scale-in { animation: fadeInScale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
     .animate-slide-right { animation: slideInRight 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
     
@@ -2012,6 +2020,7 @@
     <div class="tab" onclick="switchTab(4)">📊 Devis & Récap</div>
     <div class="tab" onclick="switchTab(5)">💻 Matériel</div>
     <div class="tab" onclick="switchTab(6)"><span class="ring-bell">🔔</span> Rappels <span id="alertBadge" style="display:none; background:#ff4444; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; font-weight:bold; box-shadow:0 0 10px rgba(255,0,0,0.5)">!</span></div>
+    <div class="tab" onclick="switchTab(7)">🎙️ Assistant IA</div>
   </div>
 
   <div class="container">
@@ -2297,7 +2306,7 @@
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
           <div class="field"><label>Telegram Bot Token</label><input type="password" id="tgToken" placeholder="ex: 123456:ABC-DEF..."></div>
-          <div class="field" style="display:flex; flex-direction:column; justify-content:flex-end;"><p style="font-size:10px; color:var(--muted)">Pour recevoir les nouveaux clients via Telegram.</p></div>
+          <div class="field"><label>🦙 Groq API Key <span style="color:var(--green);font-size:10px;">(Gratuit – console.groq.com)</span></label><input type="password" id="groqApiKey" placeholder="gsk_..."></div>
         </div>
         <div class="field" style="margin-top:15px;">
           <label>Modèle de Message Reminder</label>
@@ -2344,6 +2353,56 @@
           <tbody id="reminderBody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- ══ PANEL 8 : ASSISTANT IA (VOICE CHAT) ══ -->
+    <div class="panel" id="p7">
+      <div class="toolbar">
+        <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🎙️ Assistant IA – يتحدث الدارجة</h2>
+        <div style="flex:1"></div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleVoiceSettings()" title="Configuration">⚙️ Config</button>
+      </div>
+
+      <!-- API Key Config -->
+      <div id="voiceSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:16px; border-radius:12px; margin-bottom:16px;">
+        <h4 style="margin-bottom:12px; font-family:'Syne'; font-size:13px; color:var(--accent)">🔑 Configuration Groq API (Gratuit)</h4>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Créez un compte gratuit sur <b>console.groq.com</b> → API Keys → Create API Key</p>
+        <div class="field">
+          <label>Groq API Key (gratuit)</label>
+          <input type="password" id="claudeApiKey" placeholder="gsk_..." style="font-family:monospace;">
+        </div>
+        <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
+          <button class="btn btn-primary btn-sm" onclick="saveVoiceSettings()">💾 Sauvegarder</button>
+        </div>
+      </div>
+
+      <!-- Chat Messages -->
+      <div id="voiceChatMessages" style="
+        flex:1; min-height:420px; max-height:420px; overflow-y:auto;
+        background:var(--card); border:1px solid var(--border);
+        border-radius:12px; padding:16px; margin-bottom:16px;
+        display:flex; flex-direction:column; gap:10px;
+      ">
+        <div class="vc-msg vc-bot" style="align-self:flex-start; max-width:75%; background:var(--tag-bg); padding:12px 16px; border-radius:12px 12px 12px 4px; font-size:14px; line-height:1.6;">
+          مرحبا! أنا المساعد ديالك. كلّمني بالدارجة أو بالفرنسية وأنا نجاوبك 😊<br>
+          <small style="color:var(--muted); font-size:11px;">اضغط على الميكروفون باش تبدأ تتكلم، ولا كتب مباشرة</small>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="voiceMicBtn" onclick="toggleVoiceRecording()" style="
+          width:52px; height:52px; border-radius:50%; border:none; cursor:pointer;
+          background:var(--blue); color:white; font-size:22px;
+          display:flex; align-items:center; justify-content:center;
+          transition:all 0.2s; flex-shrink:0; box-shadow:0 2px 8px var(--shadow);
+        " title="تكلم (Parler)">🎙️</button>
+        <input type="text" id="voiceTextInput" placeholder="اكتب بالدارجة أو الفرنسية... / Tapez en darija ou français..."
+          style="flex:1; padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px; font-family:'DM Sans';"
+          onkeydown="if(event.key==='Enter') sendVoiceText()">
+        <button class="btn btn-primary" onclick="sendVoiceText()" style="height:52px; padding:0 20px;">Envoyer ➤</button>
+      </div>
+      <div id="voiceStatus" style="margin-top:8px; font-size:12px; color:var(--muted); text-align:center; min-height:18px;"></div>
     </div>
 
   </div>
@@ -2802,6 +2861,7 @@
       }
       if (i === 5) renderMaterials();
       if (i === 6) renderReminders();
+      if (i === 7) initVoiceChat();
     }
 
     // ═══════════════════════════ OPTIONS TABLE ═══════════════════════════
@@ -4509,8 +4569,10 @@
       localStorage.setItem('logicom-api-key', key);
       localStorage.setItem('logicom-reminder-template', template);
       localStorage.setItem('logicom-tg-token', tgToken);
-      
-      ipcRenderer.invoke('update-telegram-config', { token: tgToken });
+      const groqKey = document.getElementById('groqApiKey').value;
+      localStorage.setItem('claude_api_key', groqKey);
+
+      ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey });
       toast('Configuration sauvegardée ✓');
     }
 
@@ -4518,7 +4580,14 @@
       document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || '';
       document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
       document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
-      document.getElementById('tgToken').value = localStorage.getItem('logicom-tg-token') || '';
+      const tgToken = localStorage.getItem('logicom-tg-token') || '';
+      document.getElementById('tgToken').value = tgToken;
+      const groqKey = localStorage.getItem('claude_api_key') || '';
+      document.getElementById('groqApiKey').value = groqKey;
+      // Auto-persist groq key to disk so telegram.js can read it
+      if (groqKey && tgToken) {
+        ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey });
+      }
     }
 
     async function checkPaymentReminders() {
@@ -4801,6 +4870,177 @@
       setInterval(checkExpiredTrials, 60000); // Check trials every minute
       setInterval(checkPaymentReminders, 3600000); // Check payments every hour
     });
+
+    // ═══════════════════════════ ASSISTANT IA (VOICE CHAT) ═══════════════════════════
+
+    let voiceChatHistory = [];
+    let voiceRecognition = null;
+    let voiceIsRecording = false;
+    let voiceChatInitialized = false;
+
+    const VOICE_SYSTEM_PROMPT = `أنت مساعد ذكي يفهم ويتكلم الدارجة المغربية والفرنسية والعربية الفصحى.
+تعمل لدى شركة LOGICOM لبيع البرمجيات في الجزائر.
+جاوب دايما بالدارجة المغربية أو الجزائرية حسب لغة المستخدم.
+إذا سألك المستخدم بالفرنسية، جاوبه بالفرنسية.
+كون مختصر، واضح، ومفيد. لا تكتب إجابات طويلة بلا داعي.
+يمكنك مساعدة في: أسعار البرامج، معلومات العملاء، الفواتير، والاستفسارات العامة.`;
+
+    function initVoiceChat() {
+      if (voiceChatInitialized) return;
+      voiceChatInitialized = true;
+
+      // Load saved API key
+      const savedKey = localStorage.getItem('claude_api_key') || '';
+      if (savedKey) document.getElementById('claudeApiKey').value = savedKey;
+
+      // Setup Web Speech API recognition
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setVoiceStatus('⚠️ تعرف الصوت مش متاح في هذا المتصفح / Reconnaissance vocale non disponible');
+        document.getElementById('voiceMicBtn').disabled = true;
+        return;
+      }
+
+      voiceRecognition = new SpeechRecognition();
+      voiceRecognition.continuous = false;
+      voiceRecognition.interimResults = true;
+      voiceRecognition.lang = 'ar-MA'; // Moroccan Arabic / Darija
+
+      voiceRecognition.onstart = () => {
+        setVoiceStatus('🔴 كنسمع... / Écoute en cours...');
+        document.getElementById('voiceMicBtn').classList.add('recording');
+      };
+
+      voiceRecognition.onresult = (e) => {
+        let transcript = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          transcript += e.results[i][0].transcript;
+        }
+        document.getElementById('voiceTextInput').value = transcript;
+        if (e.results[e.results.length - 1].isFinal) {
+          sendVoiceText();
+        }
+      };
+
+      voiceRecognition.onerror = (e) => {
+        setVoiceStatus('❌ خطأ في التعرف على الصوت: ' + e.error);
+        stopVoiceRecording();
+      };
+
+      voiceRecognition.onend = () => {
+        stopVoiceRecording();
+      };
+    }
+
+    function toggleVoiceSettings() {
+      const box = document.getElementById('voiceSettingsBox');
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveVoiceSettings() {
+      const key = document.getElementById('claudeApiKey').value.trim();
+      if (key) localStorage.setItem('claude_api_key', key);
+      document.getElementById('voiceSettingsBox').style.display = 'none';
+      toast('✅ Configuration sauvegardée !');
+    }
+
+    function toggleVoiceRecording() {
+      if (voiceIsRecording) {
+        voiceRecognition && voiceRecognition.stop();
+        stopVoiceRecording();
+      } else {
+        if (!voiceRecognition) { initVoiceChat(); }
+        try {
+          voiceRecognition.lang = 'ar-MA';
+          voiceRecognition.start();
+          voiceIsRecording = true;
+        } catch(e) {
+          setVoiceStatus('❌ ' + e.message);
+        }
+      }
+    }
+
+    function stopVoiceRecording() {
+      voiceIsRecording = false;
+      const btn = document.getElementById('voiceMicBtn');
+      btn.classList.remove('recording');
+      setVoiceStatus('');
+    }
+
+    function setVoiceStatus(msg) {
+      document.getElementById('voiceStatus').textContent = msg;
+    }
+
+    function appendVoiceMessage(text, role) {
+      const container = document.getElementById('voiceChatMessages');
+      const div = document.createElement('div');
+      div.className = 'vc-msg ' + (role === 'user' ? 'vc-user' : 'vc-bot');
+      div.style.cssText = role === 'user'
+        ? 'align-self:flex-end; max-width:75%; background:var(--blue); color:white; padding:12px 16px; border-radius:12px 12px 4px 12px; font-size:14px; line-height:1.6;'
+        : 'align-self:flex-start; max-width:75%; background:var(--tag-bg); padding:12px 16px; border-radius:12px 12px 12px 4px; font-size:14px; line-height:1.6;';
+      div.textContent = text;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+      return div;
+    }
+
+    function speakText(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(text);
+      // Try Arabic voice, fallback to any available
+      const voices = window.speechSynthesis.getVoices();
+      const arVoice = voices.find(v => v.lang.startsWith('ar')) || null;
+      if (arVoice) utt.voice = arVoice;
+      utt.lang = 'ar-MA';
+      utt.rate = 0.9;
+      window.speechSynthesis.speak(utt);
+    }
+
+    async function sendVoiceText() {
+      const input = document.getElementById('voiceTextInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      appendVoiceMessage(text, 'user');
+      voiceChatHistory.push({ role: 'user', content: text });
+
+      const apiKey = localStorage.getItem('claude_api_key') || document.getElementById('claudeApiKey').value.trim();
+      if (!apiKey) {
+        const errMsg = '⚙️ المرجو إضافة Groq API Key في الإعدادات (مجاني) / Veuillez configurer votre Groq API Key (gratuit sur console.groq.com)';
+        appendVoiceMessage(errMsg, 'assistant');
+        document.getElementById('voiceSettingsBox').style.display = 'block';
+        return;
+      }
+
+      // Typing indicator
+      const typingDiv = appendVoiceMessage('...', 'assistant');
+      setVoiceStatus('🤔 كيفكّر... / Réflexion...');
+
+      try {
+        console.log('[GroqChat] Sending, apiKey starts with:', apiKey.substring(0, 8));
+        const messages = [
+          { role: 'system', content: VOICE_SYSTEM_PROMPT },
+          ...voiceChatHistory.slice(-10)
+        ];
+        const reply = await ipcRenderer.invoke('groq-chat', { apiKey, messages });
+        console.log('[GroqChat] Reply:', reply);
+
+        typingDiv.textContent = reply;
+        voiceChatHistory.push({ role: 'assistant', content: reply });
+        setVoiceStatus('');
+        speakText(reply);
+
+      } catch (e) {
+        console.error('[GroqChat] Error:', e);
+        const errText = '❌ Erreur: ' + (e.message || String(e));
+        typingDiv.textContent = errText;
+        typingDiv.style.color = 'var(--red)';
+        setVoiceStatus('');
+        toast(errText);
+      }
+    }
   </script>
 </body>
 </html>
