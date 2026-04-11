@@ -246,4 +246,6 @@ async function addClientManually(clientData) {
     }
 }
 
-module.exports = { initDB, registerIpcHandlers, addClientManually };
+function getDB() { return db; }
+
+module.exports = { initDB, registerIpcHandlers, addClientManually, getDB };

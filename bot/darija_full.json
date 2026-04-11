@@ -1,0 +1,4217 @@
+{
+ "👋 Greetings": [
+  {
+   "en": "Hello",
+   "dz": "sa7a / salam",
+   "note": "Informal / Islamic greeting"
+  },
+  {
+   "en": "Peace be upon you",
+   "dz": "salam 3likoum",
+   "note": "Universal greeting"
+  },
+  {
+   "en": "And upon you peace",
+   "dz": "w 3likoum salam",
+   "note": "Response to greeting"
+  },
+  {
+   "en": "Good morning",
+   "dz": "sba7 el khir",
+   "note": "Morning greeting"
+  },
+  {
+   "en": "Good morning (response)",
+   "dz": "sba7 ennour",
+   "note": "Response to good morning"
+  },
+  {
+   "en": "Good evening",
+   "dz": "mess el khir",
+   "note": "Evening greeting"
+  },
+  {
+   "en": "Good night",
+   "dz": "tasba7 bkhir",
+   "note": "Night greeting"
+  },
+  {
+   "en": "Goodbye",
+   "dz": "b9a 3la khir",
+   "note": "Farewell"
+  },
+  {
+   "en": "See you later",
+   "dz": "netla9aw omba3d",
+   "note": "See you again"
+  },
+  {
+   "en": "See you (casual, Algiers)",
+   "dz": "hia",
+   "note": "Very casual farewell"
+  },
+  {
+   "en": "How are you? (M)",
+   "dz": "wesh rak?",
+   "note": "Common greeting"
+  },
+  {
+   "en": "How are you? (F)",
+   "dz": "wesh raki?",
+   "note": "Female form"
+  },
+  {
+   "en": "How are you? (Oran)",
+   "dz": "ki dayer / ki dayra",
+   "note": "Western Algeria"
+  },
+  {
+   "en": "How are you? (Constantine)",
+   "dz": "ma3liksh?",
+   "note": "Eastern Algeria"
+  },
+  {
+   "en": "How are you? (everywhere)",
+   "dz": "ça va?",
+   "note": "French loanword, universal"
+  },
+  {
+   "en": "I'm fine (M)",
+   "dz": "rani mli7",
+   "note": "Common response"
+  },
+  {
+   "en": "I'm fine (F)",
+   "dz": "rani mli7a",
+   "note": "Female form"
+  },
+  {
+   "en": "Fine / OK",
+   "dz": "labess",
+   "note": "Universal response"
+  },
+  {
+   "en": "Fine (Oran)",
+   "dz": "ghaya",
+   "note": "Western Algeria"
+  },
+  {
+   "en": "I'm not well (M)",
+   "dz": "ma ranish mli7",
+   "note": "Not feeling well"
+  },
+  {
+   "en": "God be praised",
+   "dz": "7amdoullah",
+   "note": "Expressing gratitude to God"
+  },
+  {
+   "en": "Anything new?",
+   "dz": "kesh jdid?",
+   "note": "What's new?"
+  },
+  {
+   "en": "What have you been doing?",
+   "dz": "wesh dert fiha?",
+   "note": "Catching up"
+  },
+  {
+   "en": "How is your health?",
+   "dz": "kifesh rahi ssa7a?",
+   "note": "Asking about health"
+  },
+  {
+   "en": "How is the family?",
+   "dz": "kifesh rahi la famille?",
+   "note": "Asking about family"
+  },
+  {
+   "en": "What's your name?",
+   "dz": "wassmek?",
+   "note": "Asking name"
+  },
+  {
+   "en": "My name is...",
+   "dz": "wassemni...",
+   "note": "Giving name"
+  },
+  {
+   "en": "Nice to meet you",
+   "dz": "matcharfin",
+   "note": "Meeting someone"
+  },
+  {
+   "en": "Please",
+   "dz": "3afak / men fadlek",
+   "note": "Request"
+  },
+  {
+   "en": "Thank you",
+   "dz": "sa7a / chokran",
+   "note": "Gratitude"
+  },
+  {
+   "en": "You're welcome",
+   "dz": "merhba / bienvenue",
+   "note": "Response to thanks"
+  },
+  {
+   "en": "Yes",
+   "dz": "ih / wah",
+   "note": "Affirmative"
+  },
+  {
+   "en": "No",
+   "dz": "lala",
+   "note": "Negative"
+  },
+  {
+   "en": "OK / alright",
+   "dz": "wakhha / d'accord",
+   "note": "Agreement"
+  },
+  {
+   "en": "Sorry / Excuse me",
+   "dz": "sme7li / pardon",
+   "note": "Apology"
+  },
+  {
+   "en": "It doesn't matter",
+   "dz": "ma3liche / ma fiha walou",
+   "note": "Never mind"
+  },
+  {
+   "en": "That's great!",
+   "dz": "7ala! / bien! / fort!",
+   "note": "Expression of approval"
+  },
+  {
+   "en": "Don't stress",
+   "dz": "matet9alle9sh",
+   "note": "Reassurance"
+  },
+  {
+   "en": "Don't overthink it",
+   "dz": "matkhemmemsh",
+   "note": "Reassurance"
+  },
+  {
+   "en": "If God wills",
+   "dz": "nchallah",
+   "note": "Future plans"
+  },
+  {
+   "en": "In God's name",
+   "dz": "besmellah",
+   "note": "Before starting something"
+  },
+  {
+   "en": "May God help you",
+   "dz": "llah y3awnek",
+   "note": "Wishing success"
+  },
+  {
+   "en": "God bless you",
+   "dz": "barakallahoufik",
+   "note": "Blessing"
+  },
+  {
+   "en": "God rest his soul",
+   "dz": "rabbi yarra7mou",
+   "note": "Death condolences (M)"
+  },
+  {
+   "en": "God rest her soul",
+   "dz": "rabbi yar7amha",
+   "note": "Death condolences (F)"
+  },
+  {
+   "en": "May God accept it",
+   "dz": "rabbi ya9bel",
+   "note": "After prayer"
+  },
+  {
+   "en": "I'm happy for you",
+   "dz": "fra7tlek",
+   "note": "Sharing joy"
+  },
+  {
+   "en": "Congratulations",
+   "dz": "mabrouk 3lik",
+   "note": "Congratulations"
+  },
+  {
+   "en": "Happy birthday",
+   "dz": "3id milad sa3id",
+   "note": "Birthday"
+  },
+  {
+   "en": "Happy new year",
+   "dz": "3am sa3id / bonne année",
+   "note": "New year"
+  },
+  {
+   "en": "Well done / Bravo",
+   "dz": "bravo / allah ybarek",
+   "note": "Praise"
+  },
+  {
+   "en": "Bro / mate",
+   "dz": "yakho / khouya / sahbi",
+   "note": "Male friend"
+  },
+  {
+   "en": "Sis / girl friend",
+   "dz": "khti",
+   "note": "Female friend"
+  },
+  {
+   "en": "My dear",
+   "dz": "ya habibi / ya 3zizi",
+   "note": "Term of endearment"
+  },
+  {
+   "en": "Long time no see!",
+   "dz": "wella rak! / twa7achtek!",
+   "note": "Reuniting"
+  },
+  {
+   "en": "Come in!",
+   "dz": "dakhal / tfaddal",
+   "note": "Welcoming someone"
+  }
+ ],
+ "⏰ Time & Calendar": [
+  {
+   "en": "Time",
+   "dz": "ssa3a / lwa9t",
+   "note": "General time"
+  },
+  {
+   "en": "What time is it?",
+   "dz": "sh7al rahi ssa3a?",
+   "note": "Asking time"
+  },
+  {
+   "en": "Now",
+   "dz": "druk / duk",
+   "note": "At this moment"
+  },
+  {
+   "en": "Soon",
+   "dz": "omba3d shwiya",
+   "note": "Shortly"
+  },
+  {
+   "en": "Later",
+   "dz": "omba3d",
+   "note": "After"
+  },
+  {
+   "en": "Yesterday",
+   "dz": "el bare7",
+   "note": "Previous day"
+  },
+  {
+   "en": "Today",
+   "dz": "lyoum",
+   "note": "Current day"
+  },
+  {
+   "en": "Tomorrow",
+   "dz": "ghadwa",
+   "note": "Next day"
+  },
+  {
+   "en": "The day after tomorrow",
+   "dz": "ba3d ghadwa",
+   "note": "Two days ahead"
+  },
+  {
+   "en": "Morning",
+   "dz": "ssba7",
+   "note": "Morning time"
+  },
+  {
+   "en": "Afternoon",
+   "dz": "le3shiya",
+   "note": "Afternoon"
+  },
+  {
+   "en": "Evening",
+   "dz": "lmessa",
+   "note": "Evening"
+  },
+  {
+   "en": "Night",
+   "dz": "lil",
+   "note": "Night"
+  },
+  {
+   "en": "Hour",
+   "dz": "sa3a",
+   "note": "One hour"
+  },
+  {
+   "en": "Minute",
+   "dz": "d9i9a",
+   "note": "One minute"
+  },
+  {
+   "en": "Second",
+   "dz": "tanya",
+   "note": "One second"
+  },
+  {
+   "en": "Week",
+   "dz": "smana",
+   "note": "One week"
+  },
+  {
+   "en": "Month",
+   "dz": "shhar",
+   "note": "One month"
+  },
+  {
+   "en": "Year",
+   "dz": "3am / sna",
+   "note": "One year"
+  },
+  {
+   "en": "Monday",
+   "dz": "nhar el tnen",
+   "note": "Day of week"
+  },
+  {
+   "en": "Tuesday",
+   "dz": "nhar et tlata",
+   "note": "Day of week"
+  },
+  {
+   "en": "Wednesday",
+   "dz": "nhar l'arb3a",
+   "note": "Day of week"
+  },
+  {
+   "en": "Thursday",
+   "dz": "nhar el khamis",
+   "note": "Day of week"
+  },
+  {
+   "en": "Friday",
+   "dz": "nhar el djem3a",
+   "note": "Holy day / weekend"
+  },
+  {
+   "en": "Saturday",
+   "dz": "nhar essbt",
+   "note": "Day of week"
+  },
+  {
+   "en": "Sunday",
+   "dz": "nhar lhad",
+   "note": "Day of week"
+  },
+  {
+   "en": "January",
+   "dz": "janvier / yanayer",
+   "note": "Winter month"
+  },
+  {
+   "en": "February",
+   "dz": "fivri / febrayer",
+   "note": "Winter month"
+  },
+  {
+   "en": "March",
+   "dz": "mares",
+   "note": "Spring month"
+  },
+  {
+   "en": "April",
+   "dz": "avril",
+   "note": "Spring month"
+  },
+  {
+   "en": "May",
+   "dz": "may",
+   "note": "Spring month"
+  },
+  {
+   "en": "June",
+   "dz": "jwan",
+   "note": "Summer month"
+  },
+  {
+   "en": "July",
+   "dz": "jwiyi / jwiyet",
+   "note": "Summer month"
+  },
+  {
+   "en": "August",
+   "dz": "oot / awt",
+   "note": "Summer month"
+  },
+  {
+   "en": "September",
+   "dz": "setambar",
+   "note": "Autumn month"
+  },
+  {
+   "en": "October",
+   "dz": "uktober",
+   "note": "Autumn month"
+  },
+  {
+   "en": "November",
+   "dz": "nufambar",
+   "note": "Autumn month"
+  },
+  {
+   "en": "December",
+   "dz": "disember",
+   "note": "Winter month"
+  },
+  {
+   "en": "Spring",
+   "dz": "rbi3",
+   "note": "Season"
+  },
+  {
+   "en": "Summer",
+   "dz": "ssiff",
+   "note": "Season"
+  },
+  {
+   "en": "Autumn / Fall",
+   "dz": "lekhrif",
+   "note": "Season"
+  },
+  {
+   "en": "Winter",
+   "dz": "shta",
+   "note": "Season"
+  },
+  {
+   "en": "Always",
+   "dz": "dima",
+   "note": "Frequency"
+  },
+  {
+   "en": "Never",
+   "dz": "3ommrou ma / 3omerni ma",
+   "note": "Frequency"
+  },
+  {
+   "en": "Sometimes",
+   "dz": "wa9telli / des fois",
+   "note": "Frequency"
+  },
+  {
+   "en": "Often",
+   "dz": "bezzaf",
+   "note": "Frequency"
+  },
+  {
+   "en": "Early",
+   "dz": "bekri",
+   "note": "Timing"
+  },
+  {
+   "en": "Late",
+   "dz": "metakh",
+   "note": "Timing"
+  },
+  {
+   "en": "Last year",
+   "dz": "3am el faret",
+   "note": "Past"
+  },
+  {
+   "en": "Next year",
+   "dz": "3am el jey",
+   "note": "Future"
+  },
+  {
+   "en": "Last month",
+   "dz": "shhar el faret",
+   "note": "Past"
+  },
+  {
+   "en": "Next month",
+   "dz": "shhar el jey",
+   "note": "Future"
+  },
+  {
+   "en": "Long ago",
+   "dz": "men zmana",
+   "note": "Distant past"
+  },
+  {
+   "en": "How long?",
+   "dz": "9addesh lwa9t?",
+   "note": "Duration question"
+  },
+  {
+   "en": "How old are you?",
+   "dz": "sh7al fi 3omrek?",
+   "note": "Age question"
+  },
+  {
+   "en": "I'm ... years old",
+   "dz": "fi 3omri ... sna",
+   "note": "Age answer"
+  },
+  {
+   "en": "In the morning",
+   "dz": "fel sba7",
+   "note": "Time of day"
+  },
+  {
+   "en": "At night",
+   "dz": "fell",
+   "note": "Time of day"
+  },
+  {
+   "en": "At noon",
+   "dz": "fel9ila / a midi",
+   "note": "Midday"
+  },
+  {
+   "en": "Half past...",
+   "dz": "ssa3a ... ou nos",
+   "note": "Half hour"
+  },
+  {
+   "en": "Quarter past...",
+   "dz": "ssa3a ... ou rob3",
+   "note": "Quarter hour"
+  }
+ ],
+ "🍞 Food & Groceries": [
+  {
+   "en": "Bread",
+   "dz": "khobz",
+   "note": "Staple food"
+  },
+  {
+   "en": "Milk",
+   "dz": "la7lib",
+   "note": "Dairy"
+  },
+  {
+   "en": "Eggs",
+   "dz": "lbidh / wled el djedj",
+   "note": "Eggs — also called 'chicken's children'"
+  },
+  {
+   "en": "Flour",
+   "dz": "farina",
+   "note": "From Italian farina"
+  },
+  {
+   "en": "Sugar",
+   "dz": "sokker",
+   "note": "Sweetener"
+  },
+  {
+   "en": "Salt",
+   "dz": "lmel7",
+   "note": "Condiment"
+  },
+  {
+   "en": "Honey",
+   "dz": "3ssel",
+   "note": "Sweetener"
+  },
+  {
+   "en": "Oil",
+   "dz": "zzit",
+   "note": "Cooking oil"
+  },
+  {
+   "en": "Butter",
+   "dz": "zebda",
+   "note": "Dairy"
+  },
+  {
+   "en": "Cheese",
+   "dz": "fromage / jben",
+   "note": "Dairy"
+  },
+  {
+   "en": "Yogurt",
+   "dz": "yaourt / rayeb",
+   "note": "Dairy"
+  },
+  {
+   "en": "Water",
+   "dz": "lma",
+   "note": "Drink"
+  },
+  {
+   "en": "Coffee",
+   "dz": "9ahwa",
+   "note": "Popular drink"
+  },
+  {
+   "en": "Tea",
+   "dz": "atay / shay",
+   "note": "Popular drink"
+  },
+  {
+   "en": "Mint tea",
+   "dz": "atay benna3na3",
+   "note": "Traditional"
+  },
+  {
+   "en": "Juice",
+   "dz": "jus",
+   "note": "Drink"
+  },
+  {
+   "en": "Lemonade",
+   "dz": "limonade",
+   "note": "Drink"
+  },
+  {
+   "en": "Chickpeas",
+   "dz": "7missa",
+   "note": "Legume"
+  },
+  {
+   "en": "Lentils",
+   "dz": "3adas",
+   "note": "Legume"
+  },
+  {
+   "en": "Tomatoes",
+   "dz": "tmatich",
+   "note": "Vegetable"
+  },
+  {
+   "en": "Onions",
+   "dz": "basla",
+   "note": "Vegetable"
+  },
+  {
+   "en": "Garlic",
+   "dz": "thoum",
+   "note": "Spice / vegetable"
+  },
+  {
+   "en": "Potatoes",
+   "dz": "batata",
+   "note": "Vegetable"
+  },
+  {
+   "en": "Carrots",
+   "dz": "karotto / jazar",
+   "note": "Vegetable"
+  },
+  {
+   "en": "Pepper (green)",
+   "dz": "felfel khedra",
+   "note": "Vegetable"
+  },
+  {
+   "en": "Couscous",
+   "dz": "t3am / seksou / na3ma",
+   "note": "National dish — varies by region"
+  },
+  {
+   "en": "Soup",
+   "dz": "chorba",
+   "note": "Traditional soup"
+  },
+  {
+   "en": "Stew",
+   "dz": "djwaz",
+   "note": "Meat stew"
+  },
+  {
+   "en": "Grilled meat",
+   "dz": "mechway",
+   "note": "BBQ"
+  },
+  {
+   "en": "Fried fish",
+   "dz": "7out ma9li",
+   "note": "Fried fish"
+  },
+  {
+   "en": "Bread with filling",
+   "dz": "kaskrout",
+   "note": "Sandwich"
+  },
+  {
+   "en": "Merguez sausage",
+   "dz": "marga / merguez",
+   "note": "Spiced sausage"
+  },
+  {
+   "en": "Semolina",
+   "dz": "smida / smid",
+   "note": "Grain"
+  },
+  {
+   "en": "Harissa",
+   "dz": "harissa",
+   "note": "Spicy paste"
+  },
+  {
+   "en": "Spices (general)",
+   "dz": "39a9er / twabel",
+   "note": "Spice blend"
+  },
+  {
+   "en": "Black pepper",
+   "dz": "felfel k7el",
+   "note": "Spice"
+  },
+  {
+   "en": "Cinnamon",
+   "dz": "9arfa",
+   "note": "Spice"
+  },
+  {
+   "en": "Cumin",
+   "dz": "kemmoun",
+   "note": "Spice"
+  },
+  {
+   "en": "Chili pepper",
+   "dz": "felfel 7arr",
+   "note": "Hot spice"
+  },
+  {
+   "en": "Paprika",
+   "dz": "felfel 7mer / 3akri",
+   "note": "Spice"
+  },
+  {
+   "en": "Meat (general)",
+   "dz": "l7am",
+   "note": "Protein"
+  },
+  {
+   "en": "Beef",
+   "dz": "bagri",
+   "note": "Cow meat"
+  },
+  {
+   "en": "Lamb",
+   "dz": "ghanmi",
+   "note": "Sheep meat"
+  },
+  {
+   "en": "Chicken",
+   "dz": "djedj",
+   "note": "Poultry"
+  },
+  {
+   "en": "Fish",
+   "dz": "7out",
+   "note": "Seafood"
+  },
+  {
+   "en": "Sweets / pastries",
+   "dz": "7alwa / lgâtto",
+   "note": "Dessert"
+  },
+  {
+   "en": "Date fruits",
+   "dz": "tamr / tmer",
+   "note": "Desert fruit"
+  },
+  {
+   "en": "Orange",
+   "dz": "tchina",
+   "note": "Fruit — from Chinese"
+  },
+  {
+   "en": "Peach",
+   "dz": "khokh",
+   "note": "Fruit"
+  },
+  {
+   "en": "Watermelon",
+   "dz": "della3",
+   "note": "Fruit"
+  },
+  {
+   "en": "Grapes",
+   "dz": "la3neb",
+   "note": "Fruit"
+  },
+  {
+   "en": "Fresh (food)",
+   "dz": "frishka",
+   "note": "Adjective"
+  },
+  {
+   "en": "Rotten (food)",
+   "dz": "mdewed / ma3foun",
+   "note": "Adjective"
+  },
+  {
+   "en": "Sweet",
+   "dz": "7louw",
+   "note": "Taste"
+  },
+  {
+   "en": "Salty",
+   "dz": "male7",
+   "note": "Taste"
+  },
+  {
+   "en": "Spicy",
+   "dz": "mtabbel",
+   "note": "Taste"
+  },
+  {
+   "en": "Delicious",
+   "dz": "bnin / bnina",
+   "note": "Taste"
+  },
+  {
+   "en": "Plate / dish",
+   "dz": "t9sida / assiette",
+   "note": "Tableware"
+  },
+  {
+   "en": "Glass",
+   "dz": "kess",
+   "note": "Drink vessel"
+  },
+  {
+   "en": "Spoon",
+   "dz": "ma3la9a",
+   "note": "Utensil"
+  },
+  {
+   "en": "Fork",
+   "dz": "fourchette",
+   "note": "Utensil"
+  },
+  {
+   "en": "Knife",
+   "dz": "mouss",
+   "note": "Utensil"
+  },
+  {
+   "en": "I'm hungry",
+   "dz": "rani dji3an (m) / dji3ana (f)",
+   "note": "Hunger"
+  },
+  {
+   "en": "I'm full",
+   "dz": "rani chab3an (m) / chab3ana (f)",
+   "note": "Satiated"
+  },
+  {
+   "en": "Eat!",
+   "dz": "kol! / kolou!",
+   "note": "Imperative"
+  },
+  {
+   "en": "Drink!",
+   "dz": "eshreb! / eshrebou!",
+   "note": "Imperative"
+  },
+  {
+   "en": "Would you like more?",
+   "dz": "nzidlek?",
+   "note": "Hospitality"
+  },
+  {
+   "en": "A little (more)",
+   "dz": "chwiya",
+   "note": "Small amount"
+  }
+ ],
+ "🔢 Numbers": [
+  {
+   "en": "0",
+   "dz": "sifr",
+   "note": "Zero"
+  },
+  {
+   "en": "1",
+   "dz": "wa7ed",
+   "note": "One"
+  },
+  {
+   "en": "2",
+   "dz": "zoudj / tnin",
+   "note": "Two"
+  },
+  {
+   "en": "3",
+   "dz": "tlata",
+   "note": "Three"
+  },
+  {
+   "en": "4",
+   "dz": "rab3a",
+   "note": "Four"
+  },
+  {
+   "en": "5",
+   "dz": "khamsa",
+   "note": "Five"
+  },
+  {
+   "en": "6",
+   "dz": "setta",
+   "note": "Six"
+  },
+  {
+   "en": "7",
+   "dz": "sab3a",
+   "note": "Seven"
+  },
+  {
+   "en": "8",
+   "dz": "tmenia",
+   "note": "Eight"
+  },
+  {
+   "en": "9",
+   "dz": "tess3a",
+   "note": "Nine"
+  },
+  {
+   "en": "10",
+   "dz": "3ashra",
+   "note": "Ten"
+  },
+  {
+   "en": "11",
+   "dz": "7desh",
+   "note": "Eleven"
+  },
+  {
+   "en": "12",
+   "dz": "ttnash",
+   "note": "Twelve"
+  },
+  {
+   "en": "13",
+   "dz": "tlettash",
+   "note": "Thirteen"
+  },
+  {
+   "en": "14",
+   "dz": "rba3tash",
+   "note": "Fourteen"
+  },
+  {
+   "en": "15",
+   "dz": "khmastash",
+   "note": "Fifteen"
+  },
+  {
+   "en": "16",
+   "dz": "settash",
+   "note": "Sixteen"
+  },
+  {
+   "en": "17",
+   "dz": "sba3tash",
+   "note": "Seventeen"
+  },
+  {
+   "en": "18",
+   "dz": "tmentash",
+   "note": "Eighteen"
+  },
+  {
+   "en": "19",
+   "dz": "tssa3tash",
+   "note": "Nineteen"
+  },
+  {
+   "en": "20",
+   "dz": "3ashrine",
+   "note": "Twenty"
+  },
+  {
+   "en": "21",
+   "dz": "wa7ed ou 3ashrine",
+   "note": "Twenty-one"
+  },
+  {
+   "en": "30",
+   "dz": "tlatine",
+   "note": "Thirty"
+  },
+  {
+   "en": "40",
+   "dz": "rab3ine",
+   "note": "Forty"
+  },
+  {
+   "en": "50",
+   "dz": "khamssine",
+   "note": "Fifty"
+  },
+  {
+   "en": "60",
+   "dz": "settine",
+   "note": "Sixty"
+  },
+  {
+   "en": "70",
+   "dz": "seb3ine",
+   "note": "Seventy"
+  },
+  {
+   "en": "80",
+   "dz": "tmanine",
+   "note": "Eighty"
+  },
+  {
+   "en": "90",
+   "dz": "tess3ine",
+   "note": "Ninety"
+  },
+  {
+   "en": "100",
+   "dz": "mia",
+   "note": "One hundred"
+  },
+  {
+   "en": "200",
+   "dz": "mitine",
+   "note": "Two hundred"
+  },
+  {
+   "en": "300",
+   "dz": "telt mia",
+   "note": "Three hundred"
+  },
+  {
+   "en": "1,000",
+   "dz": "alef",
+   "note": "One thousand"
+  },
+  {
+   "en": "2,000",
+   "dz": "alfine",
+   "note": "Two thousand"
+  },
+  {
+   "en": "3,000",
+   "dz": "teltalaf",
+   "note": "Three thousand"
+  },
+  {
+   "en": "1,000,000",
+   "dz": "mellioune",
+   "note": "One million"
+  },
+  {
+   "en": "1,000,000,000",
+   "dz": "melliarr",
+   "note": "One billion"
+  },
+  {
+   "en": "1st (M)",
+   "dz": "louwel",
+   "note": "Ordinal"
+  },
+  {
+   "en": "1st (F)",
+   "dz": "louwla",
+   "note": "Ordinal female"
+  },
+  {
+   "en": "2nd (M)",
+   "dz": "tani",
+   "note": "Ordinal"
+  },
+  {
+   "en": "2nd (F)",
+   "dz": "tania",
+   "note": "Ordinal female"
+  },
+  {
+   "en": "3rd (M)",
+   "dz": "talet",
+   "note": "Ordinal"
+  },
+  {
+   "en": "4th (M)",
+   "dz": "rrabe3",
+   "note": "Ordinal"
+  },
+  {
+   "en": "5th (M)",
+   "dz": "lkhamess",
+   "note": "Ordinal"
+  },
+  {
+   "en": "Last",
+   "dz": "lakhir (m) / lakhra (f)",
+   "note": "Ordinal"
+  },
+  {
+   "en": "Half",
+   "dz": "nos",
+   "note": "Fraction"
+  },
+  {
+   "en": "Quarter",
+   "dz": "rob3",
+   "note": "Fraction"
+  },
+  {
+   "en": "Double",
+   "dz": "dob / el dob",
+   "note": "Multiplication"
+  },
+  {
+   "en": "Plus / And",
+   "dz": "ou / zid",
+   "note": "Addition"
+  },
+  {
+   "en": "Minus",
+   "dz": "na99es",
+   "note": "Subtraction"
+  }
+ ],
+ "🎨 Colors & Adjectives": [
+  {
+   "en": "White",
+   "dz": "byedh (m) / bidha (f)",
+   "note": "Color"
+  },
+  {
+   "en": "Black",
+   "dz": "k7el (m) / ka7la (f)",
+   "note": "Color"
+  },
+  {
+   "en": "Red",
+   "dz": "7marr (m) / 7amra (f)",
+   "note": "Color"
+  },
+  {
+   "en": "Green",
+   "dz": "khder (m) / khedra (f)",
+   "note": "Color"
+  },
+  {
+   "en": "Blue",
+   "dz": "zre9 (m) / zer9a (f)",
+   "note": "Color"
+  },
+  {
+   "en": "Yellow",
+   "dz": "sfarr (m) / saffra (f)",
+   "note": "Color"
+  },
+  {
+   "en": "Brown",
+   "dz": "9ahwi (m) / 9ahwiya (f)",
+   "note": "Color — coffee-colored"
+  },
+  {
+   "en": "Pink",
+   "dz": "khokhi / khokhiya",
+   "note": "Color — peach-colored"
+  },
+  {
+   "en": "Orange",
+   "dz": "tchini / tichinia",
+   "note": "Color — orange-colored"
+  },
+  {
+   "en": "Grey",
+   "dz": "rmadi (m) / rmadia (f)",
+   "note": "Color — ash-colored"
+  },
+  {
+   "en": "Purple",
+   "dz": "banafsaji / violet",
+   "note": "Color"
+  },
+  {
+   "en": "Good (M)",
+   "dz": "mli7",
+   "note": "Quality"
+  },
+  {
+   "en": "Good (F)",
+   "dz": "mli7a",
+   "note": "Quality female"
+  },
+  {
+   "en": "Bad (M)",
+   "dz": "3iyen / mashi mli7",
+   "note": "Quality"
+  },
+  {
+   "en": "Bad (F)",
+   "dz": "3iyana",
+   "note": "Quality female"
+  },
+  {
+   "en": "Beautiful (M/F)",
+   "dz": "shbab / zin",
+   "note": "Appearance"
+  },
+  {
+   "en": "Beautiful girl",
+   "dz": "zina / shabba",
+   "note": "Appearance female"
+  },
+  {
+   "en": "Ugly (M)",
+   "dz": "mez3o9",
+   "note": "Appearance"
+  },
+  {
+   "en": "Cute (M)",
+   "dz": "mesrar",
+   "note": "Appearance"
+  },
+  {
+   "en": "Old (M)",
+   "dz": "9dim",
+   "note": "Age / state"
+  },
+  {
+   "en": "New (M)",
+   "dz": "jdid",
+   "note": "Age / state"
+  },
+  {
+   "en": "Big (M)",
+   "dz": "kbir",
+   "note": "Size"
+  },
+  {
+   "en": "Small (M)",
+   "dz": "sghir",
+   "note": "Size"
+  },
+  {
+   "en": "Tall/Long (M)",
+   "dz": "twil",
+   "note": "Size"
+  },
+  {
+   "en": "Short (M)",
+   "dz": "9ssir",
+   "note": "Size"
+  },
+  {
+   "en": "Thick (M)",
+   "dz": "khshine",
+   "note": "Size"
+  },
+  {
+   "en": "Thin (M)",
+   "dz": "r9i9",
+   "note": "Size"
+  },
+  {
+   "en": "Fat (M)",
+   "dz": "smin",
+   "note": "Body"
+  },
+  {
+   "en": "Thin/Slim (M)",
+   "dz": "rfi3",
+   "note": "Body"
+  },
+  {
+   "en": "Round",
+   "dz": "mdower",
+   "note": "Shape"
+  },
+  {
+   "en": "Square",
+   "dz": "carré",
+   "note": "Shape"
+  },
+  {
+   "en": "Heavy (M)",
+   "dz": "t9il",
+   "note": "Weight"
+  },
+  {
+   "en": "Light (M)",
+   "dz": "khfif",
+   "note": "Weight"
+  },
+  {
+   "en": "Fast / Quick",
+   "dz": "bezzerba / 3ajla",
+   "note": "Speed"
+  },
+  {
+   "en": "Slow (M)",
+   "dz": "beshi3 / t9il",
+   "note": "Speed"
+  },
+  {
+   "en": "Hot",
+   "dz": "skhoun",
+   "note": "Temperature"
+  },
+  {
+   "en": "Cold",
+   "dz": "bared",
+   "note": "Temperature"
+  },
+  {
+   "en": "Lukewarm",
+   "dz": "dafi",
+   "note": "Temperature"
+  },
+  {
+   "en": "Cheap (M)",
+   "dz": "rkhiss",
+   "note": "Price"
+  },
+  {
+   "en": "Expensive (M)",
+   "dz": "ghali",
+   "note": "Price"
+  },
+  {
+   "en": "Clean (M)",
+   "dz": "n9i",
+   "note": "Cleanliness"
+  },
+  {
+   "en": "Dirty (M)",
+   "dz": "mwessekh",
+   "note": "Cleanliness"
+  },
+  {
+   "en": "Easy (M)",
+   "dz": "sahel",
+   "note": "Difficulty"
+  },
+  {
+   "en": "Difficult (M)",
+   "dz": "s3ib",
+   "note": "Difficulty"
+  },
+  {
+   "en": "Strong (M)",
+   "dz": "galb / 9wi",
+   "note": "Strength"
+  },
+  {
+   "en": "Weak (M)",
+   "dz": "d3if",
+   "note": "Strength"
+  },
+  {
+   "en": "Full (M)",
+   "dz": "chab3an",
+   "note": "After eating"
+  },
+  {
+   "en": "Hungry (M)",
+   "dz": "dji3an",
+   "note": "Hunger"
+  },
+  {
+   "en": "Tired (M)",
+   "dz": "3ayit / tayh",
+   "note": "Energy"
+  },
+  {
+   "en": "Happy (M)",
+   "dz": "far7an",
+   "note": "Emotion"
+  },
+  {
+   "en": "Sad (M)",
+   "dz": "mhazen",
+   "note": "Emotion"
+  }
+ ],
+ "🗺️ Places & Transport": [
+  {
+   "en": "Where?",
+   "dz": "win?",
+   "note": "Question word"
+  },
+  {
+   "en": "How? / How do I...?",
+   "dz": "kifesh?",
+   "note": "Question word"
+  },
+  {
+   "en": "Left",
+   "dz": "liser / a gauche",
+   "note": "Direction"
+  },
+  {
+   "en": "Right",
+   "dz": "limine / a droite",
+   "note": "Direction"
+  },
+  {
+   "en": "Straight",
+   "dz": "nichan / 9bala",
+   "note": "Direction"
+  },
+  {
+   "en": "Go back",
+   "dz": "3awed welli",
+   "note": "Direction"
+  },
+  {
+   "en": "Near",
+   "dz": "9rib",
+   "note": "Distance"
+  },
+  {
+   "en": "Far",
+   "dz": "b3id",
+   "note": "Distance"
+  },
+  {
+   "en": "Here",
+   "dz": "hna",
+   "note": "Location"
+  },
+  {
+   "en": "There",
+   "dz": "temma",
+   "note": "Location"
+  },
+  {
+   "en": "Street",
+   "dz": "zer9a / rue",
+   "note": "Urban"
+  },
+  {
+   "en": "Alley",
+   "dz": "dherb",
+   "note": "Urban"
+  },
+  {
+   "en": "Market",
+   "dz": "lmarché / souk",
+   "note": "Shopping"
+  },
+  {
+   "en": "Shop",
+   "dz": "l7anout",
+   "note": "Retail"
+  },
+  {
+   "en": "Bakery",
+   "dz": "el boulanger / khabbez",
+   "note": "Food shop"
+  },
+  {
+   "en": "Butcher",
+   "dz": "el boucher / djezzar",
+   "note": "Meat shop"
+  },
+  {
+   "en": "Pharmacy",
+   "dz": "dekhtar / pharmacie",
+   "note": "Medical"
+  },
+  {
+   "en": "Hospital",
+   "dz": "sbitar",
+   "note": "Medical"
+  },
+  {
+   "en": "Police station",
+   "dz": "commissariat",
+   "note": "Security"
+  },
+  {
+   "en": "Post office",
+   "dz": "la posta / barid",
+   "note": "Postal"
+  },
+  {
+   "en": "Bank",
+   "dz": "banka",
+   "note": "Financial"
+  },
+  {
+   "en": "Mosque",
+   "dz": "djame3",
+   "note": "Religious"
+  },
+  {
+   "en": "Church",
+   "dz": "eglise",
+   "note": "Religious"
+  },
+  {
+   "en": "Cemetery",
+   "dz": "djebbana",
+   "note": "Burial"
+  },
+  {
+   "en": "School",
+   "dz": "licoule / ibtidai",
+   "note": "Education"
+  },
+  {
+   "en": "University",
+   "dz": "djami3a",
+   "note": "Education"
+  },
+  {
+   "en": "Airport",
+   "dz": "matar / aéroport",
+   "note": "Transport"
+  },
+  {
+   "en": "Train station",
+   "dz": "la gare",
+   "note": "Transport"
+  },
+  {
+   "en": "Bus station",
+   "dz": "gare routière",
+   "note": "Transport"
+  },
+  {
+   "en": "Bus",
+   "dz": "lbus",
+   "note": "Transport"
+  },
+  {
+   "en": "Tram",
+   "dz": "tramway",
+   "note": "Transport"
+  },
+  {
+   "en": "Taxi",
+   "dz": "taxi",
+   "note": "Transport"
+  },
+  {
+   "en": "Car",
+   "dz": "tomobil / voiture",
+   "note": "Vehicle"
+  },
+  {
+   "en": "Motorcycle",
+   "dz": "moto",
+   "note": "Vehicle"
+  },
+  {
+   "en": "Bicycle",
+   "dz": "biscil / vélo",
+   "note": "Vehicle"
+  },
+  {
+   "en": "Road",
+   "dz": "tari9 / route",
+   "note": "Infrastructure"
+  },
+  {
+   "en": "Highway",
+   "dz": "autoroute",
+   "note": "Infrastructure"
+  },
+  {
+   "en": "Petrol station",
+   "dz": "essence / station",
+   "note": "Fuel"
+  },
+  {
+   "en": "Ticket",
+   "dz": "tikiya / billet",
+   "note": "Travel"
+  },
+  {
+   "en": "How much is the ticket?",
+   "dz": "sh7al yasswa ettikiya?",
+   "note": "Price question"
+  },
+  {
+   "en": "I'm looking for...",
+   "dz": "rani n7awess 3la...",
+   "note": "Searching"
+  },
+  {
+   "en": "North",
+   "dz": "shemal",
+   "note": "Cardinal direction"
+  },
+  {
+   "en": "South",
+   "dz": "jnoub",
+   "note": "Cardinal direction"
+  },
+  {
+   "en": "East",
+   "dz": "shar9",
+   "note": "Cardinal direction"
+  },
+  {
+   "en": "West",
+   "dz": "gharb",
+   "note": "Cardinal direction"
+  },
+  {
+   "en": "Mountain",
+   "dz": "djbal",
+   "note": "Geography"
+  },
+  {
+   "en": "Sea",
+   "dz": "bhar / mer",
+   "note": "Geography"
+  },
+  {
+   "en": "Desert",
+   "dz": "sa7ra",
+   "note": "Geography"
+  },
+  {
+   "en": "Forest",
+   "dz": "ghaba",
+   "note": "Geography"
+  },
+  {
+   "en": "River",
+   "dz": "wadi",
+   "note": "Geography"
+  },
+  {
+   "en": "Beach",
+   "dz": "plage / sha6",
+   "note": "Geography"
+  },
+  {
+   "en": "Village",
+   "dz": "douar / qerya",
+   "note": "Settlement"
+  },
+  {
+   "en": "City",
+   "dz": "mdina / ville",
+   "note": "Settlement"
+  },
+  {
+   "en": "Neighbourhood",
+   "dz": "hay / quartier",
+   "note": "Settlement"
+  },
+  {
+   "en": "House / Home",
+   "dz": "ddar",
+   "note": "Dwelling"
+  },
+  {
+   "en": "Apartment",
+   "dz": "chqa / appartement",
+   "note": "Dwelling"
+  },
+  {
+   "en": "Door",
+   "dz": "bab",
+   "note": "Building"
+  },
+  {
+   "en": "Window",
+   "dz": "cherja",
+   "note": "Building"
+  },
+  {
+   "en": "Floor / Story",
+   "dz": "ta9a / étage",
+   "note": "Building"
+  },
+  {
+   "en": "Stairs",
+   "dz": "drej",
+   "note": "Building"
+  }
+ ],
+ "💼 Jobs & People": [
+  {
+   "en": "Father / Dad",
+   "dz": "baba / leblad",
+   "note": "Family"
+  },
+  {
+   "en": "Mother / Mum",
+   "dz": "yemma",
+   "note": "Family"
+  },
+  {
+   "en": "Brother",
+   "dz": "khouya",
+   "note": "Family"
+  },
+  {
+   "en": "Sister",
+   "dz": "khiti",
+   "note": "Family"
+  },
+  {
+   "en": "Son",
+   "dz": "wlid",
+   "note": "Family"
+  },
+  {
+   "en": "Daughter",
+   "dz": "bnet / bent",
+   "note": "Family"
+  },
+  {
+   "en": "Grandfather",
+   "dz": "jeddi",
+   "note": "Family"
+  },
+  {
+   "en": "Grandmother",
+   "dz": "jeddati",
+   "note": "Family"
+  },
+  {
+   "en": "Uncle (paternal)",
+   "dz": "3ammi",
+   "note": "Family"
+  },
+  {
+   "en": "Aunt (paternal)",
+   "dz": "3amti",
+   "note": "Family"
+  },
+  {
+   "en": "Uncle (maternal)",
+   "dz": "khali",
+   "note": "Family"
+  },
+  {
+   "en": "Aunt (maternal)",
+   "dz": "khalti",
+   "note": "Family"
+  },
+  {
+   "en": "Husband",
+   "dz": "rajel / zawj",
+   "note": "Family"
+  },
+  {
+   "en": "Wife",
+   "dz": "mra / zawja",
+   "note": "Family"
+  },
+  {
+   "en": "Baby / child",
+   "dz": "tfel (m) / tafla (f)",
+   "note": "Family"
+  },
+  {
+   "en": "Boy",
+   "dz": "weld / drari",
+   "note": "People"
+  },
+  {
+   "en": "Girl",
+   "dz": "bent",
+   "note": "People"
+  },
+  {
+   "en": "Man",
+   "dz": "ragel",
+   "note": "People"
+  },
+  {
+   "en": "Woman",
+   "dz": "mra",
+   "note": "People"
+  },
+  {
+   "en": "Old man",
+   "dz": "chikh / 3juz",
+   "note": "People"
+  },
+  {
+   "en": "Old woman",
+   "dz": "3djouza / mra kbira",
+   "note": "People"
+  },
+  {
+   "en": "Young man",
+   "dz": "shabb",
+   "note": "People"
+  },
+  {
+   "en": "Young woman",
+   "dz": "shebba",
+   "note": "People"
+  },
+  {
+   "en": "Friend (M)",
+   "dz": "sahbi",
+   "note": "Social"
+  },
+  {
+   "en": "Friend (F)",
+   "dz": "sa7bti",
+   "note": "Social"
+  },
+  {
+   "en": "Neighbor",
+   "dz": "jar",
+   "note": "Social"
+  },
+  {
+   "en": "Stranger",
+   "dz": "ghrib",
+   "note": "Social"
+  },
+  {
+   "en": "Doctor",
+   "dz": "tbib (m) / tbiba (f)",
+   "note": "Job"
+  },
+  {
+   "en": "Teacher (M)",
+   "dz": "oustad",
+   "note": "Job"
+  },
+  {
+   "en": "Teacher (F)",
+   "dz": "oustadha",
+   "note": "Job"
+  },
+  {
+   "en": "Engineer",
+   "dz": "l'ingénieur / mouhandis",
+   "note": "Job"
+  },
+  {
+   "en": "Lawyer",
+   "dz": "l'avocat / mouhami",
+   "note": "Job"
+  },
+  {
+   "en": "Police",
+   "dz": "gach / police",
+   "note": "Job"
+  },
+  {
+   "en": "Soldier / Military",
+   "dz": "3askri",
+   "note": "Job"
+  },
+  {
+   "en": "Merchant / Trader",
+   "dz": "tajir",
+   "note": "Job"
+  },
+  {
+   "en": "Farmer",
+   "dz": "fella7",
+   "note": "Job"
+  },
+  {
+   "en": "Shepherd",
+   "dz": "ra3i",
+   "note": "Job"
+  },
+  {
+   "en": "Cook",
+   "dz": "teyyab",
+   "note": "Job"
+  },
+  {
+   "en": "Driver",
+   "dz": "chauffeur / sa9",
+   "note": "Job"
+  },
+  {
+   "en": "Mechanic",
+   "dz": "mécanicien / mtalli3",
+   "note": "Job"
+  },
+  {
+   "en": "Plumber",
+   "dz": "plombier",
+   "note": "Job"
+  },
+  {
+   "en": "Electrician",
+   "dz": "electricien",
+   "note": "Job"
+  },
+  {
+   "en": "Mason / Builder",
+   "dz": "masson / benna",
+   "note": "Job"
+  },
+  {
+   "en": "Barber",
+   "dz": "hallaq",
+   "note": "Job"
+  },
+  {
+   "en": "Hairdresser",
+   "dz": "coiffeur / coiffeuse",
+   "note": "Job"
+  },
+  {
+   "en": "Student",
+   "dz": "taleb (m) / talba (f)",
+   "note": "Education"
+  },
+  {
+   "en": "Retired",
+   "dz": "retraité",
+   "note": "Status"
+  },
+  {
+   "en": "Unemployed",
+   "dz": "ma3andouch khedma",
+   "note": "Status"
+  },
+  {
+   "en": "I work at...",
+   "dz": "nakhdem fi...",
+   "note": "Work"
+  },
+  {
+   "en": "I'm looking for work",
+   "dz": "rani n7awess 3la khedma",
+   "note": "Work"
+  },
+  {
+   "en": "Boss / Manager",
+   "dz": "chef / mou3allem",
+   "note": "Work"
+  },
+  {
+   "en": "Colleague",
+   "dz": "zmel (m) / zmila (f)",
+   "note": "Work"
+  },
+  {
+   "en": "Salary / Pay",
+   "dz": "lmourtab / le salaire",
+   "note": "Work"
+  }
+ ],
+ "🛒 Market & Money": [
+  {
+   "en": "Market",
+   "dz": "lmarché / souk",
+   "note": "Place"
+  },
+  {
+   "en": "Shop / Store",
+   "dz": "l7anout / boutique",
+   "note": "Place"
+  },
+  {
+   "en": "Supermarket",
+   "dz": "supermarché",
+   "note": "Place"
+  },
+  {
+   "en": "How much does this cost?",
+   "dz": "sh7al yaswa hada (m)?",
+   "note": "Price inquiry"
+  },
+  {
+   "en": "How much is it (F)?",
+   "dz": "sh7al taswa hadi?",
+   "note": "Price inquiry"
+  },
+  {
+   "en": "It's too expensive",
+   "dz": "ghali bezzaf",
+   "note": "Bargaining"
+  },
+  {
+   "en": "It's not cheap",
+   "dz": "mashi rkhiss",
+   "note": "Bargaining"
+  },
+  {
+   "en": "Good price",
+   "dz": "prix mli7 / prix shbab",
+   "note": "Bargaining"
+  },
+  {
+   "en": "Bad price",
+   "dz": "prix 3eyan",
+   "note": "Bargaining"
+  },
+  {
+   "en": "Can you reduce the price?",
+   "dz": "khefef 3liya shwiya",
+   "note": "Bargaining"
+  },
+  {
+   "en": "Last price",
+   "dz": "lakhir ssel3",
+   "note": "Bargaining"
+  },
+  {
+   "en": "I'll take it",
+   "dz": "nakhoudha",
+   "note": "Decision"
+  },
+  {
+   "en": "I'll leave it",
+   "dz": "nkhalliha",
+   "note": "Decision"
+  },
+  {
+   "en": "I want...",
+   "dz": "bhit... / nhebb...",
+   "note": "Desire"
+  },
+  {
+   "en": "Do you have...?",
+   "dz": "kayen...? / 3andek...?",
+   "note": "Availability"
+  },
+  {
+   "en": "Money",
+   "dz": "flouss",
+   "note": "Currency"
+  },
+  {
+   "en": "Dinar",
+   "dz": "dinar",
+   "note": "Currency"
+  },
+  {
+   "en": "Change (coins)",
+   "dz": "sa7 / ess7a7",
+   "note": "Currency"
+  },
+  {
+   "en": "Cash",
+   "dz": "cash / nkd",
+   "note": "Payment"
+  },
+  {
+   "en": "Credit card",
+   "dz": "carte",
+   "note": "Payment"
+  },
+  {
+   "en": "ATM",
+   "dz": "distributeur / guichet",
+   "note": "Payment"
+  },
+  {
+   "en": "Receipt",
+   "dz": "reçu / tassdir",
+   "note": "Document"
+  },
+  {
+   "en": "Bag",
+   "dz": "kees / sac",
+   "note": "Container"
+  },
+  {
+   "en": "Size (clothing)",
+   "dz": "pointure / taille",
+   "note": "Clothing"
+  },
+  {
+   "en": "Size S/M/L/XL",
+   "dz": "s / m / l / xl",
+   "note": "Clothing sizes"
+  },
+  {
+   "en": "Clothes",
+   "dz": "7wayedj / fringues",
+   "note": "Goods"
+  },
+  {
+   "en": "Shoes",
+   "dz": "saba6 / chaussures",
+   "note": "Goods"
+  },
+  {
+   "en": "New",
+   "dz": "jdid",
+   "note": "Condition"
+  },
+  {
+   "en": "Second hand",
+   "dz": "d'occasion / mkhalsa",
+   "note": "Condition"
+  },
+  {
+   "en": "Discount / Sale",
+   "dz": "soldes / tanki",
+   "note": "Shopping"
+  },
+  {
+   "en": "Open (shop)",
+   "dz": "ma7loul",
+   "note": "Business hours"
+  },
+  {
+   "en": "Closed (shop)",
+   "dz": "msedded",
+   "note": "Business hours"
+  },
+  {
+   "en": "Sell",
+   "dz": "ba3 / bi3",
+   "note": "Commerce"
+  },
+  {
+   "en": "Buy",
+   "dz": "shra / eshri",
+   "note": "Commerce"
+  },
+  {
+   "en": "Exchange",
+   "dz": "beddel",
+   "note": "Commerce"
+  }
+ ],
+ "🎉 Celebrations": [
+  {
+   "en": "Congratulations!",
+   "dz": "mabrouk 3lik",
+   "note": "General"
+  },
+  {
+   "en": "Happy Ramadan",
+   "dz": "sa7a ramdanek",
+   "note": "Ramadan"
+  },
+  {
+   "en": "Ramadan Kareem",
+   "dz": "ramadan karim",
+   "note": "Ramadan"
+  },
+  {
+   "en": "Have a nice Iftar",
+   "dz": "sa7a ftourek",
+   "note": "Ramadan"
+  },
+  {
+   "en": "Happy Eid",
+   "dz": "sa7a 3idek",
+   "note": "Eid"
+  },
+  {
+   "en": "Eid Mubarak",
+   "dz": "3id mubarak",
+   "note": "Eid"
+  },
+  {
+   "en": "The sheep slaughter (Eid Al-Adha)",
+   "dz": "eddbi7a / kebsh el 3id",
+   "note": "Eid Al-Adha"
+  },
+  {
+   "en": "Happy Mawlid",
+   "dz": "sa7a mouloudek",
+   "note": "Prophet's birthday"
+  },
+  {
+   "en": "Happy Yennayer (Berber NY)",
+   "dz": "yennayer amarvou7",
+   "note": "Berber tradition"
+  },
+  {
+   "en": "Happy Birthday",
+   "dz": "3id milad sa3id",
+   "note": "Birthday"
+  },
+  {
+   "en": "Happy New Year",
+   "dz": "3am sa3id / bonne année",
+   "note": "New Year"
+  },
+  {
+   "en": "Best wishes!",
+   "dz": "netmennalek ghir el khir",
+   "note": "Good wishes"
+  },
+  {
+   "en": "May you live 100 years",
+   "dz": "la39oba lemyat sna",
+   "note": "Birthday"
+  },
+  {
+   "en": "Wedding",
+   "dz": "l3arss",
+   "note": "Event"
+  },
+  {
+   "en": "The bride",
+   "dz": "l3arossa",
+   "note": "Wedding"
+  },
+  {
+   "en": "The groom",
+   "dz": "l3ariyess",
+   "note": "Wedding"
+  },
+  {
+   "en": "Traditional dress",
+   "dz": "7wayedj ta9lidia",
+   "note": "Wedding"
+  },
+  {
+   "en": "Henna night",
+   "dz": "lilt el henna",
+   "note": "Wedding tradition"
+  },
+  {
+   "en": "Circumcision party",
+   "dz": "khtana",
+   "note": "Tradition"
+  },
+  {
+   "en": "Guests / Invitees",
+   "dz": "dhyaf",
+   "note": "Event"
+  },
+  {
+   "en": "Gift",
+   "dz": "cadeau / hadiya",
+   "note": "Event"
+  },
+  {
+   "en": "Sweets box",
+   "dz": "bwayett nta3 el halwa",
+   "note": "Wedding tradition"
+  },
+  {
+   "en": "Food feast",
+   "dz": "diffa",
+   "note": "Hospitality"
+  },
+  {
+   "en": "You're invited!",
+   "dz": "rak ma3rodh!",
+   "note": "Invitation"
+  },
+  {
+   "en": "Come celebrate with us",
+   "dz": "aay n7taflo m3ana",
+   "note": "Invitation"
+  },
+  {
+   "en": "Prayer (salah)",
+   "dz": "sala",
+   "note": "Religious"
+  },
+  {
+   "en": "Fasting",
+   "dz": "ssiyam / lsoum",
+   "note": "Religious"
+  },
+  {
+   "en": "Breaking fast",
+   "dz": "lftor",
+   "note": "Ramadan"
+  },
+  {
+   "en": "Suhoor (pre-dawn meal)",
+   "dz": "ss7our",
+   "note": "Ramadan"
+  },
+  {
+   "en": "Mosque prayer call",
+   "dz": "el adhan",
+   "note": "Religious"
+  },
+  {
+   "en": "Friday prayer",
+   "dz": "salat el djom3a",
+   "note": "Religious"
+  },
+  {
+   "en": "Pilgrimage",
+   "dz": "el hajj",
+   "note": "Religious"
+  },
+  {
+   "en": "The returning pilgrim",
+   "dz": "el 7adj (m) / el 7adja (f)",
+   "note": "Religious"
+  },
+  {
+   "en": "Festival / Holiday",
+   "dz": "3id / fête",
+   "note": "General"
+  },
+  {
+   "en": "Celebration",
+   "dz": "tiflal / ihtifal",
+   "note": "General"
+  },
+  {
+   "en": "Dance",
+   "dz": "ghiwa / danse",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Sing",
+   "dz": "ghanni",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Music",
+   "dz": "mouski9a",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Firecracker",
+   "dz": "petard / 9araka9a",
+   "note": "Celebration"
+  },
+  {
+   "en": "Sweets",
+   "dz": "7alwa / gâteau",
+   "note": "Food"
+  },
+  {
+   "en": "Couscous feast",
+   "dz": "3zia nta3 tt3am",
+   "note": "Algerian tradition"
+  },
+  {
+   "en": "Slaughter (ritual)",
+   "dz": "dbi7a",
+   "note": "Tradition"
+  },
+  {
+   "en": "Charity",
+   "dz": "zaka / sadaqa",
+   "note": "Religious"
+  },
+  {
+   "en": "May God accept it",
+   "dz": "allah ya9bel",
+   "note": "Religious"
+  },
+  {
+   "en": "Thank God",
+   "dz": "7amdoullah",
+   "note": "Religious expression"
+  }
+ ],
+ "☀️ Nature & Weather": [
+  {
+   "en": "Sun",
+   "dz": "shems",
+   "note": "Nature"
+  },
+  {
+   "en": "Moon",
+   "dz": "l9mar",
+   "note": "Nature"
+  },
+  {
+   "en": "Stars",
+   "dz": "njoum",
+   "note": "Nature"
+  },
+  {
+   "en": "Sky",
+   "dz": "ssma",
+   "note": "Nature"
+  },
+  {
+   "en": "Cloud",
+   "dz": "se7aba (s) / sh7ab (pl)",
+   "note": "Nature"
+  },
+  {
+   "en": "Rain",
+   "dz": "eshta / mtra",
+   "note": "Weather"
+  },
+  {
+   "en": "Snow",
+   "dz": "etheldj",
+   "note": "Weather"
+  },
+  {
+   "en": "Wind",
+   "dz": "rri7",
+   "note": "Weather"
+  },
+  {
+   "en": "Storm",
+   "dz": "atifa / hawa3",
+   "note": "Weather"
+  },
+  {
+   "en": "Lightning",
+   "dz": "barq",
+   "note": "Weather"
+  },
+  {
+   "en": "Thunder",
+   "dz": "ra3d",
+   "note": "Weather"
+  },
+  {
+   "en": "Fog",
+   "dz": "dhbab",
+   "note": "Weather"
+  },
+  {
+   "en": "Hot weather",
+   "dz": "s7ana",
+   "note": "Weather"
+  },
+  {
+   "en": "Cold weather",
+   "dz": "el berd",
+   "note": "Weather"
+  },
+  {
+   "en": "It's sunny",
+   "dz": "shems rahi tssatta3",
+   "note": "Weather"
+  },
+  {
+   "en": "It's raining",
+   "dz": "rahi tssabb eshta",
+   "note": "Weather"
+  },
+  {
+   "en": "It's windy",
+   "dz": "kayen erri7",
+   "note": "Weather"
+  },
+  {
+   "en": "It's snowing",
+   "dz": "rahou yssabb etheldj",
+   "note": "Weather"
+  },
+  {
+   "en": "It's hot",
+   "dz": "skhoun / es7an",
+   "note": "Weather"
+  },
+  {
+   "en": "It's cold",
+   "dz": "bared / el berd",
+   "note": "Weather"
+  },
+  {
+   "en": "Earthquake",
+   "dz": "zelzla / tremblement",
+   "note": "Disaster"
+  },
+  {
+   "en": "Flood",
+   "dz": "7amla / inondation",
+   "note": "Disaster"
+  },
+  {
+   "en": "Fire",
+   "dz": "l7ri9 / feu",
+   "note": "Disaster"
+  },
+  {
+   "en": "Forest fire",
+   "dz": "l7ri9 fl ghaba",
+   "note": "Disaster"
+  },
+  {
+   "en": "Drought",
+   "dz": "el jaoufa / sécheresse",
+   "note": "Disaster"
+  },
+  {
+   "en": "Mountain",
+   "dz": "djbal",
+   "note": "Geography"
+  },
+  {
+   "en": "Sea",
+   "dz": "bhar",
+   "note": "Geography"
+  },
+  {
+   "en": "Desert",
+   "dz": "sa7ra",
+   "note": "Geography"
+  },
+  {
+   "en": "Forest",
+   "dz": "ghaba",
+   "note": "Geography"
+  },
+  {
+   "en": "River",
+   "dz": "wadi",
+   "note": "Geography"
+  },
+  {
+   "en": "Lake",
+   "dz": "bu7ayra / lac",
+   "note": "Geography"
+  },
+  {
+   "en": "Valley",
+   "dz": "wad",
+   "note": "Geography"
+  },
+  {
+   "en": "Plain",
+   "dz": "sahel / plaine",
+   "note": "Geography"
+  },
+  {
+   "en": "Sand",
+   "dz": "rml",
+   "note": "Nature"
+  },
+  {
+   "en": "Stone / Rock",
+   "dz": "hajra",
+   "note": "Nature"
+  },
+  {
+   "en": "Tree",
+   "dz": "shdjra",
+   "note": "Nature"
+  },
+  {
+   "en": "Flower",
+   "dz": "zhra",
+   "note": "Nature"
+  },
+  {
+   "en": "Grass",
+   "dz": "7shish",
+   "note": "Nature"
+  },
+  {
+   "en": "Animal",
+   "dz": "7ywan",
+   "note": "Nature"
+  },
+  {
+   "en": "Dog",
+   "dz": "kelb",
+   "note": "Animal"
+  },
+  {
+   "en": "Cat",
+   "dz": "mish / qetta",
+   "note": "Animal"
+  },
+  {
+   "en": "Horse",
+   "dz": "faras",
+   "note": "Animal"
+  },
+  {
+   "en": "Donkey",
+   "dz": "7mar",
+   "note": "Animal"
+  },
+  {
+   "en": "Camel",
+   "dz": "djmel",
+   "note": "Animal"
+  },
+  {
+   "en": "Sheep",
+   "dz": "khabch / kbesh",
+   "note": "Animal"
+  },
+  {
+   "en": "Goat",
+   "dz": "ma3za",
+   "note": "Animal"
+  },
+  {
+   "en": "Cow",
+   "dz": "ba9ra",
+   "note": "Animal"
+  },
+  {
+   "en": "Bird",
+   "dz": "ttir",
+   "note": "Animal"
+  },
+  {
+   "en": "Snake",
+   "dz": "l7iyya",
+   "note": "Animal"
+  },
+  {
+   "en": "Insect",
+   "dz": "dwidda",
+   "note": "Animal"
+  }
+ ],
+ "💬 Street Slang": [
+  {
+   "en": "Darija Word/Phrase",
+   "dz": "english meaning",
+   "note": "Region/Type"
+  },
+  {
+   "en": "Sahbi",
+   "dz": "my friend / mate",
+   "note": "Universal"
+  },
+  {
+   "en": "Khouya / Yakho",
+   "dz": "bro / brother",
+   "note": "Address"
+  },
+  {
+   "en": "Wesh!",
+   "dz": "hey! / what!",
+   "note": "Exclamation"
+  },
+  {
+   "en": "Labess",
+   "dz": "it's fine / ok",
+   "note": "State"
+  },
+  {
+   "en": "Bezzaf / Bzaaf",
+   "dz": "a lot / too much",
+   "note": "Quantity"
+  },
+  {
+   "en": "Yezzi!",
+   "dz": "enough! / stop it!",
+   "note": "Limit"
+  },
+  {
+   "en": "3adi",
+   "dz": "normal / no big deal",
+   "note": "Reaction"
+  },
+  {
+   "en": "Ma3liche",
+   "dz": "never mind / it's fine",
+   "note": "Dismissal"
+  },
+  {
+   "en": "Rah / Rani",
+   "dz": "he is / i am",
+   "note": "State verb"
+  },
+  {
+   "en": "Hak / Haki!",
+   "dz": "here! / take this!",
+   "note": "Giving"
+  },
+  {
+   "en": "Hia!",
+   "dz": "let's go! / bye!",
+   "note": "Action / goodbye"
+  },
+  {
+   "en": "Druk",
+   "dz": "right now / immediately",
+   "note": "Time"
+  },
+  {
+   "en": "Dima",
+   "dz": "always / forever",
+   "note": "Frequency"
+  },
+  {
+   "en": "Kayen",
+   "dz": "there is / exists",
+   "note": "Existence"
+  },
+  {
+   "en": "Ma kayen walou",
+   "dz": "there's nothing",
+   "note": "Negation"
+  },
+  {
+   "en": "Wali!",
+   "dz": "wow! / oh man!",
+   "note": "Surprise"
+  },
+  {
+   "en": "Yal3iyya!",
+   "dz": "wow (frustration)",
+   "note": "Exclamation"
+  },
+  {
+   "en": "7ala!",
+   "dz": "great! / awesome!",
+   "note": "Approval"
+  },
+  {
+   "en": "Galb!",
+   "dz": "strong! / well done!",
+   "note": "Approval"
+  },
+  {
+   "en": "Zahri!",
+   "dz": "my luck! / lucky me!",
+   "note": "Luck/sarcasm"
+  },
+  {
+   "en": "Hchouma!",
+   "dz": "shame! / inappropriate!",
+   "note": "Social"
+  },
+  {
+   "en": "Arak hna?",
+   "dz": "are you here? / greet",
+   "note": "Greeting"
+  },
+  {
+   "en": "Balak!",
+   "dz": "watch out! / careful!",
+   "note": "Warning"
+  },
+  {
+   "en": "Farh",
+   "dz": "happy / joy",
+   "note": "Emotion"
+  },
+  {
+   "en": "3ayit",
+   "dz": "tired / fed up",
+   "note": "Fatigue"
+  },
+  {
+   "en": "Mli7!",
+   "dz": "good! / nice!",
+   "note": "Approval"
+  },
+  {
+   "en": "Ghaya!",
+   "dz": "perfect! (oran)",
+   "note": "Approval"
+  },
+  {
+   "en": "Chwiya",
+   "dz": "a little / a bit",
+   "note": "Quantity"
+  },
+  {
+   "en": "Kter",
+   "dz": "more / a lot",
+   "note": "Quantity"
+  },
+  {
+   "en": "9lil",
+   "dz": "little / few",
+   "note": "Quantity"
+  },
+  {
+   "en": "Barcha",
+   "dz": "a lot / many (oran)",
+   "note": "Quantity"
+  },
+  {
+   "en": "9bala / Nichan",
+   "dz": "straight / forward",
+   "note": "Direction"
+  },
+  {
+   "en": "Hadi hadi",
+   "dz": "take it easy / slow down",
+   "note": "Calm"
+  },
+  {
+   "en": "Friki",
+   "dz": "trendy / stylish person",
+   "note": "Style"
+  },
+  {
+   "en": "Drari",
+   "dz": "boys / young guys / crew",
+   "note": "Group"
+  },
+  {
+   "en": "Gach",
+   "dz": "police (slang)",
+   "note": "Slang"
+  },
+  {
+   "en": "Jaw",
+   "dz": "vibe / mood / atmosphere",
+   "note": "Feeling"
+  },
+  {
+   "en": "Khorti",
+   "dz": "nonsense / rubbish",
+   "note": "Dismissal"
+  },
+  {
+   "en": "Khrab",
+   "dz": "a mess / messed up",
+   "note": "State"
+  },
+  {
+   "en": "Wili!",
+   "dz": "oh my! / wow!",
+   "note": "Surprise"
+  },
+  {
+   "en": "Dazzit",
+   "dz": "he passed it smoothly",
+   "note": "Success"
+  },
+  {
+   "en": "Thir / Tkhayyel",
+   "dz": "imagine / chill out",
+   "note": "Reaction"
+  },
+  {
+   "en": "Skout!",
+   "dz": "shut up! / be quiet!",
+   "note": "Command"
+  },
+  {
+   "en": "Roh!",
+   "dz": "go! / get out!",
+   "note": "Command"
+  },
+  {
+   "en": "Aay!",
+   "dz": "come! / come here!",
+   "note": "Command"
+  },
+  {
+   "en": "Khouf!",
+   "dz": "be afraid / watch out!",
+   "note": "Warning"
+  },
+  {
+   "en": "Sahti!",
+   "dz": "cheers! / to your health!",
+   "note": "Toast"
+  },
+  {
+   "en": "Yak?",
+   "dz": "right? / correct?",
+   "note": "Confirmation"
+  },
+  {
+   "en": "Ah / Ih",
+   "dz": "yes / yeah",
+   "note": "Affirmative"
+  },
+  {
+   "en": "Lla",
+   "dz": "no",
+   "note": "Negative"
+  },
+  {
+   "en": "Wella",
+   "dz": "or / maybe / even",
+   "note": "Conjunction"
+  },
+  {
+   "en": "Parké",
+   "dz": "parked (french hybrid)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Frimé",
+   "dz": "showing off (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Stylé",
+   "dz": "stylish (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Galère / Galérien",
+   "dz": "struggle / struggling person",
+   "note": "French loanword"
+  },
+  {
+   "en": "Tocard",
+   "dz": "lame / loser (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Pote",
+   "dz": "buddy (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Boulot",
+   "dz": "work / job (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Dégagé",
+   "dz": "get lost! (french)",
+   "note": "French command"
+  },
+  {
+   "en": "Fou",
+   "dz": "crazy (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Mec",
+   "dz": "guy / dude (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "La classe",
+   "dz": "classy / cool (french)",
+   "note": "French loanword"
+  },
+  {
+   "en": "Buzzé",
+   "dz": "went viral",
+   "note": "Social media"
+  },
+  {
+   "en": "Hacki",
+   "dz": "expose / reveal (french hack)",
+   "note": "Social media"
+  },
+  {
+   "en": "Stalki",
+   "dz": "stalked online",
+   "note": "Social media"
+  },
+  {
+   "en": "Sla3a",
+   "dz": "hype / fame",
+   "note": "Social media"
+  },
+  {
+   "en": "Crushi",
+   "dz": "crush / love interest",
+   "note": "Social media"
+  },
+  {
+   "en": "Viber",
+   "dz": "good vibe / energy",
+   "note": "Social media"
+  },
+  {
+   "en": "Chibka",
+   "dz": "internet / wifi",
+   "note": "Tech slang"
+  },
+  {
+   "en": "Meziane",
+   "dz": "good / nice (oran)",
+   "note": "Oran dialect"
+  },
+  {
+   "en": "Guapo",
+   "dz": "handsome (spanish loanword, oran)",
+   "note": "Oran / Spanish"
+  },
+  {
+   "en": "Fhamtini?",
+   "dz": "do you get me? / understood?",
+   "note": "Oran"
+  },
+  {
+   "en": "Machi normal",
+   "dz": "that's not okay / weird",
+   "note": "Expression"
+  },
+  {
+   "en": "Koulchi",
+   "dz": "everything / all (oran)",
+   "note": "Oran"
+  },
+  {
+   "en": "Yani",
+   "dz": "like / i mean",
+   "note": "Filler"
+  },
+  {
+   "en": "Elli",
+   "dz": "the one who / which",
+   "note": "Relative pronoun"
+  },
+  {
+   "en": "Tawa7achtek",
+   "dz": "i missed you",
+   "note": "Emotion"
+  },
+  {
+   "en": "Machi sahel",
+   "dz": "not easy / tough",
+   "note": "Difficulty"
+  },
+  {
+   "en": "Msho",
+   "dz": "let's go / went",
+   "note": "Verb"
+  },
+  {
+   "en": "Djer",
+   "dz": "run / hurry up",
+   "note": "Verb"
+  },
+  {
+   "en": "Ness",
+   "dz": "people / folks",
+   "note": "Noun"
+  },
+  {
+   "en": "Bghit",
+   "dz": "i want",
+   "note": "Verb"
+  },
+  {
+   "en": "Wejdek",
+   "dz": "i found you",
+   "note": "Verb"
+  },
+  {
+   "en": "Kmel",
+   "dz": "finish / continue",
+   "note": "Verb"
+  },
+  {
+   "en": "3ayes",
+   "dz": "living / surviving",
+   "note": "Verb"
+  },
+  {
+   "en": "Tfarraj",
+   "dz": "watch / enjoy the show",
+   "note": "Verb"
+  },
+  {
+   "en": "7awes",
+   "dz": "search / look for",
+   "note": "Verb"
+  },
+  {
+   "en": "Khel",
+   "dz": "leave it / let it go",
+   "note": "Verb"
+  },
+  {
+   "en": "Khal",
+   "dz": "let / allow",
+   "note": "Verb"
+  },
+  {
+   "en": "Shuf",
+   "dz": "look / see",
+   "note": "Verb"
+  },
+  {
+   "en": "Sem3",
+   "dz": "listen / hear",
+   "note": "Verb"
+  },
+  {
+   "en": "9al",
+   "dz": "he said / says",
+   "note": "Verb"
+  },
+  {
+   "en": "Dir",
+   "dz": "do / make",
+   "note": "Verb"
+  },
+  {
+   "en": "Klam",
+   "dz": "talk / words",
+   "note": "Noun"
+  },
+  {
+   "en": "9erra",
+   "dz": "read / study",
+   "note": "Verb"
+  },
+  {
+   "en": "Kteb",
+   "dz": "write",
+   "note": "Verb"
+  },
+  {
+   "en": "Rja3",
+   "dz": "return / come back",
+   "note": "Verb"
+  },
+  {
+   "en": "Telba3",
+   "dz": "follow / tag along",
+   "note": "Verb"
+  },
+  {
+   "en": "Fhem",
+   "dz": "understand",
+   "note": "Verb"
+  },
+  {
+   "en": "3ruf",
+   "dz": "know",
+   "note": "Verb"
+  },
+  {
+   "en": "Nssa",
+   "dz": "forget",
+   "note": "Verb"
+  },
+  {
+   "en": "Dja",
+   "dz": "came",
+   "note": "Verb"
+  },
+  {
+   "en": "Wedj",
+   "dz": "found",
+   "note": "Verb"
+  },
+  {
+   "en": "7ki",
+   "dz": "tell a story / talk",
+   "note": "Verb"
+  },
+  {
+   "en": "Dguel",
+   "dz": "enter / go in",
+   "note": "Verb"
+  },
+  {
+   "en": "Khrej",
+   "dz": "exit / get out",
+   "note": "Verb"
+  },
+  {
+   "en": "Salli",
+   "dz": "pray",
+   "note": "Verb"
+  },
+  {
+   "en": "Nam",
+   "dz": "sleep",
+   "note": "Verb"
+  },
+  {
+   "en": "9am",
+   "dz": "wake up / stand up",
+   "note": "Verb"
+  },
+  {
+   "en": "Kul",
+   "dz": "eat",
+   "note": "Verb"
+  },
+  {
+   "en": "Shreb",
+   "dz": "drink",
+   "note": "Verb"
+  },
+  {
+   "en": "Nda7",
+   "dz": "call out / shout",
+   "note": "Verb"
+  },
+  {
+   "en": "3yat",
+   "dz": "screamed / called",
+   "note": "Verb"
+  },
+  {
+   "en": "Lbes",
+   "dz": "wear / dress",
+   "note": "Verb"
+  },
+  {
+   "en": "Khella3",
+   "dz": "undress / remove",
+   "note": "Verb"
+  },
+  {
+   "en": "Ghassal",
+   "dz": "wash",
+   "note": "Verb"
+  },
+  {
+   "en": "Msha",
+   "dz": "went",
+   "note": "Verb"
+  },
+  {
+   "en": "Dda",
+   "dz": "took / brought",
+   "note": "Verb"
+  },
+  {
+   "en": "Biyya3",
+   "dz": "seller",
+   "note": "Noun"
+  },
+  {
+   "en": "9assab",
+   "dz": "butcher",
+   "note": "Noun"
+  }
+ ],
+ "😍 Love & Relationships": [
+  {
+   "en": "My love (M)",
+   "dz": "habibi",
+   "note": "Endearment"
+  },
+  {
+   "en": "My love (F)",
+   "dz": "habibti",
+   "note": "Endearment"
+  },
+  {
+   "en": "My dear (M)",
+   "dz": "3zizi",
+   "note": "Endearment"
+  },
+  {
+   "en": "My soul",
+   "dz": "rouhi",
+   "note": "Endearment"
+  },
+  {
+   "en": "My eyes",
+   "dz": "3yuni / 3yni",
+   "note": "Endearment"
+  },
+  {
+   "en": "My heart",
+   "dz": "galbi / galbek",
+   "note": "Endearment"
+  },
+  {
+   "en": "My life",
+   "dz": "7yati",
+   "note": "Endearment"
+  },
+  {
+   "en": "My star",
+   "dz": "nejmarti",
+   "note": "Endearment"
+  },
+  {
+   "en": "I love you (M→F)",
+   "dz": "n7ebbek",
+   "note": "Love"
+  },
+  {
+   "en": "I love you (F→M)",
+   "dz": "n7ebbek",
+   "note": "Love"
+  },
+  {
+   "en": "I want you",
+   "dz": "bghitek",
+   "note": "Desire"
+  },
+  {
+   "en": "I miss you",
+   "dz": "twa7ashtek",
+   "note": "Longing"
+  },
+  {
+   "en": "You're beautiful",
+   "dz": "nti zwina (f)",
+   "note": "Compliment"
+  },
+  {
+   "en": "You're handsome",
+   "dz": "nta shbab (m)",
+   "note": "Compliment"
+  },
+  {
+   "en": "You stole my heart",
+   "dz": "derti lgalb / sra9ti 9albi",
+   "note": "Romance"
+  },
+  {
+   "en": "You're my everything",
+   "dz": "nti galbi ou ro7i",
+   "note": "Romance"
+  },
+  {
+   "en": "Will you marry me?",
+   "dz": "tqabli t3aishi m3aya?",
+   "note": "Proposal"
+  },
+  {
+   "en": "I want to be with you",
+   "dz": "nhebb nkoun m3ak",
+   "note": "Relationship"
+  },
+  {
+   "en": "Forgive me",
+   "dz": "sme7li",
+   "note": "Apology"
+  },
+  {
+   "en": "I'm sorry",
+   "dz": "sme7li / ma7asshtekch",
+   "note": "Apology"
+  },
+  {
+   "en": "I'm jealous",
+   "dz": "ghira 3liya",
+   "note": "Emotion"
+  },
+  {
+   "en": "Don't leave me",
+   "dz": "matetrukniesh",
+   "note": "Plea"
+  },
+  {
+   "en": "I'm thinking of you",
+   "dz": "rani nfakker fik",
+   "note": "Affection"
+  },
+  {
+   "en": "Be with me",
+   "dz": "koun m3aya",
+   "note": "Request"
+  },
+  {
+   "en": "My girlfriend",
+   "dz": "sa7abti / l7abiba nta3i",
+   "note": "Relationship"
+  },
+  {
+   "en": "My boyfriend",
+   "dz": "sa7bi / l7abib nta3i",
+   "note": "Relationship"
+  },
+  {
+   "en": "Engagement",
+   "dz": "khotba",
+   "note": "Milestone"
+  },
+  {
+   "en": "Wedding",
+   "dz": "3arss",
+   "note": "Milestone"
+  },
+  {
+   "en": "Honeymoon",
+   "dz": "shahr el 3asal",
+   "note": "Milestone"
+  },
+  {
+   "en": "Divorce",
+   "dz": "tla9",
+   "note": "Relationship"
+  },
+  {
+   "en": "Widow / Widower",
+   "dz": "armala (f) / armil (m)",
+   "note": "Status"
+  },
+  {
+   "en": "Lover",
+   "dz": "3ashek (m) / 3ashka (f)",
+   "note": "Romantic"
+  },
+  {
+   "en": "Kiss",
+   "dz": "busa / bisou",
+   "note": "Affection"
+  },
+  {
+   "en": "Hug",
+   "dz": "d3en / câlin",
+   "note": "Affection"
+  },
+  {
+   "en": "Sweet words",
+   "dz": "klam hali",
+   "note": "Affection"
+  },
+  {
+   "en": "Beautiful eyes",
+   "dz": "3ioun zwinin",
+   "note": "Compliment"
+  },
+  {
+   "en": "Nice smile",
+   "dz": "dbissama mli7a",
+   "note": "Compliment"
+  },
+  {
+   "en": "I'm lucky to have you",
+   "dz": "zahri bik",
+   "note": "Gratitude"
+  },
+  {
+   "en": "You're everything to me",
+   "dz": "nti galbi",
+   "note": "Deep love"
+  },
+  {
+   "en": "Only you",
+   "dz": "ghir ntia",
+   "note": "Exclusivity"
+  }
+ ],
+ "😤 Emotions": [
+  {
+   "en": "Happy (M)",
+   "dz": "far7an",
+   "note": "Positive"
+  },
+  {
+   "en": "Happy (F)",
+   "dz": "far7ana",
+   "note": "Positive"
+  },
+  {
+   "en": "Sad (M)",
+   "dz": "mhazen",
+   "note": "Negative"
+  },
+  {
+   "en": "Angry (M)",
+   "dz": "m3assebs / mghayedh",
+   "note": "Negative"
+  },
+  {
+   "en": "Scared (M)",
+   "dz": "khayef",
+   "note": "Negative"
+  },
+  {
+   "en": "Tired (M)",
+   "dz": "3ayit / tayh",
+   "note": "Negative"
+  },
+  {
+   "en": "Bored (M)",
+   "dz": "zm3an",
+   "note": "Negative"
+  },
+  {
+   "en": "Embarrassed",
+   "dz": "fdalt / hshemt",
+   "note": "Social"
+  },
+  {
+   "en": "Proud (M)",
+   "dz": "fakhir",
+   "note": "Positive"
+  },
+  {
+   "en": "Surprised (M)",
+   "dz": "mhayyer",
+   "note": "Neutral"
+  },
+  {
+   "en": "Confused (M)",
+   "dz": "hayer / mkhbel",
+   "note": "Neutral"
+  },
+  {
+   "en": "Relieved",
+   "dz": "rti7t",
+   "note": "Positive"
+  },
+  {
+   "en": "Anxious / Worried",
+   "dz": "9ale9 / mte9le9",
+   "note": "Negative"
+  },
+  {
+   "en": "Fed up",
+   "dz": "3ayit / mlilt",
+   "note": "Negative"
+  },
+  {
+   "en": "Jealous",
+   "dz": "gherdan / ghiran",
+   "note": "Negative"
+  },
+  {
+   "en": "Lonely (M)",
+   "dz": "we7dan",
+   "note": "Negative"
+  },
+  {
+   "en": "Excited",
+   "dz": "mtet7ammes / wajdi",
+   "note": "Positive"
+  },
+  {
+   "en": "Hopeful",
+   "dz": "3andou amal",
+   "note": "Positive"
+  },
+  {
+   "en": "Desperate",
+   "dz": "meyyes",
+   "note": "Negative"
+  },
+  {
+   "en": "Jealous of",
+   "dz": "gherda / ghedra",
+   "note": "Negative"
+  },
+  {
+   "en": "I feel good",
+   "dz": "rani mli7",
+   "note": "State"
+  },
+  {
+   "en": "I feel bad",
+   "dz": "rani 3iyen",
+   "note": "State"
+  },
+  {
+   "en": "I'm stressed",
+   "dz": "rani 9ale9",
+   "note": "State"
+  },
+  {
+   "en": "My heart hurts",
+   "dz": "galbi y3awwerni",
+   "note": "Pain"
+  },
+  {
+   "en": "I'm in love",
+   "dz": "ana 3ashe9",
+   "note": "Emotion"
+  },
+  {
+   "en": "I'm heartbroken",
+   "dz": "9albi mherres",
+   "note": "Pain"
+  },
+  {
+   "en": "It made me laugh",
+   "dz": "dha7ketni",
+   "note": "Reaction"
+  },
+  {
+   "en": "It made me cry",
+   "dz": "bekkani",
+   "note": "Reaction"
+  },
+  {
+   "en": "I'm lost",
+   "dz": "rani dhaye3",
+   "note": "State"
+  },
+  {
+   "en": "I regret",
+   "dz": "kan khelli / ndmit",
+   "note": "Regret"
+  },
+  {
+   "en": "I'm ashamed",
+   "dz": "3iyit / hshemt",
+   "note": "Social"
+  },
+  {
+   "en": "Calm / peaceful",
+   "dz": "merta7",
+   "note": "State"
+  },
+  {
+   "en": "In a good mood",
+   "dz": "fi jaw mli7",
+   "note": "State"
+  },
+  {
+   "en": "In a bad mood",
+   "dz": "fi jaw 3iyen",
+   "note": "State"
+  },
+  {
+   "en": "Frustrated",
+   "dz": "mte3ssef",
+   "note": "Negative"
+  },
+  {
+   "en": "Grateful",
+   "dz": "shakir",
+   "note": "Positive"
+  },
+  {
+   "en": "Content",
+   "dz": "ra9i",
+   "note": "Positive"
+  },
+  {
+   "en": "Nervous",
+   "dz": "3asabi / m3assebs",
+   "note": "Negative"
+  },
+  {
+   "en": "Disgusted",
+   "dz": "3andou nefra",
+   "note": "Negative"
+  },
+  {
+   "en": "Amused",
+   "dz": "mdhak",
+   "note": "Positive"
+  },
+  {
+   "en": "Nostalgic",
+   "dz": "mtwa7esh",
+   "note": "Emotion"
+  },
+  {
+   "en": "I feel like crying",
+   "dz": "7assit nbeki",
+   "note": "Emotion"
+  },
+  {
+   "en": "Don't make me laugh",
+   "dz": "matdha7niesh",
+   "note": "Expression"
+  },
+  {
+   "en": "What happened?",
+   "dz": "wesh sar?",
+   "note": "Question"
+  },
+  {
+   "en": "Nothing happened",
+   "dz": "ma sar walou",
+   "note": "Response"
+  },
+  {
+   "en": "Don't worry!",
+   "dz": "matet9alle9sh!",
+   "note": "Reassurance"
+  },
+  {
+   "en": "Breathe / calm down",
+   "dz": "t7emma / t9el3a",
+   "note": "Advice"
+  },
+  {
+   "en": "It'll be fine",
+   "dz": "ghadi tkoun mli7a",
+   "note": "Reassurance"
+  },
+  {
+   "en": "God is with you",
+   "dz": "rabbi m3ak",
+   "note": "Comfort"
+  },
+  {
+   "en": "Patience!",
+   "dz": "sber / sbir!",
+   "note": "Advice"
+  }
+ ],
+ "📱 Media & Music": [
+  {
+   "en": "Music",
+   "dz": "mouski9a / musi9a",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Song",
+   "dz": "ughniya / canson",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Singer (M)",
+   "dz": "mghanni",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Singer (F)",
+   "dz": "mghanniya",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Raï music",
+   "dz": "raï",
+   "note": "Algerian genre"
+  },
+  {
+   "en": "Chaabi music",
+   "dz": "sha3bi",
+   "note": "Algerian genre"
+  },
+  {
+   "en": "Kabyle music",
+   "dz": "musi9a 9baylia",
+   "note": "Algerian genre"
+  },
+  {
+   "en": "Staifi (Eastern music)",
+   "dz": "staifi",
+   "note": "Algerian genre"
+  },
+  {
+   "en": "Chaoui",
+   "dz": "chaoui",
+   "note": "Berber Algerian genre"
+  },
+  {
+   "en": "Rap / Hip-hop",
+   "dz": "rap",
+   "note": "Genre"
+  },
+  {
+   "en": "Gnawa",
+   "dz": "gnawa",
+   "note": "Traditional genre"
+  },
+  {
+   "en": "Television",
+   "dz": "ltelza / télévision",
+   "note": "Media"
+  },
+  {
+   "en": "Radio",
+   "dz": "rradio",
+   "note": "Media"
+  },
+  {
+   "en": "Film / Movie",
+   "dz": "filim / film",
+   "note": "Media"
+  },
+  {
+   "en": "News",
+   "dz": "akhbar",
+   "note": "Media"
+  },
+  {
+   "en": "Newspaper",
+   "dz": "jerida / journal",
+   "note": "Media"
+  },
+  {
+   "en": "Internet",
+   "dz": "internet / chibka",
+   "note": "Technology"
+  },
+  {
+   "en": "Phone",
+   "dz": "tilifoune / sla7",
+   "note": "Technology"
+  },
+  {
+   "en": "Computer",
+   "dz": "l'ordi / ordinateur",
+   "note": "Technology"
+  },
+  {
+   "en": "Social media",
+   "dz": "les réseaux / chibka",
+   "note": "Technology"
+  },
+  {
+   "en": "Video",
+   "dz": "vidéo",
+   "note": "Media"
+  },
+  {
+   "en": "Photo / Picture",
+   "dz": "tsawira / photo",
+   "note": "Media"
+  },
+  {
+   "en": "Story (social)",
+   "dz": "stori",
+   "note": "Social media"
+  },
+  {
+   "en": "Like (verb)",
+   "dz": "liker",
+   "note": "Social media"
+  },
+  {
+   "en": "Share (verb)",
+   "dz": "partager / charij",
+   "note": "Social media"
+  },
+  {
+   "en": "Comment",
+   "dz": "commenta / ta3li9",
+   "note": "Social media"
+  },
+  {
+   "en": "Follow",
+   "dz": "suivi / tba3",
+   "note": "Social media"
+  },
+  {
+   "en": "Viral / trending",
+   "dz": "buzzé / tranding",
+   "note": "Social media"
+  },
+  {
+   "en": "TikTok content creator",
+   "dz": "tiktoka",
+   "note": "Social media"
+  },
+  {
+   "en": "Influencer",
+   "dz": "influenceur",
+   "note": "Social media"
+  },
+  {
+   "en": "Hater",
+   "dz": "hater / ghiran",
+   "note": "Social media"
+  },
+  {
+   "en": "Play music",
+   "dz": "dir musi9a",
+   "note": "Action"
+  },
+  {
+   "en": "Dance",
+   "dz": "rqas / danse",
+   "note": "Action"
+  },
+  {
+   "en": "Rhythm / beat",
+   "dz": "rythma / ida3",
+   "note": "Music"
+  },
+  {
+   "en": "Lyrics",
+   "dz": "klam el ughniya",
+   "note": "Music"
+  },
+  {
+   "en": "Concert",
+   "dz": "concert / 7afla",
+   "note": "Event"
+  },
+  {
+   "en": "Theater",
+   "dz": "masra7",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Cinema",
+   "dz": "cinéma / dar el film",
+   "note": "Entertainment"
+  },
+  {
+   "en": "Football (soccer)",
+   "dz": "koura / football",
+   "note": "Sport"
+  },
+  {
+   "en": "Handball",
+   "dz": "hand",
+   "note": "Sport"
+  },
+  {
+   "en": "Match / Game",
+   "dz": "match / law9a",
+   "note": "Sport"
+  },
+  {
+   "en": "Stadium",
+   "dz": "stade / mal3ab",
+   "note": "Sport"
+  },
+  {
+   "en": "Team",
+   "dz": "fri9 / equipe",
+   "note": "Sport"
+  },
+  {
+   "en": "Score",
+   "dz": "score / nati9a",
+   "note": "Sport"
+  },
+  {
+   "en": "Win",
+   "dz": "ghaleb / faz",
+   "note": "Sport"
+  },
+  {
+   "en": "Lose",
+   "dz": "khser",
+   "note": "Sport"
+  },
+  {
+   "en": "Draw",
+   "dz": "tnin tnin / match nul",
+   "note": "Sport"
+  }
+ ],
+ "🏠 Home & Objects": [
+  {
+   "en": "House / Home",
+   "dz": "ddar",
+   "note": "Dwelling"
+  },
+  {
+   "en": "Apartment",
+   "dz": "chqa / appartement",
+   "note": "Dwelling"
+  },
+  {
+   "en": "Room",
+   "dz": "bit / chambre",
+   "note": "Room"
+  },
+  {
+   "en": "Bedroom",
+   "dz": "bit el nom / chambre",
+   "note": "Room"
+  },
+  {
+   "en": "Living room",
+   "dz": "salon / bit el kbir",
+   "note": "Room"
+  },
+  {
+   "en": "Kitchen",
+   "dz": "kouzina / matbakh",
+   "note": "Room"
+  },
+  {
+   "en": "Bathroom",
+   "dz": "hammam / salle de bain",
+   "note": "Room"
+  },
+  {
+   "en": "Toilet",
+   "dz": "wc / twalette",
+   "note": "Room"
+  },
+  {
+   "en": "Door",
+   "dz": "bab",
+   "note": "Structure"
+  },
+  {
+   "en": "Window",
+   "dz": "cherja",
+   "note": "Structure"
+  },
+  {
+   "en": "Wall",
+   "dz": "hit",
+   "note": "Structure"
+  },
+  {
+   "en": "Floor",
+   "dz": "ardhiya",
+   "note": "Structure"
+  },
+  {
+   "en": "Ceiling",
+   "dz": "saqf",
+   "note": "Structure"
+  },
+  {
+   "en": "Stairs",
+   "dz": "drej",
+   "note": "Structure"
+  },
+  {
+   "en": "Balcony",
+   "dz": "balcon / louja",
+   "note": "Structure"
+  },
+  {
+   "en": "Roof",
+   "dz": "sth",
+   "note": "Structure"
+  },
+  {
+   "en": "Garden",
+   "dz": "jardin / bstan",
+   "note": "Outdoor"
+  },
+  {
+   "en": "Table",
+   "dz": "tawla / table",
+   "note": "Furniture"
+  },
+  {
+   "en": "Chair",
+   "dz": "korssi / chaise",
+   "note": "Furniture"
+  },
+  {
+   "en": "Bed",
+   "dz": "frrash / lit",
+   "note": "Furniture"
+  },
+  {
+   "en": "Sofa",
+   "dz": "knabu / canapé",
+   "note": "Furniture"
+  },
+  {
+   "en": "Wardrobe",
+   "dz": "garde-robe / korta",
+   "note": "Furniture"
+  },
+  {
+   "en": "Carpet",
+   "dz": "zerbia",
+   "note": "Decoration"
+  },
+  {
+   "en": "Light / Lamp",
+   "dz": "lmba / lampe",
+   "note": "Utilities"
+  },
+  {
+   "en": "TV",
+   "dz": "ltelza / télé",
+   "note": "Electronics"
+  },
+  {
+   "en": "Fridge",
+   "dz": "frigidaire / brrad",
+   "note": "Appliance"
+  },
+  {
+   "en": "Stove / Oven",
+   "dz": "tanour / cuisinière",
+   "note": "Appliance"
+  },
+  {
+   "en": "Washing machine",
+   "dz": "machine a laver",
+   "note": "Appliance"
+  },
+  {
+   "en": "Air conditioner",
+   "dz": "climatiseur / klima",
+   "note": "Appliance"
+  },
+  {
+   "en": "Fan",
+   "dz": "ventilateur / vanto",
+   "note": "Appliance"
+  },
+  {
+   "en": "Key",
+   "dz": "sarout",
+   "note": "Object"
+  },
+  {
+   "en": "Lock",
+   "dz": "qfel",
+   "note": "Object"
+  },
+  {
+   "en": "Bag",
+   "dz": "shanta / kees",
+   "note": "Object"
+  },
+  {
+   "en": "Suitcase",
+   "dz": "valise / baliza",
+   "note": "Object"
+  },
+  {
+   "en": "Clothes",
+   "dz": "7wayedj",
+   "note": "Objects"
+  },
+  {
+   "en": "Shirt",
+   "dz": "9amis / chemise",
+   "note": "Clothing"
+  },
+  {
+   "en": "Trousers",
+   "dz": "serwal / pantalon",
+   "note": "Clothing"
+  },
+  {
+   "en": "Shoes",
+   "dz": "sba6 / chaussures",
+   "note": "Clothing"
+  },
+  {
+   "en": "Cap / hat",
+   "dz": "bernouss / casquette",
+   "note": "Clothing"
+  },
+  {
+   "en": "Glasses",
+   "dz": "ndhara / lunettes",
+   "note": "Accessory"
+  },
+  {
+   "en": "Watch",
+   "dz": "montri / montre",
+   "note": "Accessory"
+  },
+  {
+   "en": "Wallet",
+   "dz": "ti9i / portefeuille",
+   "note": "Accessory"
+  },
+  {
+   "en": "Money",
+   "dz": "flouss",
+   "note": "Object"
+  },
+  {
+   "en": "Pen",
+   "dz": "stylo / qalam",
+   "note": "Stationery"
+  },
+  {
+   "en": "Book",
+   "dz": "ktab",
+   "note": "Stationery"
+  },
+  {
+   "en": "Notebook",
+   "dz": "daftar / cahier",
+   "note": "Stationery"
+  },
+  {
+   "en": "Phone",
+   "dz": "tilifoune",
+   "note": "Electronics"
+  },
+  {
+   "en": "Charger",
+   "dz": "cartouche / chargeur",
+   "note": "Electronics"
+  },
+  {
+   "en": "Headphones",
+   "dz": "oreillettes / sammaa3a",
+   "note": "Electronics"
+  },
+  {
+   "en": "Car",
+   "dz": "tomobil / voiture",
+   "note": "Vehicle"
+  }
+ ]
+}

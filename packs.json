@@ -1,0 +1,38 @@
+{
+  "superette": {
+    "nom": "Pack Supérette",
+    "prix": "15000",
+    "inclus": ["Caisse enregistreuse", "Gestion stock", "Facturation", "Rapport ventes"],
+    "youtube": "https://youtu.be/VOTRE_VIDEO"
+  },
+  "pharmacie": {
+    "nom": "Pack Pharmacie",
+    "prix": "20000",
+    "inclus": ["Stock médicaments", "Gestion ordonnances", "Caisse", "Alertes péremption"],
+    "youtube": "https://youtu.be/VOTRE_VIDEO"
+  },
+  "boulangerie": {
+    "nom": "Pack Boulangerie",
+    "prix": "12000",
+    "inclus": ["Caisse rapide", "Gestion production", "Stock matières premières", "Rapport journalier"],
+    "youtube": "https://youtu.be/VOTRE_VIDEO"
+  },
+  "quincaillerie": {
+    "nom": "Pack Quincaillerie",
+    "prix": "18000",
+    "inclus": ["Stock articles", "Facturation", "Gestion fournisseurs", "Code-barres"],
+    "youtube": "https://youtu.be/VOTRE_VIDEO"
+  },
+  "industrie": {
+    "nom": "Pack Industriel",
+    "prix": "35000",
+    "inclus": ["Gestion production", "Ordres de fabrication", "Stock matières", "Nomenclatures", "Rapports"],
+    "youtube": "https://youtu.be/VOTRE_VIDEO"
+  },
+  "restaurant": {
+    "nom": "Pack Restaurant / Café",
+    "prix": "14000",
+    "inclus": ["Caisse tables", "Gestion menu", "Stock cuisine", "Rapport journalier"],
+    "youtube": "https://youtu.be/VOTRE_VIDEO"
+  }
+}

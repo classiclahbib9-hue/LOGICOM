@@ -1,8 +1,9 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const path = require('path')
 const fs = require('fs')
-const { initDB, registerIpcHandlers } = require('./db')
+const { initDB, registerIpcHandlers, getDB } = require('./db')
 const { initTelegram } = require('./telegram')
+const { startApiServer, generateKey, loadKeys, saveKeys } = require('./api-server')
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
@@ -267,6 +268,91 @@ ipcMain.handle('groq-chat', async (event, { apiKey, messages }) => {
   });
 });
 
+ipcMain.handle('openai-chat', async (_event, { apiKey, messages, model }) => {
+  console.log('[OpenAIChat] IPC received, model:', model, 'key starts:', apiKey && apiKey.substring(0, 7));
+  const https = require('https');
+  const body = JSON.stringify({
+    model: model || 'gpt-4.5-preview', // GPT-4.5 (latest as of 2025)
+    max_tokens: 500,
+    messages
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.openai.com',
+      path: '/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (res.statusCode !== 200) {
+            reject(new Error(json.error?.message || `HTTP ${res.statusCode}: ${data}`));
+          } else {
+            resolve(json.choices?.[0]?.message?.content || '...');
+          }
+        } catch(e) { reject(new Error('Parse error: ' + data)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+});
+
+ipcMain.handle('claude-chat', async (_event, { apiKey, messages }) => {
+  console.log('[ClaudeChat] IPC received, key starts:', apiKey && apiKey.substring(0, 10));
+  const https = require('https');
+
+  // Convert messages: extract system prompt, keep user/assistant turns
+  const systemMsg = messages.find(m => m.role === 'system');
+  const chatMessages = messages.filter(m => m.role !== 'system');
+
+  const body = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 500,
+    system: systemMsg ? systemMsg.content : undefined,
+    messages: chatMessages
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.anthropic.com',
+      path: '/v1/messages',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (res.statusCode !== 200) {
+            reject(new Error(json.error?.message || `HTTP ${res.statusCode}: ${data}`));
+          } else {
+            resolve(json.content?.[0]?.text || '...');
+          }
+        } catch(e) { reject(new Error('Parse error: ' + data)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+});
+
 ipcMain.handle('update-telegram-config', (event, data) => {
   const { updateConfig } = require('./telegram');
   return updateConfig(data);
@@ -277,11 +363,36 @@ ipcMain.handle('save-groq-key', (event, groqApiKey) => {
   fs.writeFileSync(configPath, JSON.stringify({ groqApiKey }));
 });
 
+// ── LOGICOM Public API — key management IPC ──────────────────────────────────
+ipcMain.handle('api-keys-list', () => loadKeys());
+
+ipcMain.handle('api-keys-create', (_e, label) => {
+  const keys = loadKeys();
+  const entry = { key: generateKey(), label: label || 'Clé sans nom', active: true, created: new Date().toISOString() };
+  keys.push(entry);
+  saveKeys(keys);
+  return entry;
+});
+
+ipcMain.handle('api-keys-revoke', (_e, key) => {
+  const keys = loadKeys().map(k => k.key === key ? { ...k, active: false } : k);
+  saveKeys(keys);
+  return true;
+});
+
+ipcMain.handle('api-keys-delete', (_e, key) => {
+  saveKeys(loadKeys().filter(k => k.key !== key));
+  return true;
+});
+
+ipcMain.handle('api-server-port', () => 3737);
+
 app.whenReady().then(async () => {
   console.log('App ready, initializing DB...');
   await initDB()
   console.log('DB Initialized!');
   registerIpcHandlers()
+  startApiServer(getDB())
   initTelegram()
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })

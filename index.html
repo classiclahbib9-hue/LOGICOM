@@ -161,7 +161,7 @@
     .logo-text {
       display: flex;
       align-items: center;
-      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       z-index: 1;
       white-space: nowrap;
@@ -185,7 +185,7 @@
       width: 130px;
       height: 130px;
       border-radius: 50%;
-      transform: rotate(360deg) scale(0.95);
+      transform: scale(0.95);
       box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(232, 160, 32, 0.2);
     }
 
@@ -195,7 +195,8 @@
 
     header h1:hover .logo-text {
       opacity: 0;
-      transform: scale(0.3) blur(10px);
+      transform: scale(0.3);
+      filter: blur(6px);
     }
 
     header h1:hover .logo-img {
@@ -2317,6 +2318,46 @@
         </div>
       </div>
 
+      <!-- ══ LOGICOM PUBLIC API KEYS ══ -->
+      <div style="background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <h4 style="font-family:'Syne'; font-size:14px; color:var(--accent); margin:0;">🔑 Clés API LOGICOM</h4>
+          <span id="apiServerBadge" style="font-size:11px; background:rgba(0,200,100,0.15); color:#00c864; border:1px solid rgba(0,200,100,0.3); padding:2px 10px; border-radius:20px;">● Serveur actif — port 3737</span>
+          <div style="flex:1"></div>
+          <input type="text" id="newKeyLabel" placeholder="Nom de la clé (ex: Ahmed)" style="padding:7px 12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:13px; width:180px;">
+          <button class="btn btn-primary btn-sm" onclick="createApiKey()">＋ Générer une clé</button>
+        </div>
+        <p style="font-size:11px; color:var(--muted); margin-bottom:14px;">
+          Partagez une clé avec quelqu'un pour lui donner accès en lecture à vos données via <code style="background:var(--card); padding:2px 6px; border-radius:4px;">http://[votre-ip]:3737/api/clients</code>
+        </p>
+        <table style="width:100%; border-collapse:collapse; font-size:13px;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="text-align:left; padding:8px 6px; color:var(--muted); font-weight:600;">Nom</th>
+              <th style="text-align:left; padding:8px 6px; color:var(--muted); font-weight:600;">Clé API</th>
+              <th style="text-align:left; padding:8px 6px; color:var(--muted); font-weight:600;">Créée le</th>
+              <th style="text-align:left; padding:8px 6px; color:var(--muted); font-weight:600;">Statut</th>
+              <th style="padding:8px 6px;"></th>
+            </tr>
+          </thead>
+          <tbody id="apiKeysList"></tbody>
+        </table>
+        <div id="apiKeysEmpty" style="text-align:center; color:var(--muted); font-size:13px; padding:20px; display:none;">Aucune clé générée. Créez une clé pour partager l'accès.</div>
+
+        <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);">
+          <p style="font-size:11px; color:var(--muted); margin-bottom:6px;"><b>Endpoints disponibles :</b></p>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; font-size:11px; font-family:monospace;">
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/clients</span>
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/options</span>
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/activities</span>
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/materials</span>
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/stats</span>
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/ping</span>
+          </div>
+          <p style="font-size:11px; color:var(--muted); margin-top:8px;">Utiliser le header : <code style="background:var(--card); padding:2px 6px; border-radius:4px;">Authorization: Bearer [votre-clé]</code></p>
+        </div>
+      </div>
+
       <div class="table-container">
         <table style="margin-bottom: 20px;">
           <thead>
@@ -2365,12 +2406,51 @@
 
       <!-- API Key Config -->
       <div id="voiceSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:16px; border-radius:12px; margin-bottom:16px;">
-        <h4 style="margin-bottom:12px; font-family:'Syne'; font-size:13px; color:var(--accent)">🔑 Configuration Groq API (Gratuit)</h4>
-        <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Créez un compte gratuit sur <b>console.groq.com</b> → API Keys → Create API Key</p>
-        <div class="field">
-          <label>Groq API Key (gratuit)</label>
-          <input type="password" id="claudeApiKey" placeholder="gsk_..." style="font-family:monospace;">
+        <h4 style="margin-bottom:12px; font-family:'Syne'; font-size:13px; color:var(--accent)">🔑 Configuration API</h4>
+
+        <!-- Provider selector -->
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button id="btnProviderGroq" class="btn btn-primary btn-sm" onclick="setAiProvider('groq')" style="flex:1;">🦙 Groq (Gratuit)</button>
+          <button id="btnProviderClaude" class="btn btn-ghost btn-sm" onclick="setAiProvider('claude')" style="flex:1; border:1px solid var(--border);">🤖 Claude</button>
+          <button id="btnProviderOpenai" class="btn btn-ghost btn-sm" onclick="setAiProvider('openai')" style="flex:1; border:1px solid var(--border);">✨ ChatGPT</button>
         </div>
+
+        <!-- Groq section -->
+        <div id="voiceGroqSection">
+          <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Créez un compte gratuit sur <b>console.groq.com</b> → API Keys → Create API Key</p>
+          <div class="field">
+            <label>Groq API Key (gratuit)</label>
+            <input type="password" id="claudeApiKey" placeholder="gsk_..." style="font-family:monospace;">
+          </div>
+        </div>
+
+        <!-- Claude section -->
+        <div id="voiceClaudeSection" style="display:none;">
+          <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Obtenez votre clé sur <b>console.anthropic.com</b> → API Keys</p>
+          <div class="field">
+            <label>Claude API Key (Anthropic)</label>
+            <input type="password" id="claudeAnthropicKey" placeholder="sk-ant-..." style="font-family:monospace;">
+          </div>
+        </div>
+
+        <!-- OpenAI / ChatGPT section -->
+        <div id="voiceOpenaiSection" style="display:none;">
+          <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Obtenez votre clé sur <b>platform.openai.com</b> → API Keys</p>
+          <div class="field">
+            <label>OpenAI API Key (ChatGPT)</label>
+            <input type="password" id="openaiApiKey" placeholder="sk-..." style="font-family:monospace;">
+          </div>
+          <div class="field">
+            <label>Modèle</label>
+            <select id="openaiModel" style="font-family:monospace;">
+              <option value="gpt-4.5-preview">GPT-4.5 Preview</option>
+              <option value="chatgpt-4o-latest">ChatGPT-4o Latest</option>
+              <option value="gpt-4o">GPT-4o</option>
+              <option value="gpt-4o-mini">GPT-4o Mini (rapide)</option>
+            </select>
+          </div>
+        </div>
+
         <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
           <button class="btn btn-primary btn-sm" onclick="saveVoiceSettings()">💾 Sauvegarder</button>
         </div>
@@ -2860,7 +2940,7 @@
         }, 50);
       }
       if (i === 5) renderMaterials();
-      if (i === 6) renderReminders();
+      if (i === 6) { renderReminders(); loadApiKeys(); }
       if (i === 7) initVoiceChat();
     }
 
@@ -4559,6 +4639,67 @@
       box.style.display = box.style.display === 'none' ? 'block' : 'none';
     }
 
+    // ── LOGICOM API KEY MANAGEMENT ────────────────────────────────────────────
+    async function loadApiKeys() {
+      const keys = await ipcRenderer.invoke('api-keys-list');
+      const tbody = document.getElementById('apiKeysList');
+      const empty = document.getElementById('apiKeysEmpty');
+      if (!keys || keys.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      tbody.innerHTML = keys.map(k => `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 6px; font-weight:600;">${k.label}</td>
+          <td style="padding:10px 6px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <code style="font-size:11px; background:var(--card); padding:4px 8px; border-radius:6px; border:1px solid var(--border); letter-spacing:0.5px; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${k.key}</code>
+              <button onclick="copyApiKey('${k.key}')" style="background:none; border:none; cursor:pointer; font-size:14px;" title="Copier">📋</button>
+            </div>
+          </td>
+          <td style="padding:10px 6px; color:var(--muted); font-size:12px;">${new Date(k.created).toLocaleDateString('fr-DZ')}</td>
+          <td style="padding:10px 6px;">
+            <span style="font-size:11px; padding:2px 10px; border-radius:20px; ${k.active ? 'background:rgba(0,200,100,0.15); color:#00c864; border:1px solid rgba(0,200,100,0.3);' : 'background:rgba(255,99,71,0.1); color:var(--red); border:1px solid rgba(255,99,71,0.2);'}">
+              ${k.active ? '● Active' : '✕ Révoquée'}
+            </span>
+          </td>
+          <td style="padding:10px 6px; text-align:right;">
+            <div style="display:flex; gap:6px; justify-content:flex-end;">
+              ${k.active ? `<button class="btn btn-ghost btn-sm" onclick="revokeApiKey('${k.key}')" style="font-size:11px; color:var(--red);">Révoquer</button>` : ''}
+              <button class="btn btn-ghost btn-sm" onclick="deleteApiKey('${k.key}')" style="font-size:11px;">🗑</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function createApiKey() {
+      const label = document.getElementById('newKeyLabel').value.trim() || 'Clé sans nom';
+      const entry = await ipcRenderer.invoke('api-keys-create', label);
+      document.getElementById('newKeyLabel').value = '';
+      await loadApiKeys();
+      toast(`✅ Clé créée pour "${entry.label}"`);
+    }
+
+    async function revokeApiKey(key) {
+      await ipcRenderer.invoke('api-keys-revoke', key);
+      await loadApiKeys();
+      toast('🔒 Clé révoquée');
+    }
+
+    async function deleteApiKey(key) {
+      await ipcRenderer.invoke('api-keys-delete', key);
+      await loadApiKeys();
+      toast('🗑 Clé supprimée');
+    }
+
+    function copyApiKey(key) {
+      navigator.clipboard.writeText(key);
+      toast('📋 Clé copiée !');
+    }
+
     function saveApiSettings() {
       const endpoint = document.getElementById('apiEndpoint').value;
       const key = document.getElementById('apiKey').value;
@@ -4877,21 +5018,43 @@
     let voiceRecognition = null;
     let voiceIsRecording = false;
     let voiceChatInitialized = false;
+    let aiProvider = localStorage.getItem('ai_provider') || 'groq'; // 'groq' | 'claude'
 
-    const VOICE_SYSTEM_PROMPT = `أنت مساعد ذكي يفهم ويتكلم الدارجة المغربية والفرنسية والعربية الفصحى.
+    function setAiProvider(p) {
+      aiProvider = p;
+      ['groq', 'claude', 'openai'].forEach(id => {
+        const btn = document.getElementById('btnProvider' + id.charAt(0).toUpperCase() + id.slice(1));
+        if (!btn) return;
+        btn.className = 'btn btn-sm ' + (p === id ? 'btn-primary' : 'btn-ghost');
+        btn.style.border = p === id ? '' : '1px solid var(--border)';
+      });
+      document.getElementById('voiceGroqSection').style.display = p === 'groq' ? 'block' : 'none';
+      document.getElementById('voiceClaudeSection').style.display = p === 'claude' ? 'block' : 'none';
+      document.getElementById('voiceOpenaiSection').style.display = p === 'openai' ? 'block' : 'none';
+    }
+
+    const VOICE_SYSTEM_PROMPT = `أنت مساعد ذكي تتكلم الدارجة الجزائرية فقط.
 تعمل لدى شركة LOGICOM لبيع البرمجيات في الجزائر.
-جاوب دايما بالدارجة المغربية أو الجزائرية حسب لغة المستخدم.
-إذا سألك المستخدم بالفرنسية، جاوبه بالفرنسية.
-كون مختصر، واضح، ومفيد. لا تكتب إجابات طويلة بلا داعي.
-يمكنك مساعدة في: أسعار البرامج، معلومات العملاء، الفواتير، والاستفسارات العامة.`;
+IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — ما تستعملش العربية الفصحى أبدا، حتى كلمة واحدة.
+الدارجة الجزائرية: "واش راك؟ كيفاش نقدر نعاونك؟ بصح، مزيان، روح، جي، بلا ما..."
+إذا كلمك المستخدم بالفرنسية، جاوبه بالفرنسية العامية مع كلمات دارجة.
+كون مختصر، واضح، وطبيعي. ما تكتبش ردود طويلة.
+يمكنك تعاون في: أسعار البرامج، معلومات العملاء، الفواتير، والأسئلة العامة.`;
 
     function initVoiceChat() {
       if (voiceChatInitialized) return;
       voiceChatInitialized = true;
 
-      // Load saved API key
+      // Load saved API keys and provider
       const savedKey = localStorage.getItem('claude_api_key') || '';
       if (savedKey) document.getElementById('claudeApiKey').value = savedKey;
+      const savedClaudeKey = localStorage.getItem('anthropic_api_key') || '';
+      if (savedClaudeKey) document.getElementById('claudeAnthropicKey').value = savedClaudeKey;
+      const savedOpenaiKey = localStorage.getItem('openai_api_key') || '';
+      if (savedOpenaiKey) document.getElementById('openaiApiKey').value = savedOpenaiKey;
+      const savedOpenaiModel = localStorage.getItem('openai_model') || 'gpt-4.5-preview';
+      document.getElementById('openaiModel').value = savedOpenaiModel;
+      setAiProvider(aiProvider);
 
       // Setup Web Speech API recognition
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -4904,7 +5067,7 @@
       voiceRecognition = new SpeechRecognition();
       voiceRecognition.continuous = false;
       voiceRecognition.interimResults = true;
-      voiceRecognition.lang = 'ar-MA'; // Moroccan Arabic / Darija
+      voiceRecognition.lang = 'ar-DZ'; // Algerian Arabic / Darija
 
       voiceRecognition.onstart = () => {
         setVoiceStatus('🔴 كنسمع... / Écoute en cours...');
@@ -4938,8 +5101,14 @@
     }
 
     function saveVoiceSettings() {
-      const key = document.getElementById('claudeApiKey').value.trim();
-      if (key) localStorage.setItem('claude_api_key', key);
+      const groqKey = document.getElementById('claudeApiKey').value.trim();
+      if (groqKey) localStorage.setItem('claude_api_key', groqKey);
+      const claudeKey = document.getElementById('claudeAnthropicKey').value.trim();
+      if (claudeKey) localStorage.setItem('anthropic_api_key', claudeKey);
+      const openaiKey = document.getElementById('openaiApiKey').value.trim();
+      if (openaiKey) localStorage.setItem('openai_api_key', openaiKey);
+      localStorage.setItem('openai_model', document.getElementById('openaiModel').value);
+      localStorage.setItem('ai_provider', aiProvider);
       document.getElementById('voiceSettingsBox').style.display = 'none';
       toast('✅ Configuration sauvegardée !');
     }
@@ -4951,7 +5120,7 @@
       } else {
         if (!voiceRecognition) { initVoiceChat(); }
         try {
-          voiceRecognition.lang = 'ar-MA';
+          voiceRecognition.lang = 'ar-DZ';
           voiceRecognition.start();
           voiceIsRecording = true;
         } catch(e) {
@@ -4992,7 +5161,7 @@
       const voices = window.speechSynthesis.getVoices();
       const arVoice = voices.find(v => v.lang.startsWith('ar')) || null;
       if (arVoice) utt.voice = arVoice;
-      utt.lang = 'ar-MA';
+      utt.lang = 'ar-DZ';
       utt.rate = 0.9;
       window.speechSynthesis.speak(utt);
     }
@@ -5006,10 +5175,19 @@
       appendVoiceMessage(text, 'user');
       voiceChatHistory.push({ role: 'user', content: text });
 
-      const apiKey = localStorage.getItem('claude_api_key') || document.getElementById('claudeApiKey').value.trim();
+      const provider = localStorage.getItem('ai_provider') || aiProvider || 'groq';
+      let apiKey = '';
+      if (provider === 'claude') apiKey = localStorage.getItem('anthropic_api_key') || document.getElementById('claudeAnthropicKey').value.trim();
+      else if (provider === 'openai') apiKey = localStorage.getItem('openai_api_key') || document.getElementById('openaiApiKey').value.trim();
+      else apiKey = localStorage.getItem('claude_api_key') || document.getElementById('claudeApiKey').value.trim();
+
       if (!apiKey) {
-        const errMsg = '⚙️ المرجو إضافة Groq API Key في الإعدادات (مجاني) / Veuillez configurer votre Groq API Key (gratuit sur console.groq.com)';
-        appendVoiceMessage(errMsg, 'assistant');
+        const errMsgs = {
+          claude: '⚙️ Veuillez configurer votre Claude API Key (console.anthropic.com)',
+          openai: '⚙️ Veuillez configurer votre OpenAI API Key (platform.openai.com)',
+          groq: '⚙️ Veuillez configurer votre Groq API Key (gratuit sur console.groq.com)'
+        };
+        appendVoiceMessage(errMsgs[provider] || errMsgs.groq, 'assistant');
         document.getElementById('voiceSettingsBox').style.display = 'block';
         return;
       }
@@ -5019,13 +5197,15 @@
       setVoiceStatus('🤔 كيفكّر... / Réflexion...');
 
       try {
-        console.log('[GroqChat] Sending, apiKey starts with:', apiKey.substring(0, 8));
+        const ipcChannel = provider === 'claude' ? 'claude-chat' : provider === 'openai' ? 'openai-chat' : 'groq-chat';
+        const openaiModel = localStorage.getItem('openai_model') || 'gpt-4.5-preview';
+        console.log(`[${provider}Chat] Sending, apiKey starts with:`, apiKey.substring(0, 10));
         const messages = [
           { role: 'system', content: VOICE_SYSTEM_PROMPT },
           ...voiceChatHistory.slice(-10)
         ];
-        const reply = await ipcRenderer.invoke('groq-chat', { apiKey, messages });
-        console.log('[GroqChat] Reply:', reply);
+        const reply = await ipcRenderer.invoke(ipcChannel, { apiKey, messages, model: openaiModel });
+        console.log(`[${provider}Chat] Reply:`, reply);
 
         typingDiv.textContent = reply;
         voiceChatHistory.push({ role: 'assistant', content: reply });
@@ -5033,7 +5213,7 @@
         speakText(reply);
 
       } catch (e) {
-        console.error('[GroqChat] Error:', e);
+        console.error(`[${provider}Chat] Error:`, e);
         const errText = '❌ Erreur: ' + (e.message || String(e));
         typingDiv.textContent = errText;
         typingDiv.style.color = 'var(--red)';
