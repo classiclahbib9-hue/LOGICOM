@@ -1,8 +1,9 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const path = require('path')
 const fs = require('fs')
-const { initDB, registerIpcHandlers, getDB } = require('./db')
+const { initDB, registerIpcHandlers, getDB, getSoldClients, savePaymentPromise, getDuePromises } = require('./db')
 const { initTelegram } = require('./telegram')
+const { initWhatsApp } = require('./whatsapp')
 const { startApiServer, generateKey, loadKeys, saveKeys } = require('./api-server')
 
 function createWindow() {
@@ -139,6 +140,53 @@ ipcMain.handle('generate-pdf', async (event, { html, filename }) => {
   }
   win.close(); 
   return null;
+});
+
+// ── BULK SEND TO SOLD CLIENTS ────────────────────────────────────────────────
+ipcMain.handle('save-payment-promise', async (_e, { clientId, promisedDate, promisedAmount, promisedMethod, promiseNote }) => {
+  return savePaymentPromise(clientId, { promisedDate, promisedAmount, promisedMethod, promiseNote });
+});
+
+ipcMain.handle('get-due-promises', async () => {
+  return getDuePromises();
+});
+
+ipcMain.handle('get-sold-clients', async (event, { filter }) => {
+  return getSoldClients(filter || 'all');
+});
+
+ipcMain.handle('bulk-send-sold-message', async (event, { filter, template, channel }) => {
+  const { sendWhatsApp, isWhatsAppReady } = require('./whatsapp');
+  const { getBot } = require('./telegram');
+  const tgBot = getBot();
+
+  const clients = getSoldClients(filter || 'all');
+  let sentWA = 0, sentTG = 0, failedWA = 0, failedTG = 0;
+
+  for (const c of clients) {
+    const msg = template
+      .replace(/\{name\}/g, c.name || '')
+      .replace(/\{phone\}/g, c.phone || '')
+      .replace(/\{brand\}/g, c.brand || '')
+      .replace(/\{pack\}/g, c.brand || '')
+      .replace(/\{balance\}/g, Math.max(0, (c.negotiatedPrice || 0) - (c.paidAmount || 0)));
+
+    // WhatsApp
+    if ((channel === 'wa' || channel === 'both') && isWhatsAppReady() && c.phone) {
+      try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 500)); }
+      catch(e) { failedWA++; }
+    }
+
+    // Telegram
+    if ((channel === 'tg' || channel === 'both') && tgBot && c.telegramChatId) {
+      try { await tgBot.sendMessage(c.telegramChatId, msg); sentTG++; }
+      catch(e) { failedTG++; }
+    }
+
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  return { total: clients.length, sentWA, sentTG, failedWA, failedTG };
 });
 
 ipcMain.handle('open-whatsapp', async (event, url) => {
@@ -387,6 +435,42 @@ ipcMain.handle('api-keys-delete', (_e, key) => {
 
 ipcMain.handle('api-server-port', () => 3737);
 
+// ── DAILY PROMISE ALERT ─────────────────────────────────────────────────────
+function scheduleDuePromiseAlerts() {
+  async function checkAndNotify() {
+    const due = getDuePromises();
+    if (!due.length) return;
+
+    const { getBot } = require('./telegram');
+    const bot = getBot();
+
+    // Build summary for admin Telegram (read from config)
+    let adminChatId = null;
+    try {
+      const cfgPath = require('path').join(app.getPath('userData'), 'telegram-config.json');
+      const cfg = JSON.parse(require('fs').readFileSync(cfgPath, 'utf8'));
+      adminChatId = cfg.adminChatId || null;
+    } catch(e) {}
+
+    const lines = due.map(c =>
+      `• *${c.name}* (${c.phone}) — ${c.promisedAmount ? c.promisedAmount.toLocaleString('fr-DZ') + ' DA' : 'montant non précisé'} via *${c.promisedMethod || '?'}*${c.promiseNote ? `\n  _"${c.promiseNote}"_` : ''}`
+    ).join('\n');
+
+    const alertMsg =
+      `🔔 *${due.length} promesse(s) de paiement arrivée(s) à échéance aujourd'hui !*\n\n${lines}\n\nRelancez-les maintenant.`;
+
+    if (bot && adminChatId) {
+      try { await bot.sendMessage(adminChatId, alertMsg, { parse_mode: 'Markdown' }); } catch(e) {}
+    }
+  }
+
+  // Run once at startup (in case app was closed yesterday)
+  setTimeout(checkAndNotify, 10000);
+
+  // Then every 24 hours
+  setInterval(checkAndNotify, 24 * 60 * 60 * 1000);
+}
+
 app.whenReady().then(async () => {
   console.log('App ready, initializing DB...');
   await initDB()
@@ -394,6 +478,26 @@ app.whenReady().then(async () => {
   registerIpcHandlers()
   startApiServer(getDB())
   initTelegram()
+  initWhatsApp(null, async ({ channel, clientName, clientPhone, parsed, rawMessage }) => {
+    // Notify admin on Telegram when WhatsApp auto-saves a promise
+    const { getBot } = require('./telegram');
+    const bot = getBot();
+    const cfg = (() => {
+      try { return JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'telegram-config.json'), 'utf8')); }
+      catch(e) { return {}; }
+    })();
+    const adminChatId = cfg.adminChatId;
+    if (!bot || !adminChatId) return;
+    const alert =
+      `🔔 *Promesse de paiement (${channel}) enregistrée auto !*\n\n` +
+      `👤 Client : *${clientName}* (${clientPhone})\n` +
+      `📅 Date : *${parsed.promisedDate || 'non précisée'}*\n` +
+      `💰 Montant : *${parsed.promisedAmount ? parsed.promisedAmount.toLocaleString('fr-DZ') + ' DA' : 'non précisé'}*\n` +
+      `💳 Mode : *${parsed.promisedMethod || 'non précisé'}*\n` +
+      `💬 Ce qu'il a dit : _"${parsed.promiseNote || rawMessage}"_`;
+    try { await bot.sendMessage(adminChatId, alert, { parse_mode: 'Markdown' }); } catch(e) {}
+  })
+  scheduleDuePromiseAlerts()
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })

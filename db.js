@@ -79,6 +79,11 @@ async function initDB() {
         try { db.run("ALTER TABLE clients ADD COLUMN paidAmount INTEGER DEFAULT 0"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN paymentDeadline TEXT"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN autoReminder INTEGER DEFAULT 0"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN telegramChatId TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN promisedDate TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN promisedAmount INTEGER DEFAULT 0"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN promisedMethod TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN promiseNote TEXT"); } catch(e){}
 
         db.run(`
           CREATE TABLE IF NOT EXISTS materials (
@@ -221,12 +226,12 @@ async function addClientManually(clientData) {
             0,
             '',
             15,
-            'Nouveau',
+            clientData.category || 'Nouveau',
             clientData.addedBy || ''
         ]);
         stmt.free();
         saveToFile();
-        
+
         console.log('Client saved via Telegram bot:', clientData.name);
         
         // Show Native Notification
@@ -246,6 +251,100 @@ async function addClientManually(clientData) {
     }
 }
 
+// Save a payment promise for a client
+function savePaymentPromise(clientId, { promisedDate, promisedAmount, promisedMethod, promiseNote }) {
+    try {
+        db.run(
+            `UPDATE clients SET promisedDate=?, promisedAmount=?, promisedMethod=?, promiseNote=? WHERE id=?`,
+            [promisedDate || '', promisedAmount || 0, promisedMethod || '', promiseNote || '', clientId]
+        );
+        saveToFile();
+        return true;
+    } catch(e) { return false; }
+}
+
+// Returns clients with a promisedDate today or overdue and still unpaid
+function getDuePromises() {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = db.exec(`
+            SELECT id, name, phone, brand, promisedDate, promisedAmount, promisedMethod, promiseNote,
+                   negotiatedPrice, paidAmount, telegramChatId
+            FROM clients
+            WHERE promisedDate IS NOT NULL AND promisedDate != ''
+              AND promisedDate <= '${today}'
+              AND paymentStatus != 'Régler'
+            ORDER BY promisedDate ASC
+        `);
+        if (!res.length) return [];
+        const cols = res[0].columns;
+        return res[0].values.map(row => {
+            const obj = {};
+            cols.forEach((c, i) => obj[c] = row[i]);
+            return obj;
+        });
+    } catch(e) { return []; }
+}
+
 function getDB() { return db; }
 
-module.exports = { initDB, registerIpcHandlers, addClientManually, getDB };
+// Returns sold clients filtered by paymentStatus
+// filter: 'all' | 'Régler' | 'Verser'
+function getSoldClients(filter) {
+    try {
+        let where = `paymentStatus IN ('Régler','Verser')`;
+        if (filter === 'Régler') where = `paymentStatus = 'Régler'`;
+        else if (filter === 'Verser') where = `paymentStatus = 'Verser'`;
+        const res = db.exec(`
+            SELECT id, name, phone, brand, paymentStatus, paidAmount, negotiatedPrice, telegramChatId, created_at
+            FROM clients WHERE ${where} ORDER BY created_at DESC
+        `);
+        if (!res.length) return [];
+        const cols = res[0].columns;
+        return res[0].values.map(row => {
+            const obj = {};
+            cols.forEach((c, i) => obj[c] = row[i]);
+            return obj;
+        });
+    } catch(e) { return []; }
+}
+
+// Returns unpaid clients whose paymentDeadline (or created_at) is older than `days` days ago
+function getUnpaidClientsByPeriod(days) {
+    try {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffStr = cutoff.toISOString().split('T')[0]; // YYYY-MM-DD
+
+        const res = db.exec(`
+            SELECT id, name, phone, brand, note, paymentDeadline, created_at, paidAmount, negotiatedPrice, telegramChatId
+            FROM clients
+            WHERE paymentStatus = 'Non'
+              AND (
+                (paymentDeadline IS NOT NULL AND paymentDeadline != '' AND paymentDeadline <= '${cutoffStr}')
+                OR
+                (( paymentDeadline IS NULL OR paymentDeadline = '') AND created_at <= '${cutoffStr}')
+              )
+            ORDER BY paymentDeadline ASC, created_at ASC
+        `);
+        if (!res.length) return [];
+        const cols = res[0].columns;
+        return res[0].values.map(row => {
+            const obj = {};
+            cols.forEach((c, i) => obj[c] = row[i]);
+            return obj;
+        });
+    } catch(e) {
+        return [];
+    }
+}
+
+// Save telegramChatId for a client matched by phone
+function linkClientTelegram(phone, chatId) {
+    try {
+        db.run(`UPDATE clients SET telegramChatId = ? WHERE phone = ?`, [String(chatId), phone]);
+        saveToFile();
+    } catch(e) {}
+}
+
+module.exports = { initDB, registerIpcHandlers, addClientManually, getDB, getUnpaidClientsByPeriod, linkClientTelegram, getSoldClients, savePaymentPromise, getDuePromises };

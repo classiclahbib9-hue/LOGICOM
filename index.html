@@ -2318,6 +2318,39 @@
         </div>
       </div>
 
+      <!-- ══ MESSAGE AUX CLIENTS VENDUS ══ -->
+      <div style="background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+          <h4 style="font-family:'Syne'; font-size:14px; color:var(--accent); margin:0;">📢 Message aux Clients Vendus</h4>
+          <select id="soldFilter" onchange="updateSoldCount()" style="padding:6px 12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:13px;">
+            <option value="all">Tous (Réglés + Versement)</option>
+            <option value="Régler">Réglés uniquement</option>
+            <option value="Verser">Versement uniquement</option>
+          </select>
+          <span id="soldCountBadge" style="font-size:12px; background:rgba(0,200,100,0.12); color:#00c864; border:1px solid rgba(0,200,100,0.3); padding:3px 12px; border-radius:20px; font-weight:600;">— clients</span>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:6px;">
+            Message personnalisé — variables : <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{name}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{phone}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{brand}</code>
+          </label>
+          <textarea id="soldMsgTemplate" rows="5" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:12px; border-radius:8px; font-family:'DM Sans'; font-size:13px; resize:vertical; box-sizing:border-box;">Salam alikoum {name} ! 👋
+
+Merci d'avoir choisi LOGICOM 🎉
+Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous accompagner.
+
+📞 N'hésitez pas à nous contacter pour toute question !
+— Équipe LOGICOM 🇩🇿</textarea>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" style="border-color:#25D366; color:#25D366;" onclick="bulkSendSold('wa')">💬 Envoyer WhatsApp</button>
+          <button class="btn btn-ghost btn-sm" style="border-color:#229ED9; color:#229ED9;" onclick="bulkSendSold('tg')">📱 Envoyer Telegram</button>
+          <button class="btn btn-primary btn-sm" onclick="bulkSendSold('both')">📤 Envoyer les deux</button>
+          <span id="soldSendStatus" style="font-size:12px; color:var(--muted);"></span>
+        </div>
+      </div>
+
       <!-- ══ LOGICOM PUBLIC API KEYS ══ -->
       <div style="background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
@@ -2376,10 +2409,31 @@
           <tbody id="trialReminderBody"></tbody>
         </table>
 
+        <!-- Promesses à suivre -->
+        <div id="promisesSection" style="margin-bottom:20px; display:none;">
+          <div style="background:rgba(255,165,0,0.08); border:1px solid rgba(255,165,0,0.3); border-radius:12px; padding:16px;">
+            <h4 style="font-family:'Syne'; font-size:13px; color:orange; margin:0 0 12px;">⏰ Promesses de paiement arrivées à échéance</h4>
+            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+              <thead>
+                <tr style="border-bottom:1px solid rgba(255,165,0,0.2);">
+                  <th style="text-align:left; padding:6px; color:var(--muted);">Client</th>
+                  <th style="text-align:left; padding:6px; color:var(--muted);">Téléphone</th>
+                  <th style="text-align:left; padding:6px; color:var(--muted);">Date promise</th>
+                  <th style="text-align:left; padding:6px; color:var(--muted);">Montant</th>
+                  <th style="text-align:left; padding:6px; color:var(--muted);">Comment</th>
+                  <th style="text-align:left; padding:6px; color:var(--muted);">Note</th>
+                  <th style="padding:6px;"></th>
+                </tr>
+              </thead>
+              <tbody id="duePromisesBody"></tbody>
+            </table>
+          </div>
+        </div>
+
         <table>
           <thead>
             <tr>
-              <th colspan="6" style="background:rgba(255,99,71,0.1); color:var(--red); padding:12px; font-size:14px; text-transform:uppercase;">💰 Relances & Dettes (Paiements)</th>
+              <th colspan="8" style="background:rgba(255,99,71,0.1); color:var(--red); padding:12px; font-size:14px; text-transform:uppercase;">💰 Relances & Dettes (Paiements)</th>
             </tr>
             <tr>
               <th>Client</th>
@@ -2388,11 +2442,52 @@
               <th>Reste à Payer</th>
               <th>Limite (Deadline)</th>
               <th>Dernière Relance</th>
+              <th>Promesse</th>
               <th width="150">Actions</th>
             </tr>
           </thead>
           <tbody id="reminderBody"></tbody>
         </table>
+
+        <!-- Inline promise form (hidden, positioned by JS) -->
+        <div id="promiseFormBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; width:380px; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+          <h4 style="font-family:'Syne'; font-size:15px; margin:0 0 16px; color:var(--accent);">📝 Enregistrer une promesse de paiement</h4>
+          <input type="hidden" id="promiseClientId">
+          <div class="field">
+            <label>Client</label>
+            <input type="text" id="promiseClientName" disabled style="opacity:0.6;">
+          </div>
+          <div class="field">
+            <label>Date de paiement promise</label>
+            <input type="date" id="promisedDate">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div class="field">
+              <label>Montant promis (DA)</label>
+              <input type="number" id="promisedAmount" placeholder="ex: 25000">
+            </div>
+            <div class="field">
+              <label>Comment payer ?</label>
+              <select id="promisedMethod">
+                <option value="">— Choisir —</option>
+                <option value="Espèces">💵 Espèces</option>
+                <option value="Virement">🏦 Virement</option>
+                <option value="Chèque">📄 Chèque</option>
+                <option value="BaridiMob">📱 BaridiMob</option>
+                <option value="CCP">📮 CCP</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Note (ce qu'il a dit)</label>
+            <textarea id="promiseNote" rows="3" placeholder='ex: "Vendredi il me vire l&apos;argent après le marché"' style="width:100%; background:var(--tag-bg); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; font-family:DM Sans; box-sizing:border-box;"></textarea>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="savePromise()">💾 Enregistrer</button>
+            <button class="btn btn-ghost" onclick="closePromiseForm()">Annuler</button>
+          </div>
+        </div>
+        <div id="promiseFormOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:9998;" onclick="closePromiseForm()"></div>
       </div>
     </div>
 
@@ -3288,15 +3383,18 @@
       `).join('');
       
       html += `<div style="font-size:11px; font-weight:700; color:var(--muted); margin:12px 0 4px; text-transform:uppercase;">📋 Options Individuelles</div>`;
-      html += Object.keys(options).map(Number).sort((a,b)=>a-b).map(k => `
-        <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px;">
+      html += Object.keys(options).map(Number).sort((a,b)=>a-b).map(k => {
+        const isCustomPrice = options[k].price === 0;
+        return `
+        <div class="cl-row" style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px; flex-wrap:wrap;">
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; cursor:pointer; flex:1;">
-            <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); recalculateNegotiatedPrice();">
+            <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); toggleCustomPrice(this, ${k}); recalculateNegotiatedPrice();">
             <span>${k} — ${options[k].name}</span>
           </label>
+          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="recalculateNegotiatedPrice()">` : ''}
           <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}" oninput="recalculateNegotiatedPrice()">
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
       
       container.innerHTML = html;
     }
@@ -3378,6 +3476,14 @@
       const qtyInp = row.querySelector('.cl-qty');
       if (qtyInp) qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
     }
+
+    function toggleCustomPrice(cb, optId) {
+      const row = cb.closest('.cl-row');
+      const priceInp = row.querySelector('.cl-custom-price');
+      if (!priceInp) return;
+      priceInp.style.display = cb.checked ? 'inline-block' : 'none';
+      if (!cb.checked) priceInp.value = '';
+    }
     
     function recalculateNegotiatedPrice() {
       const checkboxes = document.querySelectorAll('.cl-cb:checked');
@@ -3409,9 +3515,15 @@
           materialQtys[mId] = (materialQtys[mId] || 0) + qty;
         }
       });
-      
+
       Object.keys(optionQtys).forEach(oId => {
-        total += (options[oId]?.price || 0) * optionQtys[oId];
+        // Use custom price input if visible (for zero-price options like Dossiers Supplémentaires)
+        const customPriceInp = document.querySelector(`.cl-custom-price[data-opt="${oId}"]`);
+        const customPrice = customPriceInp && customPriceInp.style.display !== 'none'
+          ? (parseInt(customPriceInp.value) || 0)
+          : null;
+        const unitPrice = customPrice !== null ? customPrice : (options[oId]?.price || 0);
+        total += unitPrice * optionQtys[oId];
       });
       Object.keys(materialQtys).forEach(mId => {
         total += (materials.find(m => m.id == mId)?.price || 0) * materialQtys[mId];
@@ -4148,6 +4260,73 @@
       toast('Matériel supprimé.');
     }
 
+    // ═══════════════════════════ PAYMENT PROMISE ═══════════════════════════
+    function openPromiseForm(clientId) {
+      const c = clients.find(x => x.id === clientId);
+      if (!c) return;
+      document.getElementById('promiseClientId').value = clientId;
+      document.getElementById('promiseClientName').value = `${c.name} — Reste: ${Math.max(0, (c.negotiatedPrice || 0) - (c.paidAmount || 0)).toLocaleString('fr-DZ')} DA`;
+      document.getElementById('promisedDate').value = c.promisedDate || '';
+      document.getElementById('promisedAmount').value = c.promisedAmount || '';
+      document.getElementById('promisedMethod').value = c.promisedMethod || '';
+      document.getElementById('promiseNote').value = c.promiseNote || '';
+      document.getElementById('promiseFormBox').style.display = '';
+      document.getElementById('promiseFormOverlay').style.display = '';
+    }
+
+    function closePromiseForm() {
+      document.getElementById('promiseFormBox').style.display = 'none';
+      document.getElementById('promiseFormOverlay').style.display = 'none';
+    }
+
+    async function savePromise() {
+      const clientId = parseInt(document.getElementById('promiseClientId').value);
+      const promisedDate   = document.getElementById('promisedDate').value;
+      const promisedAmount = parseInt(document.getElementById('promisedAmount').value) || 0;
+      const promisedMethod = document.getElementById('promisedMethod').value;
+      const promiseNote    = document.getElementById('promiseNote').value.trim();
+
+      if (!promisedDate) { toast('Choisissez une date de paiement !', true); return; }
+
+      await ipcRenderer.invoke('save-payment-promise', { clientId, promisedDate, promisedAmount, promisedMethod, promiseNote });
+
+      // Update local client object
+      const c = clients.find(x => x.id === clientId);
+      if (c) { c.promisedDate = promisedDate; c.promisedAmount = promisedAmount; c.promisedMethod = promisedMethod; c.promiseNote = promiseNote; }
+
+      closePromiseForm();
+      renderReminders();
+      toast('✅ Promesse enregistrée !');
+    }
+
+    // ═══════════════════════════ SOLD CLIENTS BULK MESSAGE ═══════════════════════════
+    async function updateSoldCount() {
+      const filter = document.getElementById('soldFilter').value;
+      const clients = await ipcRenderer.invoke('get-sold-clients', { filter });
+      document.getElementById('soldCountBadge').textContent = `${clients.length} client${clients.length !== 1 ? 's' : ''}`;
+    }
+
+    async function bulkSendSold(channel) {
+      const filter = document.getElementById('soldFilter').value;
+      const template = document.getElementById('soldMsgTemplate').value.trim();
+      if (!template) { toast('Écrivez un message avant d\'envoyer !', true); return; }
+
+      const statusEl = document.getElementById('soldSendStatus');
+      statusEl.textContent = '⏳ Envoi en cours...';
+
+      try {
+        const result = await ipcRenderer.invoke('bulk-send-sold-message', { filter, template, channel });
+        statusEl.textContent = `✅ Envoyé — WA: ${result.sentWA} | TG: ${result.sentTG} | Échecs: ${result.failedWA + result.failedTG}`;
+        toast(`📤 ${result.sentWA + result.sentTG} messages envoyés !`);
+      } catch(e) {
+        statusEl.textContent = '❌ Erreur lors de l\'envoi';
+        toast('Erreur envoi groupé', true);
+      }
+    }
+
+    // Load count on tab switch
+    document.addEventListener('DOMContentLoaded', () => updateSoldCount());
+
     // ═══════════════════════════ WHATSAPP ═══════════════════════════
     let isMessaging = false;
     async function sendClientWhatsApp(id) {
@@ -4778,10 +4957,34 @@
       renderReminders();
     }
 
-    function renderReminders() {
+    async function renderReminders() {
       const body = document.getElementById('reminderBody');
       const trialBody = document.getElementById('trialReminderBody');
-      
+
+      // Load due promises section
+      try {
+        const due = await ipcRenderer.invoke('get-due-promises');
+        const section = document.getElementById('promisesSection');
+        const dueBody = document.getElementById('duePromisesBody');
+        if (due.length) {
+          section.style.display = '';
+          dueBody.innerHTML = due.map(c => `
+            <tr style="background:rgba(255,165,0,0.05);">
+              <td style="padding:7px 6px; font-weight:600;">${c.name}</td>
+              <td style="padding:7px 6px;">${c.phone || '-'}</td>
+              <td style="padding:7px 6px; color:orange; font-weight:700;">${c.promisedDate}</td>
+              <td style="padding:7px 6px; color:var(--red); font-weight:700;">${c.promisedAmount ? c.promisedAmount.toLocaleString('fr-DZ') + ' DA' : '-'}</td>
+              <td style="padding:7px 6px;">${c.promisedMethod || '-'}</td>
+              <td style="padding:7px 6px; font-size:12px; color:var(--muted); max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${c.promiseNote || ''}">${c.promiseNote || '-'}</td>
+              <td style="padding:7px 6px;">
+                <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})" title="Relancer">📲</button>
+              </td>
+            </tr>`).join('');
+        } else {
+          section.style.display = 'none';
+        }
+      } catch(e) {}
+
       // 1. Debt Reminders
       const indebted = clients.filter(c => {
         const total = c.negotiatedPrice || getClientTotalValue(c);
@@ -4789,14 +4992,28 @@
         return total - paid > 0;
       });
 
+      const today = new Date().toISOString().split('T')[0];
+
       body.innerHTML = indebted.map(c => {
         const total = c.negotiatedPrice || getClientTotalValue(c);
         const paid = c.paidAmount || 0;
         const balance = total - paid;
-        
+
         const isOverdue = c.paymentDeadline && new Date(c.paymentDeadline) <= new Date().setHours(0,0,0,0);
         const rowStyle = isOverdue ? 'background:rgba(255,99,71,0.05);' : '';
         const deadlineColor = isOverdue ? 'color:var(--red); font-weight:700;' : 'color:var(--muted);';
+
+        // Promise badge
+        let promiseBadge = `<button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="openPromiseForm(${c.id})">📝 Ajouter</button>`;
+        if (c.promisedDate) {
+          const isPromiseDue = c.promisedDate <= today;
+          const badgeColor = isPromiseDue ? 'rgba(255,99,71,0.15); color:var(--red)' : 'rgba(255,165,0,0.12); color:orange';
+          promiseBadge = `
+            <div style="font-size:11px; background:${badgeColor}; padding:3px 7px; border-radius:8px; cursor:pointer; line-height:1.5;" onclick="openPromiseForm(${c.id})" title="${c.promiseNote || ''}">
+              📅 ${c.promisedDate}<br>
+              <span style="font-weight:700;">${c.promisedAmount ? c.promisedAmount.toLocaleString('fr-DZ') + ' DA' : ''}</span>${c.promisedMethod ? ` · ${c.promisedMethod}` : ''}
+            </div>`;
+        }
 
         return `<tr style="${rowStyle}">
           <td style="font-weight:600">${c.name} ${c.autoReminder ? '🤖' : ''}</td>
@@ -4805,6 +5022,7 @@
           <td class="price-cell" style="color:var(--red); font-weight:700;">${balance.toLocaleString('fr-DZ')} DA</td>
           <td style="font-size:12px; ${deadlineColor}">${c.paymentDeadline || '-'}</td>
           <td style="font-size:12px; color:var(--muted)">${c.dateDernierRappel || 'Jamais'}</td>
+          <td style="min-width:140px;">${promiseBadge}</td>
           <td>
             <div style="display:flex; gap:6px;">
               <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲</button>
