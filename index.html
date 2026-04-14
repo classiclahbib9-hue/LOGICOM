@@ -2435,19 +2435,47 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           </div>
         </div>
 
+        <!-- ══ FILTRE BULK RELANCE ══ -->
+        <div style="background:var(--tag-bg); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:13px; font-weight:600; color:var(--text);">📅 Filtre ancienneté client :</span>
+            <button class="btn btn-ghost btn-sm" onclick="setReminderMonthFilter(1)"  id="rmf1">1 mois</button>
+            <button class="btn btn-ghost btn-sm" onclick="setReminderMonthFilter(3)"  id="rmf3">3 mois</button>
+            <button class="btn btn-ghost btn-sm" onclick="setReminderMonthFilter(6)"  id="rmf6">6 mois</button>
+            <button class="btn btn-ghost btn-sm" onclick="setReminderMonthFilter(10)" id="rmf10">10 mois</button>
+            <button class="btn btn-ghost btn-sm" onclick="setReminderMonthFilter(0)"  id="rmf0">Tous</button>
+            <div style="display:flex; align-items:center; gap:6px; margin-left:8px;">
+              <input type="number" id="rmfCustomInput" placeholder="Mois perso" min="1" max="120" style="width:100px; padding:5px 10px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:12px;">
+              <button class="btn btn-ghost btn-sm" onclick="setReminderMonthFilter(parseInt(document.getElementById('rmfCustomInput').value)||0)">OK</button>
+            </div>
+            <span id="rmfBadge" style="font-size:12px; background:rgba(255,99,71,0.12); color:var(--red); border:1px solid rgba(255,99,71,0.3); padding:3px 12px; border-radius:20px; font-weight:600; margin-left:auto;">— clients</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:13px; cursor:pointer;">
+              <input type="checkbox" id="selectAllReminders" onchange="toggleSelectAllReminders(this.checked)" style="width:16px;height:16px;cursor:pointer;">
+              <span>Tout sélectionner</span>
+            </label>
+            <button class="btn btn-sm" style="background:#25D366; color:white; border:none; display:flex; align-items:center; gap:6px;" onclick="bulkSendReminders()">
+              📲 Envoyer WhatsApp à tous les sélectionnés
+            </button>
+            <span id="bulkSendStatus" style="font-size:12px; color:var(--muted);"></span>
+          </div>
+        </div>
+
         <table>
           <thead>
             <tr>
-              <th colspan="8" style="background:rgba(255,99,71,0.1); color:var(--red); padding:12px; font-size:14px; text-transform:uppercase;">💰 Relances & Dettes (Paiements)</th>
+              <th colspan="9" style="background:rgba(255,99,71,0.1); color:var(--red); padding:12px; font-size:14px; text-transform:uppercase;">💰 Relances & Dettes (Paiements)</th>
             </tr>
             <tr>
+              <th width="36"><input type="checkbox" id="selectAllReminders2" onchange="toggleSelectAllReminders(this.checked)" style="width:15px;height:15px;cursor:pointer;"></th>
               <th>Client</th>
               <th>Téléphone</th>
+              <th>Ancienneté</th>
               <th>Total Devis</th>
               <th>Reste à Payer</th>
               <th>Limite (Deadline)</th>
               <th>Dernière Relance</th>
-              <th>Promesse</th>
               <th width="150">Actions</th>
             </tr>
           </thead>
@@ -4988,6 +5016,57 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       renderReminders();
     }
 
+    // ── BULK REMINDER FILTER ────────────────────────────────────────────
+    let reminderMonthFilter = 0; // 0 = tous
+
+    function setReminderMonthFilter(months) {
+      reminderMonthFilter = months;
+      // highlight active button
+      [0,1,3,6,10].forEach(m => {
+        const btn = document.getElementById('rmf' + m);
+        if (btn) btn.style.background = (m === months) ? 'var(--accent)' : '';
+        if (btn) btn.style.color      = (m === months) ? 'white' : '';
+      });
+      renderReminders();
+    }
+
+    function toggleSelectAllReminders(checked) {
+      document.querySelectorAll('.reminder-cb').forEach(cb => cb.checked = checked);
+      // sync both header checkboxes
+      const s1 = document.getElementById('selectAllReminders');
+      const s2 = document.getElementById('selectAllReminders2');
+      if (s1) s1.checked = checked;
+      if (s2) s2.checked = checked;
+    }
+
+    async function bulkSendReminders() {
+      const checked = Array.from(document.querySelectorAll('.reminder-cb:checked'));
+      if (checked.length === 0) { toast('Aucun client sélectionné', true); return; }
+      const ids = checked.map(cb => parseInt(cb.dataset.id));
+      const status = document.getElementById('bulkSendStatus');
+      status.textContent = `Envoi en cours… 0 / ${ids.length}`;
+      let sent = 0;
+      for (const id of ids) {
+        const c = clients.find(x => x.id === id);
+        if (!c || !c.phone) { sent++; continue; }
+        const total = c.negotiatedPrice || getClientTotalValue(c);
+        const paid  = c.paidAmount || 0;
+        const balance = total - paid;
+        let msg = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
+        msg = msg.replace('{name}', c.name).replace('{balance}', balance.toLocaleString('fr-DZ'));
+        const cleanPhone = c.phone.replace(/[^\d+]/g, '');
+        const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
+        await ipcRenderer.invoke('open-whatsapp', `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`);
+        c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
+        sent++;
+        status.textContent = `Envoi en cours… ${sent} / ${ids.length}`;
+        await new Promise(r => setTimeout(r, 800)); // small delay between messages
+      }
+      await syncDB();
+      status.textContent = `✅ ${sent} message(s) envoyé(s)`;
+      renderReminders();
+    }
+
     async function renderReminders() {
       const body = document.getElementById('reminderBody');
       const trialBody = document.getElementById('trialReminderBody');
@@ -5017,53 +5096,65 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       } catch(e) {}
 
       // 1. Debt Reminders
+      const now = new Date();
       const indebted = clients.filter(c => {
         if (c.installer !== 'Oui') return false;
         if (c.paymentStatus === 'Régler') return false;
         const total = c.negotiatedPrice || getClientTotalValue(c);
         const paid = c.paidAmount || 0;
-        return total - paid > 0;
+        if (total - paid <= 0) return false;
+        // Month filter
+        if (reminderMonthFilter > 0 && c.created_at) {
+          const created = new Date(c.created_at);
+          const monthsAgo = (now - created) / (1000 * 60 * 60 * 24 * 30.44);
+          if (monthsAgo < reminderMonthFilter - 0.5 || monthsAgo > reminderMonthFilter + 0.5) return false;
+        }
+        return true;
       });
+
+      // Update badge count
+      const badge = document.getElementById('rmfBadge');
+      if (badge) badge.textContent = `${indebted.length} client${indebted.length !== 1 ? 's' : ''}`;
 
       const today = new Date().toISOString().split('T')[0];
 
-      body.innerHTML = indebted.map(c => {
-        const total = c.negotiatedPrice || getClientTotalValue(c);
-        const paid = c.paidAmount || 0;
-        const balance = total - paid;
+      if (indebted.length === 0) {
+        body.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--muted);">Aucun client correspondant à ce filtre.</td></tr>`;
+      } else {
+        body.innerHTML = indebted.map(c => {
+          const total = c.negotiatedPrice || getClientTotalValue(c);
+          const paid = c.paidAmount || 0;
+          const balance = total - paid;
 
-        const isOverdue = c.paymentDeadline && new Date(c.paymentDeadline) <= new Date().setHours(0,0,0,0);
-        const rowStyle = isOverdue ? 'background:rgba(255,99,71,0.05);' : '';
-        const deadlineColor = isOverdue ? 'color:var(--red); font-weight:700;' : 'color:var(--muted);';
+          // Ancienneté
+          let anciennete = '-';
+          if (c.created_at) {
+            const months = Math.floor((now - new Date(c.created_at)) / (1000 * 60 * 60 * 24 * 30.44));
+            anciennete = months < 1 ? '< 1 mois' : `${months} mois`;
+          }
 
-        // Promise badge
-        let promiseBadge = `<button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="openPromiseForm(${c.id})">📝 Ajouter</button>`;
-        if (c.promisedDate) {
-          const isPromiseDue = c.promisedDate <= today;
-          const badgeColor = isPromiseDue ? 'rgba(255,99,71,0.15); color:var(--red)' : 'rgba(255,165,0,0.12); color:orange';
-          promiseBadge = `
-            <div style="font-size:11px; background:${badgeColor}; padding:3px 7px; border-radius:8px; cursor:pointer; line-height:1.5;" onclick="openPromiseForm(${c.id})" title="${c.promiseNote || ''}">
-              📅 ${c.promisedDate}<br>
-              <span style="font-weight:700;">${c.promisedAmount ? c.promisedAmount.toLocaleString('fr-DZ') + ' DA' : ''}</span>${c.promisedMethod ? ` · ${c.promisedMethod}` : ''}
-            </div>`;
-        }
+          const isOverdue = c.paymentDeadline && new Date(c.paymentDeadline) <= new Date().setHours(0,0,0,0);
+          const rowStyle = isOverdue ? 'background:rgba(255,99,71,0.05);' : '';
+          const deadlineColor = isOverdue ? 'color:var(--red); font-weight:700;' : 'color:var(--muted);';
 
-        return `<tr style="${rowStyle}">
-          <td style="font-weight:600">${c.name} ${c.autoReminder ? '🤖' : ''}</td>
-          <td>${c.phone || '-'}</td>
-          <td class="price-cell">${total.toLocaleString('fr-DZ')} DA</td>
-          <td class="price-cell" style="color:var(--red); font-weight:700;">${balance.toLocaleString('fr-DZ')} DA</td>
-          <td style="font-size:12px; ${deadlineColor}">${c.paymentDeadline || '-'}</td>
-          <td style="font-size:12px; color:var(--muted)">${c.dateDernierRappel || 'Jamais'}</td>
-          <td style="min-width:140px;">${promiseBadge}</td>
-          <td>
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲</button>
-              <button class="btn btn-ghost btn-sm" onclick="sendApiReminder(${c.id})" title="API Auto">🤖</button>
-            </div>
-          </td>
-        </tr>`;
-      }).join('');
+          return `<tr style="${rowStyle}">
+            <td><input type="checkbox" class="reminder-cb" data-id="${c.id}" style="width:15px;height:15px;cursor:pointer;"></td>
+            <td style="font-weight:600">${c.name} ${c.autoReminder ? '🤖' : ''}</td>
+            <td>${c.phone || '-'}</td>
+            <td style="font-size:12px; color:var(--muted);">${anciennete}</td>
+            <td class="price-cell">${total.toLocaleString('fr-DZ')} DA</td>
+            <td class="price-cell" style="color:var(--red); font-weight:700;">${balance.toLocaleString('fr-DZ')} DA</td>
+            <td style="font-size:12px; ${deadlineColor}">${c.paymentDeadline || '-'}</td>
+            <td style="font-size:12px; color:var(--muted)">${c.dateDernierRappel || 'Jamais'}</td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲</button>
+                <button class="btn btn-ghost btn-sm" onclick="sendApiReminder(${c.id})" title="API Auto">🤖</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+      }
 
       // 2. Trial Reminders
       const trials = clients.filter(c => c.trialStatus && c.trialStatus > 0);
