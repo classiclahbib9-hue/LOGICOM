@@ -2449,25 +2449,6 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           <tbody id="reminderBody"></tbody>
         </table>
 
-        <!-- ══ INSTALLÉS NON RÉGLÉS ══ -->
-        <table style="margin-top:20px;">
-          <thead>
-            <tr>
-              <th colspan="7" style="background:rgba(255,165,0,0.1); color:orange; padding:12px; font-size:14px; text-transform:uppercase;">🛠️ Clients Installés — Paiement en Attente</th>
-            </tr>
-            <tr>
-              <th>Client</th>
-              <th>Téléphone</th>
-              <th>Statut</th>
-              <th>Total Devis</th>
-              <th>Payé</th>
-              <th>Reste</th>
-              <th width="120">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="installedUnpaidBody"></tbody>
-        </table>
-
         <!-- Inline promise form (hidden, positioned by JS) -->
         <div id="promiseFormBox" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:9999; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; width:380px; box-shadow:0 8px 40px rgba(0,0,0,0.4);">
           <h4 style="font-family:'Syne'; font-size:15px; margin:0 0 16px; color:var(--accent);">📝 Enregistrer une promesse de paiement</h4>
@@ -5072,33 +5053,6 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       
       if (trials.length === 0) trialBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted)">Aucune version de test active.</td></tr>';
 
-      // 3. Installed but not paid
-      const installedUnpaid = clients.filter(c =>
-        c.installer === 'Oui' && c.paymentStatus !== 'Régler'
-      );
-      const iuBody = document.getElementById('installedUnpaidBody');
-      if (installedUnpaid.length === 0) {
-        iuBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--muted)">Aucun client installé en attente de paiement.</td></tr>';
-      } else {
-        iuBody.innerHTML = installedUnpaid.map(c => {
-          const total = c.negotiatedPrice || getClientTotalValue(c);
-          const paid = c.paidAmount || 0;
-          const balance = total - paid;
-          const statusColor = c.paymentStatus === 'Verser' ? 'color:var(--accent)' : 'color:var(--red)';
-          const statusLabel = c.paymentStatus === 'Verser' ? 'Versement partiel' : 'Non payé';
-          return `<tr style="background:rgba(255,165,0,0.04);">
-            <td style="font-weight:600;">${c.name}</td>
-            <td>${c.phone || '-'}</td>
-            <td><span style="font-size:12px; ${statusColor}; font-weight:600;">${statusLabel}</span></td>
-            <td class="price-cell">${total.toLocaleString('fr-DZ')} DA</td>
-            <td class="price-cell" style="color:var(--green);">${paid.toLocaleString('fr-DZ')} DA</td>
-            <td class="price-cell" style="color:var(--red); font-weight:700;">${balance.toLocaleString('fr-DZ')} DA</td>
-            <td>
-              <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})" title="Relancer WhatsApp">📲</button>
-            </td>
-          </tr>`;
-        }).join('');
-      }
     }
 
     async function sendTrialFollowUp(id) {
