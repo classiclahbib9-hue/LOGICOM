@@ -5007,6 +5007,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       // 1. Debt Reminders
       const indebted = clients.filter(c => {
         if (c.installer !== 'Oui') return false;
+        if (c.paymentStatus === 'Régler') return false;
         const total = c.negotiatedPrice || getClientTotalValue(c);
         const paid = c.paidAmount || 0;
         return total - paid > 0;
