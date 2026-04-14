@@ -1,4 +1,4 @@
-$workingDir = "C:\Users\PC\software\LOGICOM"
+$workingDir = "C:\Users\Gatsby\Desktop\software\LOGICOM"
 $desktop = [Environment]::GetFolderPath('Desktop')
 $shortcutPath = [IO.Path]::Combine($desktop, "LOGICOM (Dev Mode).lnk")
 
@@ -8,6 +8,6 @@ $shortcut = $shell.CreateShortcut($shortcutPath)
 $shortcut.TargetPath = "C:\Windows\System32\cmd.exe"
 $shortcut.Arguments = "/k npm start"
 $shortcut.WorkingDirectory = $workingDir
-$shortcut.IconLocation = "C:\Users\PC\software\LOGICOM\logo.png,0"
+$shortcut.IconLocation = "C:\Users\Gatsby\Desktop\software\LOGICOM\logo.png,0"
 $shortcut.Save()
 Write-Host "Dev Mode shortcut created at: $shortcutPath"
