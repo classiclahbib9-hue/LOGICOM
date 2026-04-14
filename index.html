@@ -2455,9 +2455,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
               <input type="checkbox" id="selectAllReminders" onchange="toggleSelectAllReminders(this.checked)" style="width:16px;height:16px;cursor:pointer;">
               <span>Tout sélectionner</span>
             </label>
-            <button class="btn btn-sm" style="background:#25D366; color:white; border:none; display:flex; align-items:center; gap:6px;" onclick="bulkSendReminders()">
-              📲 Envoyer WhatsApp à tous les sélectionnés
-            </button>
+            <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="bulkSendReminders('wa')">💬 WhatsApp</button>
+            <button class="btn btn-sm" style="background:#229ED9; color:white; border:none;" onclick="bulkSendReminders('tg')">✈️ Telegram</button>
+            <button class="btn btn-primary btn-sm" onclick="bulkSendReminders('both')">📤 Les deux</button>
             <span id="bulkSendStatus" style="font-size:12px; color:var(--muted);"></span>
           </div>
         </div>
@@ -5039,32 +5039,30 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       if (s2) s2.checked = checked;
     }
 
-    async function bulkSendReminders() {
+    async function bulkSendReminders(channel) {
       const checked = Array.from(document.querySelectorAll('.reminder-cb:checked'));
       if (checked.length === 0) { toast('Aucun client sélectionné', true); return; }
       const ids = checked.map(cb => parseInt(cb.dataset.id));
+      const template = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
       const status = document.getElementById('bulkSendStatus');
-      status.textContent = `Envoi en cours… 0 / ${ids.length}`;
-      let sent = 0;
-      for (const id of ids) {
-        const c = clients.find(x => x.id === id);
-        if (!c || !c.phone) { sent++; continue; }
-        const total = c.negotiatedPrice || getClientTotalValue(c);
-        const paid  = c.paidAmount || 0;
-        const balance = total - paid;
-        let msg = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
-        msg = msg.replace('{name}', c.name).replace('{balance}', balance.toLocaleString('fr-DZ'));
-        const cleanPhone = c.phone.replace(/[^\d+]/g, '');
-        const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
-        await ipcRenderer.invoke('open-whatsapp', `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`);
-        c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
-        sent++;
-        status.textContent = `Envoi en cours… ${sent} / ${ids.length}`;
-        await new Promise(r => setTimeout(r, 800)); // small delay between messages
+      status.textContent = '⏳ Envoi en cours...';
+
+      try {
+        const result = await ipcRenderer.invoke('bulk-send-reminder-message', { clientIds: ids, template, channel });
+        // Update dateDernierRappel locally for the sent clients
+        ids.forEach(id => {
+          const c = clients.find(x => x.id === id);
+          if (c) c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
+        });
+        await syncDB();
+        const channelLabel = channel === 'wa' ? '💬 WA' : channel === 'tg' ? '✈️ TG' : '💬 WA + ✈️ TG';
+        status.textContent = `✅ ${channelLabel} — Envoyés: ${result.sentWA + result.sentTG} | Échecs: ${result.failedWA + result.failedTG}`;
+        toast(`📤 ${result.sentWA + result.sentTG} rappel(s) envoyé(s) !`);
+        renderReminders();
+      } catch(e) {
+        status.textContent = '❌ Erreur lors de l\'envoi';
+        toast('Erreur envoi groupé', true);
       }
-      await syncDB();
-      status.textContent = `✅ ${sent} message(s) envoyé(s)`;
-      renderReminders();
     }
 
     async function renderReminders() {

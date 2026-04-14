@@ -193,6 +193,43 @@ ipcMain.handle('open-whatsapp', async (event, url) => {
   return shell.openExternal(url);
 });
 
+ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template, channel }) => {
+  const { sendWhatsApp, isWhatsAppReady } = require('./whatsapp');
+  const { getBot } = require('./telegram');
+  const tgBot = getBot();
+  const db = getDB();
+
+  const placeholders = clientIds.map(() => '?').join(',');
+  const rows = db.prepare(`SELECT * FROM clients WHERE id IN (${placeholders})`).all(...clientIds);
+
+  let sentWA = 0, sentTG = 0, failedWA = 0, failedTG = 0;
+
+  for (const c of rows) {
+    const total = c.negotiatedPrice || 0;
+    const paid  = c.paidAmount || 0;
+    const balance = Math.max(0, total - paid);
+    const msg = template
+      .replace(/\{name\}/g, c.name || '')
+      .replace(/\{phone\}/g, c.phone || '')
+      .replace(/\{brand\}/g, c.brand || '')
+      .replace(/\{balance\}/g, balance.toLocaleString('fr-DZ'));
+
+    if ((channel === 'wa' || channel === 'both') && isWhatsAppReady() && c.phone) {
+      try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 600)); }
+      catch(e) { failedWA++; }
+    }
+
+    if ((channel === 'tg' || channel === 'both') && tgBot && c.telegramChatId) {
+      try { await tgBot.sendMessage(c.telegramChatId, msg); sentTG++; }
+      catch(e) { failedTG++; }
+    }
+
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  return { total: rows.length, sentWA, sentTG, failedWA, failedTG };
+});
+
 ipcMain.handle('send-whatsapp-with-file', async (event, { phone, message, filePath }) => {
   // 1. Copy file to clipboard using a more robust PowerShell method (FileDropList)
   if (filePath && fs.existsSync(filePath)) {
