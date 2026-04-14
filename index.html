@@ -2310,8 +2310,13 @@
           <div class="field"><label>🦙 Groq API Key <span style="color:var(--green);font-size:10px;">(Gratuit – console.groq.com)</span></label><input type="password" id="groqApiKey" placeholder="gsk_..."></div>
         </div>
         <div class="field" style="margin-top:15px;">
-          <label>Modèle de Message Reminder</label>
+          <label>Modèle de Message Reminder (relance dette)</label>
           <textarea id="reminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !</textarea>
+        </div>
+        <div class="field" style="margin-top:15px;">
+          <label>✅ Message de Confirmation Paiement <span style="font-size:11px; color:var(--muted);">(envoi automatique quand le client paye)</span></label>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">Variables : <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{name}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{amount}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{balance}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{brand}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{mode}</code></div>
+          <textarea id="paymentConfirmTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿</textarea>
         </div>
         <div style="margin-top:15px; display:flex; justify-content:flex-end;">
           <button class="btn btn-primary btn-sm" onclick="saveApiSettings()">💾 Sauvegarder Config</button>
@@ -3672,6 +3677,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
       if (editClientKey) {
         const c = clients.find(x => x.id === editClientKey);
+        // Capture old payment values before update
+        const oldPaymentStatus = c.paymentStatus;
+        const oldPaidAmount = c.paidAmount || 0;
+
         c.name = name; c.phone = phone; c.brand = brand; c.category = category;
         c.potential = potential; c.address = address; c.source = source; c.options = selectedOpts;
         c.installer = installer; c.material = material; c.paymentStatus = paymentStatus; c.paymentMode = paymentMode; c.finalState = finalState; c.noPurchaseReason = noPurchaseReason;
@@ -3679,6 +3688,25 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         c.trialStatus = trialStatus; c.trialStartDate = trialStartDate; c.trialPeriod = trialPeriod;
         c.negotiatedPrice = negotiatedPrice; c.paidAmount = paidAmount; c.paymentDeadline = paymentDeadline; c.autoReminder = autoReminder;
         // c.added_by remains the same
+
+        // Auto-send payment confirmation if payment changed
+        const paymentJustMade = paidAmount > oldPaidAmount || (paymentStatus === 'Régler' && oldPaymentStatus !== 'Régler');
+        if (paymentJustMade && phone) {
+          const total = negotiatedPrice || getClientTotalValue(c);
+          const amountPaid = paidAmount - oldPaidAmount > 0 ? paidAmount - oldPaidAmount : paidAmount;
+          const balance = Math.max(0, total - paidAmount);
+          let tpl = localStorage.getItem('logicom-payment-confirm-template') || 'Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿';
+          tpl = tpl
+            .replace('{name}', name)
+            .replace('{amount}', amountPaid.toLocaleString('fr-DZ'))
+            .replace('{balance}', balance.toLocaleString('fr-DZ'))
+            .replace('{brand}', brand || '')
+            .replace('{mode}', paymentMode || 'Non précisé');
+          const cleanPhone = phone.replace(/[^\d+]/g, '');
+          const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
+          ipcRenderer.invoke('open-whatsapp', `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(tpl)}`);
+          toast(`📲 Confirmation paiement envoyée à ${name}`);
+        }
       } else {
         clients.push({ id: nextClientId++, name, phone, brand, category, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate, trialPeriod: trialPeriod, added_by: 'Direct', negotiatedPrice, paidAmount, paymentDeadline, autoReminder });
       }
@@ -4885,9 +4913,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const template = document.getElementById('reminderTemplate').value;
       const tgToken = document.getElementById('tgToken').value;
 
+      const paymentConfirmTpl = document.getElementById('paymentConfirmTemplate').value;
       localStorage.setItem('logicom-api-endpoint', endpoint);
       localStorage.setItem('logicom-api-key', key);
       localStorage.setItem('logicom-reminder-template', template);
+      localStorage.setItem('logicom-payment-confirm-template', paymentConfirmTpl);
       localStorage.setItem('logicom-tg-token', tgToken);
       const groqKey = document.getElementById('groqApiKey').value;
       localStorage.setItem('claude_api_key', groqKey);
@@ -4900,6 +4930,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || '';
       document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
       document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
+      document.getElementById('paymentConfirmTemplate').value = localStorage.getItem('logicom-payment-confirm-template') || 'Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿';
       const tgToken = localStorage.getItem('logicom-tg-token') || '';
       document.getElementById('tgToken').value = tgToken;
       const groqKey = localStorage.getItem('claude_api_key') || '';
