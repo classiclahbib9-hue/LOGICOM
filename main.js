@@ -533,7 +533,11 @@ app.whenReady().then(async () => {
   registerIpcHandlers()
   startApiServer(getDB())
   initTelegram()
-  initWhatsApp(null, async ({ channel, clientName, clientPhone, parsed, rawMessage }) => {
+  initWhatsApp((qr) => {
+    // Send QR to renderer to display in UI
+    const wins = BrowserWindow.getAllWindows();
+    if (wins.length) wins[0].webContents.send('whatsapp-qr', qr);
+  }, async ({ channel, clientName, clientPhone, parsed, rawMessage }) => {
     // Notify admin on Telegram when WhatsApp auto-saves a promise
     const { getBot } = require('./telegram');
     const bot = getBot();

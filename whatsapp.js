@@ -62,6 +62,9 @@ function initWhatsApp(onQr, onAdminNotify) {
     waClient.on('ready', () => {
         waReady = true;
         console.log('[WhatsApp] Client ready ✅');
+        const { BrowserWindow } = require('electron');
+        const wins = BrowserWindow.getAllWindows();
+        if (wins.length) wins[0].webContents.send('whatsapp-ready');
     });
 
     waClient.on('authenticated', () => {
