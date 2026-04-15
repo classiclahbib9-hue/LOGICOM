@@ -197,10 +197,15 @@ ipcMain.handle('open-whatsapp', async (event, url) => {
 
 ipcMain.handle('link-telegram-chatid', async (event, { clientId, chatId }) => {
   const db = getDB();
-  if (!db) return { ok: false };
+  if (!db) { console.error('[LinkTG] DB not ready'); return { ok: false }; }
+  console.log(`[LinkTG] Linking clientId=${clientId} chatId=${chatId}`);
   db.run(`UPDATE clients SET telegramChatId='${chatId}' WHERE id=${parseInt(clientId)}`);
+  // Verify it was saved
+  const check = db.exec(`SELECT id, name, telegramChatId FROM clients WHERE id=${parseInt(clientId)}`);
+  if (check.length) console.log('[LinkTG] After update:', check[0].values[0]);
   const { saveToFile } = require('./db');
   saveToFile();
+  console.log('[LinkTG] Saved to file ✅');
   return { ok: true };
 });
 
