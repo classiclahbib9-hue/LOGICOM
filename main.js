@@ -199,8 +199,13 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
   const tgBot = getBot();
   const db = getDB();
 
-  const placeholders = clientIds.map(() => '?').join(',');
-  const rows = db.prepare(`SELECT * FROM clients WHERE id IN (${placeholders})`).all(...clientIds);
+  const idList = clientIds.map(id => parseInt(id)).join(',');
+  const res = db.exec(`SELECT id, name, phone, brand, negotiatedPrice, paidAmount, telegramChatId FROM clients WHERE id IN (${idList})`);
+  const rows = res.length ? res[0].values.map(row => {
+    const obj = {};
+    res[0].columns.forEach((col, i) => obj[col] = row[i]);
+    return obj;
+  }) : [];
 
   let sentWA = 0, sentTG = 0, failedWA = 0, failedTG = 0;
 
