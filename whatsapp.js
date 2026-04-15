@@ -49,7 +49,16 @@ function initWhatsApp(onQr, onAdminNotify) {
         authStrategy: new LocalAuth({ dataPath: getSessionPath() }),
         puppeteer: {
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'],
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-extensions',
+            ],
+            timeout: 60000,
         },
     });
 
