@@ -435,8 +435,11 @@ function getConfigPath() {
 }
 
 let currentBot = null;
+let isInitializing = false;
 
 async function initTelegram() {
+    if (isInitializing) { console.log('[Telegram] Already initializing, skipping...'); return; }
+    isInitializing = true;
     let config = { token: '', active: false };
     const configPath = getConfigPath();
 
@@ -457,7 +460,7 @@ async function initTelegram() {
         try {
             await currentBot.stopPolling();
             currentBot = null;
-            await new Promise(r => setTimeout(r, 3000));
+            await new Promise(r => setTimeout(r, 5000));
         } catch (e) {}
     }
 
@@ -1017,6 +1020,8 @@ async function initTelegram() {
         console.log('Telegram Bot is now polling...');
     } catch (err) {
         console.error('Critical Telegram initialization error:', err);
+    } finally {
+        isInitializing = false;
     }
 }
 
