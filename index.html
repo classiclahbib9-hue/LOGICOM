@@ -5083,11 +5083,33 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     async function linkTelegram(clientId) {
-      const chatId = prompt('Entrez le Telegram Chat ID du client (ex: 1202783448) :');
-      if (!chatId || !chatId.trim()) return;
-      const res = await ipcRenderer.invoke('link-telegram-chatid', { clientId, chatId: chatId.trim() });
-      if (res.ok) { toast('✅ Telegram lié !'); renderReminders(); }
-      else toast('❌ Erreur liaison Telegram', true);
+      let modal = document.getElementById('tgLinkModal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'tgLinkModal';
+        modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;';
+        modal.innerHTML = `
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;min-width:320px;text-align:center;">
+            <h3 style="margin:0 0 8px;color:var(--text);">🔗 Lier Telegram</h3>
+            <p style="color:var(--muted);font-size:13px;margin:0 0 16px;">Entrez le Chat ID Telegram du client</p>
+            <input id="tgChatIdInput" type="text" placeholder="ex: 1202783448" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--navy);color:var(--text);font-size:14px;box-sizing:border-box;"/>
+            <div style="display:flex;gap:10px;margin-top:16px;justify-content:center;">
+              <button onclick="document.getElementById('tgLinkModal').remove()" style="padding:8px 20px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;">Annuler</button>
+              <button id="tgLinkConfirm" style="padding:8px 20px;border-radius:8px;border:none;background:#229ED9;color:white;cursor:pointer;font-weight:600;">✅ Lier</button>
+            </div>
+          </div>`;
+        document.body.appendChild(modal);
+      }
+      document.getElementById('tgChatIdInput').value = '';
+      document.getElementById('tgLinkConfirm').onclick = async () => {
+        const chatId = document.getElementById('tgChatIdInput').value.trim();
+        if (!chatId) return;
+        modal.remove();
+        const res = await ipcRenderer.invoke('link-telegram-chatid', { clientId, chatId });
+        if (res.ok) { toast('✅ Telegram lié !'); renderReminders(); }
+        else toast('❌ Erreur liaison Telegram', true);
+      };
+      document.getElementById('tgChatIdInput').focus();
     }
 
     async function refreshWAStatus() {
