@@ -159,17 +159,32 @@ function registerIpcHandlers() {
             }
 
             if (data.clients) {
+                // Preserve telegramChatId and promise fields before deleting
+                const preserved = {};
+                const pRes = db.exec(`SELECT id, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote FROM clients`);
+                if (pRes.length) {
+                    pRes[0].values.forEach(row => {
+                        preserved[row[0]] = { telegramChatId: row[1], promisedDate: row[2], promisedAmount: row[3], promisedMethod: row[4], promiseNote: row[5] };
+                    });
+                }
+
                 db.run('DELETE FROM clients');
-                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                 const stmt = db.prepare(sql);
                 for (const c of data.clients) {
+                    const p = preserved[c.id] || {};
                     stmt.run([
-                        c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source, 
-                        JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non', 
-                        c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '', 
-                        c.created_at || '', (c.called?1:0), c.dateDernierRappel || '', (c.trialStatus || 0), 
+                        c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source,
+                        JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non',
+                        c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '',
+                        c.created_at || '', (c.called?1:0), c.dateDernierRappel || '', (c.trialStatus || 0),
                         c.trialStartDate || '', c.trialPeriod || 15, c.category || 'Nouveau', c.added_by || '',
-                        c.negotiatedPrice || 0, c.paidAmount || 0, c.paymentDeadline || '', (c.autoReminder?1:0)
+                        c.negotiatedPrice || 0, c.paidAmount || 0, c.paymentDeadline || '', (c.autoReminder?1:0),
+                        c.telegramChatId || p.telegramChatId || null,
+                        c.promisedDate || p.promisedDate || null,
+                        c.promisedAmount || p.promisedAmount || 0,
+                        c.promisedMethod || p.promisedMethod || null,
+                        c.promiseNote || p.promiseNote || null
                     ]);
                 }
                 stmt.free();
