@@ -2455,9 +2455,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
               <input type="checkbox" id="selectAllReminders" onchange="toggleSelectAllReminders(this.checked)" style="width:16px;height:16px;cursor:pointer;">
               <span>Tout sélectionner</span>
             </label>
-            <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="bulkSendReminders('wa')">💬 WhatsApp</button>
-            <button class="btn btn-sm" style="background:#229ED9; color:white; border:none;" onclick="bulkSendReminders('tg')">✈️ Telegram</button>
-            <button class="btn btn-primary btn-sm" onclick="bulkSendReminders('both')">📤 Les deux</button>
+            <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="bulkSendReminders('wa')">💬 Envoyer WhatsApp</button>
             <span id="waStatusBadge" style="font-size:11px; padding:2px 8px; border-radius:12px; font-weight:600;">⏳ WA...</span>
             <span id="bulkSendStatus" style="font-size:12px; color:var(--muted);"></span>
           </div>
@@ -5044,13 +5042,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const checked = Array.from(document.querySelectorAll('.reminder-cb:checked'));
       if (checked.length === 0) { toast('Aucun client sélectionné', true); return; }
 
-      // Warn if WA not ready and WA needed
-      if (channel === 'wa' || channel === 'both') {
-        const { ready } = await ipcRenderer.invoke('get-whatsapp-status');
-        if (!ready) {
-          toast('❌ WhatsApp non connecté ! Scan le QR dans le terminal.', true);
-          return;
-        }
+      // Warn if WA not ready
+      const { ready } = await ipcRenderer.invoke('get-whatsapp-status');
+      if (!ready) {
+        toast('❌ WhatsApp non connecté !', true);
+        return;
       }
 
       const ids = checked.map(cb => parseInt(cb.dataset.id));
