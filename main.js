@@ -228,11 +228,12 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
 
     const waReady = isWhatsAppReady() && !!c.phone;
     const tgReady = !!(tgBot && c.telegramChatId);
+    console.log(`[BulkSend] ${c.name} — phone:${c.phone} chatId:${c.telegramChatId} waReady:${waReady} tgReady:${tgReady} channel:${channel}`);
 
     // Telegram send
     if ((channel === 'tg' || channel === 'both') && tgReady) {
       try { await tgBot.sendMessage(c.telegramChatId, msg); sentTG++; }
-      catch(e) { failedTG++; }
+      catch(e) { console.error('[BulkSend TG error]', e.message); failedTG++; }
     }
 
     // WhatsApp send — also used as fallback when TG requested but client has no chatId
