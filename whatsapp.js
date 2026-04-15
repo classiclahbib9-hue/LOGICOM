@@ -49,6 +49,15 @@ function initWhatsApp(onQr, onAdminNotify) {
         authStrategy: new LocalAuth({ dataPath: getSessionPath() }),
         puppeteer: {
             headless: true,
+            executablePath: (() => {
+                const paths = [
+                    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+                    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+                    process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
+                ];
+                const fs = require('fs');
+                return paths.find(p => fs.existsSync(p)) || undefined;
+            })(),
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -56,7 +65,6 @@ function initWhatsApp(onQr, onAdminNotify) {
                 '--disable-dev-shm-usage',
                 '--no-first-run',
                 '--no-zygote',
-                '--disable-extensions',
             ],
             timeout: 60000,
         },
