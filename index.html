@@ -2458,6 +2458,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="bulkSendReminders('wa')">💬 WhatsApp</button>
             <button class="btn btn-sm" style="background:#229ED9; color:white; border:none;" onclick="bulkSendReminders('tg')">✈️ Telegram</button>
             <button class="btn btn-primary btn-sm" onclick="bulkSendReminders('both')">📤 Les deux</button>
+            <span id="waStatusBadge" style="font-size:11px; padding:2px 8px; border-radius:12px; font-weight:600;">⏳ WA...</span>
             <span id="bulkSendStatus" style="font-size:12px; color:var(--muted);"></span>
           </div>
         </div>
@@ -3068,7 +3069,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         }, 50);
       }
       if (i === 5) renderMaterials();
-      if (i === 6) { renderReminders(); loadApiKeys(); }
+      if (i === 6) { renderReminders(); loadApiKeys(); refreshWAStatus(); }
       if (i === 7) initVoiceChat();
     }
 
@@ -5042,6 +5043,16 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     async function bulkSendReminders(channel) {
       const checked = Array.from(document.querySelectorAll('.reminder-cb:checked'));
       if (checked.length === 0) { toast('Aucun client sélectionné', true); return; }
+
+      // Warn if WA not ready and WA needed
+      if (channel === 'wa' || channel === 'both') {
+        const { ready } = await ipcRenderer.invoke('get-whatsapp-status');
+        if (!ready) {
+          toast('❌ WhatsApp non connecté ! Scan le QR dans le terminal.', true);
+          return;
+        }
+      }
+
       const ids = checked.map(cb => parseInt(cb.dataset.id));
       const template = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
       const status = document.getElementById('bulkSendStatus');
@@ -5063,6 +5074,30 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         status.textContent = '❌ Erreur lors de l\'envoi';
         toast('Erreur envoi groupé', true);
       }
+    }
+
+    async function refreshWAStatus() {
+      try {
+        const { status, ready } = await ipcRenderer.invoke('get-whatsapp-status');
+        const badge = document.getElementById('waStatusBadge');
+        if (!badge) return;
+        if (ready) {
+          badge.textContent = '✅ WA Connecté';
+          badge.style.background = 'rgba(37,211,102,0.15)';
+          badge.style.color = '#25D366';
+          badge.style.border = '1px solid #25D366';
+        } else if (status === 'connecting') {
+          badge.textContent = '⏳ WA Connexion...';
+          badge.style.background = 'rgba(255,193,7,0.15)';
+          badge.style.color = '#ffc107';
+          badge.style.border = '1px solid #ffc107';
+        } else {
+          badge.textContent = '❌ WA Déconnecté';
+          badge.style.background = 'rgba(255,99,71,0.15)';
+          badge.style.color = 'var(--red)';
+          badge.style.border = '1px solid var(--red)';
+        }
+      } catch(e) {}
     }
 
     async function renderReminders() {

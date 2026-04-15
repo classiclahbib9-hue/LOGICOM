@@ -195,6 +195,11 @@ ipcMain.handle('open-whatsapp', async (event, url) => {
   return shell.openExternal(url);
 });
 
+ipcMain.handle('get-whatsapp-status', async () => {
+  const { getWhatsAppStatus, isWhatsAppReady } = require('./whatsapp');
+  return { status: getWhatsAppStatus(), ready: isWhatsAppReady() };
+});
+
 ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template, channel }) => {
   const { sendWhatsApp, isWhatsAppReady } = require('./whatsapp');
   const { getBot } = require('./telegram');
