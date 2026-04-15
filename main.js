@@ -195,6 +195,15 @@ ipcMain.handle('open-whatsapp', async (event, url) => {
   return shell.openExternal(url);
 });
 
+ipcMain.handle('link-telegram-chatid', async (event, { clientId, chatId }) => {
+  const db = getDB();
+  if (!db) return { ok: false };
+  db.run(`UPDATE clients SET telegramChatId='${chatId}' WHERE id=${parseInt(clientId)}`);
+  const { saveToFile } = require('./db');
+  saveToFile();
+  return { ok: true };
+});
+
 ipcMain.handle('get-whatsapp-status', async () => {
   const { getWhatsAppStatus, isWhatsAppReady } = require('./whatsapp');
   return { status: getWhatsAppStatus(), ready: isWhatsAppReady() };

@@ -1028,7 +1028,8 @@ async function initTelegram() {
 function updateConfig(newConfig) {
     const configPath = getConfigPath();
     fs.writeFileSync(configPath, JSON.stringify(newConfig));
-    initTelegram();
+    // Only restart if token changed
+    if (!currentBot) initTelegram();
 }
 
 function getBot() { return currentBot; }

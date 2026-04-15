@@ -5082,6 +5082,14 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       _waStatusInterval = setInterval(refreshWAStatus, 5000);
     }
 
+    async function linkTelegram(clientId) {
+      const chatId = prompt('Entrez le Telegram Chat ID du client (ex: 1202783448) :');
+      if (!chatId || !chatId.trim()) return;
+      const res = await ipcRenderer.invoke('link-telegram-chatid', { clientId, chatId: chatId.trim() });
+      if (res.ok) { toast('✅ Telegram lié !'); renderReminders(); }
+      else toast('❌ Erreur liaison Telegram', true);
+    }
+
     async function refreshWAStatus() {
       try {
         const { status, ready } = await ipcRenderer.invoke('get-whatsapp-status');
@@ -5177,7 +5185,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           const deadlineColor = isOverdue ? 'color:var(--red); font-weight:700;' : 'color:var(--muted);';
 
           const waBadge = c.phone ? '<span title="Joignable WhatsApp" style="background:#25D366;color:white;border-radius:4px;padding:1px 5px;font-size:10px;margin-left:4px;">WA</span>' : '';
-          const tgBadge = c.telegramChatId ? '<span title="Lié Telegram" style="background:#229ED9;color:white;border-radius:4px;padding:1px 5px;font-size:10px;margin-left:4px;">TG</span>' : '';
+          const tgBadge = c.telegramChatId
+            ? '<span title="Lié Telegram" style="background:#229ED9;color:white;border-radius:4px;padding:1px 5px;font-size:10px;margin-left:4px;">TG</span>'
+            : `<span onclick="linkTelegram(${c.id})" title="Lier Telegram" style="background:#555;color:white;border-radius:4px;padding:1px 5px;font-size:10px;margin-left:4px;cursor:pointer;">TG?</span>`;
 
           return `<tr style="${rowStyle}">
             <td><input type="checkbox" class="reminder-cb" data-id="${c.id}" style="width:15px;height:15px;cursor:pointer;"></td>
