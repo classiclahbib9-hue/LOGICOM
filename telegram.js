@@ -539,17 +539,29 @@ async function initTelegram() {
             try {
                 const db = getDB();
                 if (db) {
-                    const linked = db.exec(`SELECT id FROM clients WHERE telegramChatId = '${chatId}' LIMIT 1`);
-                    if (!linked.length) {
-                        // Try to find by phone if client included it in text (e.g. "0661234567")
-                        const phoneMatch = text.match(/0[567]\d{8}/);
-                        if (phoneMatch) {
-                            const p = phoneMatch[0];
-                            db.run(`UPDATE clients SET telegramChatId='${chatId}' WHERE replace(phone,' ','')='${p}' OR replace(phone,' ','')='213${p.slice(1)}'`);
+                    const already = db.exec(`SELECT id, name FROM clients WHERE telegramChatId = '${chatId}' LIMIT 1`);
+                    if (already.length && already[0].values.length) {
+                        const clientName = already[0].values[0][1];
+                        bot.sendMessage(chatId, `✅ Votre compte (${clientName}) est déjà lié à Telegram !`);
+                        return;
+                    }
+                    const phoneMatch = text.match(/0[5-7]\d{8}/);
+                    if (phoneMatch) {
+                        const p = phoneMatch[0];
+                        const p213 = '213' + p.slice(1);
+                        const check = db.exec(`SELECT id, name FROM clients WHERE replace(replace(phone,' ',''),'+','') IN ('${p}','${p213}') LIMIT 1`);
+                        if (check.length && check[0].values.length) {
+                            const clientName = check[0].values[0][1];
+                            db.run(`UPDATE clients SET telegramChatId='${chatId}' WHERE replace(replace(phone,' ',''),'+','') IN ('${p}','${p213}')`);
+                            bot.sendMessage(chatId, `✅ Parfait ${clientName} ! Votre compte est maintenant lié. Vous recevrez vos rappels ici.`);
+                            return;
+                        } else {
+                            bot.sendMessage(chatId, `❌ Numéro ${p} introuvable dans notre système. Vérifiez votre numéro ou contactez LOGICOM.`);
+                            return;
                         }
                     }
                 }
-            } catch(e) {}
+            } catch(e) { console.error('[AutoLink]', e.message); }
 
             // --- COMMANDS ---
             const lang = detectLanguage(text);
