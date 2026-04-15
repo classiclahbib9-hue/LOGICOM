@@ -1,5 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { addClientManually, getUnpaidClientsByPeriod, getDB, savePaymentPromise } = require('./db');
+const { addClientManually, getUnpaidClientsByPeriod, getDB, savePaymentPromise, saveToFile } = require('./db');
 const { parsePromiseWithGroq } = require('./promise-parser');
 const { sendWhatsApp, isWhatsAppReady } = require('./whatsapp');
 const fs = require('fs');
@@ -553,6 +553,7 @@ async function initTelegram() {
                         if (check.length && check[0].values.length) {
                             const clientName = check[0].values[0][1];
                             db.run(`UPDATE clients SET telegramChatId='${chatId}' WHERE replace(replace(phone,' ',''),'+','') IN ('${p}','${p213}')`);
+                            saveToFile();
                             bot.sendMessage(chatId, `✅ Parfait ${clientName} ! Votre compte est maintenant lié. Vous recevrez vos rappels ici.`);
                             return;
                         } else {

@@ -347,4 +347,4 @@ function linkClientTelegram(phone, chatId) {
     } catch(e) {}
 }
 
-module.exports = { initDB, registerIpcHandlers, addClientManually, getDB, getUnpaidClientsByPeriod, linkClientTelegram, getSoldClients, savePaymentPromise, getDuePromises };
+module.exports = { initDB, registerIpcHandlers, addClientManually, getDB, getUnpaidClientsByPeriod, linkClientTelegram, getSoldClients, savePaymentPromise, getDuePromises, saveToFile };
