@@ -220,8 +220,15 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
   const tgBot = getBot();
   const db = getDB();
 
+  // Get admin chatId from config
+  let adminChatId = null;
+  try {
+    const cfg = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'telegram-config.json'), 'utf8'));
+    adminChatId = cfg.adminChatId || null;
+  } catch(e) {}
+
   const idList = clientIds.map(id => parseInt(id)).join(',');
-  const res = db.exec(`SELECT id, name, phone, brand, negotiatedPrice, paidAmount, telegramChatId FROM clients WHERE id IN (${idList})`);
+  const res = db.exec(`SELECT id, name, phone, brand, negotiatedPrice, paidAmount FROM clients WHERE id IN (${idList})`);
   const rows = res.length ? res[0].values.map(row => {
     const obj = {};
     res[0].columns.forEach((col, i) => obj[col] = row[i]);
@@ -229,6 +236,7 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
   }) : [];
 
   let sentWA = 0, sentTG = 0, failedWA = 0, failedTG = 0;
+  const tgSummaryLines = [];
 
   for (const c of rows) {
     const total = c.negotiatedPrice || 0;
@@ -240,24 +248,27 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
       .replace(/\{brand\}/g, c.brand || '')
       .replace(/\{balance\}/g, balance.toLocaleString('fr-DZ'));
 
-    const waReady = isWhatsAppReady() && !!c.phone;
-    const tgReady = !!(tgBot && c.telegramChatId);
-    console.log(`[BulkSend] ${c.name} — phone:${c.phone} chatId:${c.telegramChatId} waReady:${waReady} tgReady:${tgReady} channel:${channel}`);
-
-    // Telegram send
-    if ((channel === 'tg' || channel === 'both') && tgReady) {
-      try { await tgBot.sendMessage(c.telegramChatId, msg); sentTG++; }
-      catch(e) { console.error('[BulkSend TG error]', e.message); failedTG++; }
-    }
-
-    // WhatsApp send — also used as fallback when TG requested but client has no chatId
-    const needWA = channel === 'wa' || channel === 'both' || (channel === 'tg' && !tgReady);
-    if (needWA && waReady) {
+    // WhatsApp — send directly to client phone
+    if ((channel === 'wa' || channel === 'both') && isWhatsAppReady() && c.phone) {
       try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 600)); }
       catch(e) { failedWA++; }
     }
 
+    // Collect for Telegram admin summary
+    if (channel === 'tg' || channel === 'both') {
+      tgSummaryLines.push(`• *${c.name}* (${c.phone}) — *${balance.toLocaleString('fr-DZ')} DA*`);
+    }
+
     await new Promise(r => setTimeout(r, 300));
+  }
+
+  // Send Telegram summary to admin
+  if ((channel === 'tg' || channel === 'both') && tgBot && adminChatId && tgSummaryLines.length) {
+    try {
+      const summary = `📋 *Rappels envoyés (${new Date().toLocaleDateString('fr-DZ')})*\n\n${tgSummaryLines.join('\n')}\n\n✅ *${sentWA} via WhatsApp* | 📱 *${tgSummaryLines.length} dans ce résumé*`;
+      await tgBot.sendMessage(adminChatId, summary, { parse_mode: 'Markdown' });
+      sentTG = tgSummaryLines.length;
+    } catch(e) { console.error('[TG Admin summary error]', e.message); }
   }
 
   return { total: rows.length, sentWA, sentTG, failedWA, failedTG };
