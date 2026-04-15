@@ -48,7 +48,7 @@ function initWhatsApp(onQr, onAdminNotify) {
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: getSessionPath() }),
         puppeteer: {
-            headless: true,
+            headless: false,
             executablePath: (() => {
                 const paths = [
                     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
