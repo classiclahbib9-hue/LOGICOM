@@ -2318,6 +2318,32 @@
           <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">Variables : <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{name}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{amount}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{balance}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{brand}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{mode}</code></div>
           <textarea id="paymentConfirmTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿</textarea>
         </div>
+        <!-- Auto WhatsApp Reminder -->
+        <div style="margin-top:20px; padding:16px; background:rgba(37,211,102,0.07); border:1px solid rgba(37,211,102,0.25); border-radius:12px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+              <input type="checkbox" id="autoReminderEnabled" style="width:16px;height:16px;cursor:pointer;">
+              🤖 Rappel WhatsApp Automatique
+            </label>
+            <span style="font-size:12px; color:var(--muted);">— envoie un rappel aux clients non payés chaque jour</span>
+          </div>
+          <div style="display:flex; gap:15px; align-items:center; flex-wrap:wrap;">
+            <div class="field" style="margin:0; flex:1; min-width:180px;">
+              <label style="font-size:12px;">Délai après installation (jours)</label>
+              <select id="autoReminderDays" style="width:100%; padding:8px; border-radius:8px; background:var(--card); border:1px solid var(--border); color:var(--text);">
+                <option value="30">1 mois (30 jours)</option>
+                <option value="90">3 mois (90 jours)</option>
+                <option value="180">6 mois (180 jours)</option>
+                <option value="240">8 mois (240 jours)</option>
+                <option value="365">1 an (365 jours)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label style="font-size:12px;">Message automatique</label>
+            <textarea id="autoReminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:70px; font-family:'DM Sans'; font-size:13px;">Salam alikoum {name}, petit rappel pour votre règlement de {balance} DA pour votre logiciel LOGICOM. Merci de nous contacter. 🙏</textarea>
+          </div>
+        </div>
         <div style="margin-top:15px; display:flex; justify-content:flex-end;">
           <button class="btn btn-primary btn-sm" onclick="saveApiSettings()">💾 Sauvegarder Config</button>
         </div>
@@ -4949,7 +4975,14 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const groqKey = document.getElementById('groqApiKey').value;
       localStorage.setItem('claude_api_key', groqKey);
 
-      ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey });
+      const autoReminderEnabled = document.getElementById('autoReminderEnabled').checked;
+      const autoReminderDays = parseInt(document.getElementById('autoReminderDays').value);
+      const autoReminderTemplate = document.getElementById('autoReminderTemplate').value;
+      localStorage.setItem('logicom-auto-reminder-enabled', autoReminderEnabled ? '1' : '0');
+      localStorage.setItem('logicom-auto-reminder-days', autoReminderDays);
+      localStorage.setItem('logicom-auto-reminder-template', autoReminderTemplate);
+
+      ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey, autoReminderEnabled, autoReminderDays, autoReminderTemplate });
       toast('Configuration sauvegardée ✓');
     }
 
@@ -4962,7 +4995,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('tgToken').value = tgToken;
       const groqKey = localStorage.getItem('claude_api_key') || '';
       document.getElementById('groqApiKey').value = groqKey;
-      // Auto-persist groq key to disk so telegram.js can read it
+
+      document.getElementById('autoReminderEnabled').checked = localStorage.getItem('logicom-auto-reminder-enabled') === '1';
+      document.getElementById('autoReminderDays').value = localStorage.getItem('logicom-auto-reminder-days') || '30';
+      document.getElementById('autoReminderTemplate').value = localStorage.getItem('logicom-auto-reminder-template') || 'Salam alikoum {name}, petit rappel pour votre règlement de {balance} DA pour votre logiciel LOGICOM. Merci de nous contacter. 🙏';
+
       if (groqKey && tgToken) {
         ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey });
       }

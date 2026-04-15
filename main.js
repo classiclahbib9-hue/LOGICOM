@@ -552,6 +552,77 @@ function scheduleDuePromiseAlerts() {
   setInterval(checkAndNotify, 24 * 60 * 60 * 1000);
 }
 
+function scheduleAutoWhatsAppReminders() {
+  async function runAutoReminders() {
+    const { isWhatsAppReady, sendWhatsApp } = require('./whatsapp');
+    if (!isWhatsAppReady()) return;
+
+    const db = getDB();
+    if (!db) return;
+
+    // Load auto-reminder settings from config
+    let settings = { autoReminderEnabled: false, autoReminderDays: 30, autoReminderTemplate: '' };
+    try {
+      const cfgPath = path.join(app.getPath('userData'), 'telegram-config.json');
+      const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+      settings = { ...settings, ...cfg };
+    } catch(e) {}
+
+    if (!settings.autoReminderEnabled) return;
+
+    const days = settings.autoReminderDays || 30;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+
+    // Get unpaid clients older than X days, not reminded today
+    const today = new Date().toLocaleDateString('fr-FR');
+    const res = db.exec(`
+      SELECT id, name, phone, negotiatedPrice, paidAmount, dateDernierRappel, brand
+      FROM clients
+      WHERE paymentStatus != 'Régler'
+        AND (negotiatedPrice - COALESCE(paidAmount,0)) > 0
+        AND phone IS NOT NULL AND phone != ''
+        AND (created_at <= '${cutoffStr}' OR paymentDeadline <= date('now'))
+        AND (dateDernierRappel IS NULL OR dateDernierRappel = '' OR dateDernierRappel != '${today}')
+      LIMIT 50
+    `);
+
+    if (!res.length || !res[0].values.length) return;
+
+    const template = settings.autoReminderTemplate ||
+      `Salam alikoum {name}, petit rappel pour votre règlement de *{balance} DA* pour votre logiciel LOGICOM. Merci de nous contacter. 🙏`;
+
+    let sent = 0;
+    for (const row of res[0].values) {
+      const [id, name, phone, negotiatedPrice, paidAmount, , brand] = row;
+      const balance = Math.max(0, (negotiatedPrice || 0) - (paidAmount || 0));
+      const msg = template
+        .replace(/\{name\}/g, name || '')
+        .replace(/\{phone\}/g, phone || '')
+        .replace(/\{brand\}/g, brand || '')
+        .replace(/\{balance\}/g, balance.toLocaleString('fr-DZ'));
+      try {
+        await sendWhatsApp(phone, msg);
+        db.run(`UPDATE clients SET dateDernierRappel='${today}' WHERE id=${id}`);
+        sent++;
+        await new Promise(r => setTimeout(r, 800));
+      } catch(e) { console.error('[AutoReminder] Failed for', name, e.message); }
+    }
+
+    if (sent > 0) {
+      const { saveToFile } = require('./db');
+      saveToFile();
+      console.log(`[AutoReminder] ✅ Sent ${sent} automatic WhatsApp reminders`);
+    }
+  }
+
+  // Run once 30s after startup (WhatsApp needs time to connect)
+  setTimeout(runAutoReminders, 30000);
+  // Then every 24 hours
+  setInterval(runAutoReminders, 24 * 60 * 60 * 1000);
+}
+
 app.whenReady().then(async () => {
   console.log('App ready, initializing DB...');
   await initDB()
@@ -583,6 +654,7 @@ app.whenReady().then(async () => {
     try { await bot.sendMessage(adminChatId, alert, { parse_mode: 'Markdown' }); } catch(e) {}
   })
   scheduleDuePromiseAlerts()
+  scheduleAutoWhatsAppReminders()
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
