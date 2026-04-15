@@ -462,17 +462,20 @@ async function initTelegram() {
     console.log('Initializing Telegram Bot with token:', config.token.substring(0, 5) + '...');
     
     try {
-        const bot = new TelegramBot(config.token, { polling: false });
-        // Delete webhook & drop pending updates to clear any 409 conflict
-        await bot.deleteWebhook({ drop_pending_updates: true }).catch(() => {});
-        await new Promise(r => setTimeout(r, 2000));
-        bot.startPolling({ restart: true });
+        const bot = new TelegramBot(config.token, {
+            polling: {
+                interval: 1000,
+                autoStart: true,
+                params: { timeout: 10, allowed_updates: [] }
+            }
+        });
         currentBot = bot;
 
         bot.on('polling_error', (error) => {
-            if (error.code === 'ETELEGRAM' && error.message.includes('409')) {
-                console.warn('[Telegram] 409 conflict — retrying in 5s...');
-                setTimeout(() => { try { bot.startPolling({ restart: true }); } catch(e) {} }, 5000);
+            if (error.message && error.message.includes('409')) {
+                console.warn('[Telegram] 409 conflict — another instance running, retrying in 10s...');
+                bot.stopPolling().catch(() => {});
+                setTimeout(() => bot.startPolling().catch(() => {}), 10000);
                 return;
             }
             console.error('Telegram Polling Error:', error.code, error.message);
