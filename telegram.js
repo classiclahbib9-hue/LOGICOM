@@ -455,7 +455,9 @@ async function initTelegram() {
 
     if (currentBot) {
         try {
-            currentBot.stopPolling();
+            await currentBot.stopPolling();
+            currentBot = null;
+            await new Promise(r => setTimeout(r, 3000));
         } catch (e) {}
     }
 
