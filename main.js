@@ -171,16 +171,18 @@ ipcMain.handle('bulk-send-sold-message', async (event, { filter, template, chann
       .replace(/\{pack\}/g, c.brand || '')
       .replace(/\{balance\}/g, Math.max(0, (c.negotiatedPrice || 0) - (c.paidAmount || 0)));
 
-    // WhatsApp
-    if ((channel === 'wa' || channel === 'both') && isWhatsAppReady() && c.phone) {
-      try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 500)); }
-      catch(e) { failedWA++; }
-    }
+    const waReady2 = isWhatsAppReady() && !!c.phone;
+    const tgReady2 = !!(tgBot && c.telegramChatId);
 
-    // Telegram
-    if ((channel === 'tg' || channel === 'both') && tgBot && c.telegramChatId) {
+    if ((channel === 'tg' || channel === 'both') && tgReady2) {
       try { await tgBot.sendMessage(c.telegramChatId, msg); sentTG++; }
       catch(e) { failedTG++; }
+    }
+
+    const needWA2 = channel === 'wa' || channel === 'both' || (channel === 'tg' && !tgReady2);
+    if (needWA2 && waReady2) {
+      try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 500)); }
+      catch(e) { failedWA++; }
     }
 
     await new Promise(r => setTimeout(r, 300));
@@ -219,14 +221,20 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
       .replace(/\{brand\}/g, c.brand || '')
       .replace(/\{balance\}/g, balance.toLocaleString('fr-DZ'));
 
-    if ((channel === 'wa' || channel === 'both') && isWhatsAppReady() && c.phone) {
-      try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 600)); }
-      catch(e) { failedWA++; }
-    }
+    const waReady = isWhatsAppReady() && !!c.phone;
+    const tgReady = !!(tgBot && c.telegramChatId);
 
-    if ((channel === 'tg' || channel === 'both') && tgBot && c.telegramChatId) {
+    // Telegram send
+    if ((channel === 'tg' || channel === 'both') && tgReady) {
       try { await tgBot.sendMessage(c.telegramChatId, msg); sentTG++; }
       catch(e) { failedTG++; }
+    }
+
+    // WhatsApp send — also used as fallback when TG requested but client has no chatId
+    const needWA = channel === 'wa' || channel === 'both' || (channel === 'tg' && !tgReady);
+    if (needWA && waReady) {
+      try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 600)); }
+      catch(e) { failedWA++; }
     }
 
     await new Promise(r => setTimeout(r, 300));

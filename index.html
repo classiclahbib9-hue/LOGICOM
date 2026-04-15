@@ -5135,9 +5135,12 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           const rowStyle = isOverdue ? 'background:rgba(255,99,71,0.05);' : '';
           const deadlineColor = isOverdue ? 'color:var(--red); font-weight:700;' : 'color:var(--muted);';
 
+          const waBadge = c.phone ? '<span title="Joignable WhatsApp" style="background:#25D366;color:white;border-radius:4px;padding:1px 5px;font-size:10px;margin-left:4px;">WA</span>' : '';
+          const tgBadge = c.telegramChatId ? '<span title="Lié Telegram" style="background:#229ED9;color:white;border-radius:4px;padding:1px 5px;font-size:10px;margin-left:4px;">TG</span>' : '';
+
           return `<tr style="${rowStyle}">
             <td><input type="checkbox" class="reminder-cb" data-id="${c.id}" style="width:15px;height:15px;cursor:pointer;"></td>
-            <td style="font-weight:600">${c.name} ${c.autoReminder ? '🤖' : ''}</td>
+            <td style="font-weight:600">${c.name} ${c.autoReminder ? '🤖' : ''}${waBadge}${tgBadge}</td>
             <td>${c.phone || '-'}</td>
             <td style="font-size:12px; color:var(--muted);">${anciennete}</td>
             <td class="price-cell">${total.toLocaleString('fr-DZ')} DA</td>
