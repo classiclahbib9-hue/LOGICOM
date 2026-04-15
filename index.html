@@ -3069,7 +3069,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         }, 50);
       }
       if (i === 5) renderMaterials();
-      if (i === 6) { renderReminders(); loadApiKeys(); refreshWAStatus(); }
+      if (i === 6) { renderReminders(); loadApiKeys(); refreshWAStatus(); startWAStatusPolling(); }
       if (i === 7) initVoiceChat();
     }
 
@@ -5074,6 +5074,12 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         status.textContent = '❌ Erreur lors de l\'envoi';
         toast('Erreur envoi groupé', true);
       }
+    }
+
+    let _waStatusInterval = null;
+    function startWAStatusPolling() {
+      if (_waStatusInterval) clearInterval(_waStatusInterval);
+      _waStatusInterval = setInterval(refreshWAStatus, 5000);
     }
 
     async function refreshWAStatus() {
