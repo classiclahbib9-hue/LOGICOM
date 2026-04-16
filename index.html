@@ -2359,8 +2359,12 @@
             </div>
           </div>
           <div class="field" style="margin-top:10px;">
-            <label style="font-size:12px;">Message automatique</label>
+            <label style="font-size:12px;">📩 Message rappel dettes <span style="color:var(--muted);">— Variables : {name} {balance} {brand} {phone}</span></label>
             <textarea id="autoReminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:70px; font-family:'DM Sans'; font-size:13px;">Salam alikoum {name}, petit rappel pour votre règlement de {balance} DA pour votre logiciel LOGICOM. Merci de nous contacter. 🙏</textarea>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label style="font-size:12px;">🧪 Message fin d'essai <span style="color:var(--muted);">— Variables : {name} {days} {brand} {phone}</span></label>
+            <textarea id="trialExpiredTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:70px; font-family:'DM Sans'; font-size:13px;">Salam alikoum {name} ! 👋 Votre période d'essai LOGICOM de {days} jours est terminée. Vous avez aimé le logiciel ? Contactez-nous pour confirmer votre achat 😊 — Équipe LOGICOM 🇩🇿</textarea>
           </div>
         </div>
         <div style="margin-top:15px; display:flex; justify-content:flex-end;">
@@ -5045,8 +5049,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       localStorage.setItem('logicom-auto-reminder-enabled', autoReminderEnabled ? '1' : '0');
       localStorage.setItem('logicom-auto-reminder-days', autoReminderDays);
       localStorage.setItem('logicom-auto-reminder-template', autoReminderTemplate);
+      const trialExpiredTemplate = document.getElementById('trialExpiredTemplate').value;
+      localStorage.setItem('logicom-trial-expired-template', trialExpiredTemplate);
 
-      ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey, autoReminderEnabled, autoReminderDays, autoReminderTemplate });
+      ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey, autoReminderEnabled, autoReminderDays, autoReminderTemplate, trialExpiredTemplate });
       toast('Configuration sauvegardée ✓');
     }
 
@@ -5063,6 +5069,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('autoReminderEnabled').checked = localStorage.getItem('logicom-auto-reminder-enabled') === '1';
       document.getElementById('autoReminderDays').value = localStorage.getItem('logicom-auto-reminder-days') || '30';
       document.getElementById('autoReminderTemplate').value = localStorage.getItem('logicom-auto-reminder-template') || 'Salam alikoum {name}, petit rappel pour votre règlement de {balance} DA pour votre logiciel LOGICOM. Merci de nous contacter. 🙏';
+      document.getElementById('trialExpiredTemplate').value = localStorage.getItem('logicom-trial-expired-template') || "Salam alikoum {name} ! 👋 Votre période d'essai LOGICOM de {days} jours est terminée. Vous avez aimé le logiciel ? Contactez-nous pour confirmer votre achat 😊 — Équipe LOGICOM 🇩🇿";
 
       if (groqKey && tgToken) {
         ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey });

@@ -579,11 +579,14 @@ function scheduleTrialExpiredMessages() {
 
     for (const row of res[0].values) {
       const [id, name, phone, trialStartDate, trialPeriod] = row;
-      const msg =
-        `Salam alikoum ${name} ! 👋\n\n` +
-        `Votre période d'essai LOGICOM de *${trialPeriod || 15} jours* est maintenant terminée.\n\n` +
-        `Vous avez aimé le logiciel ? Contactez-nous pour confirmer votre achat et continuer à profiter de toutes les fonctionnalités. 😊\n\n` +
-        `— Équipe LOGICOM 🇩🇿`;
+      let cfg2 = {};
+      try { cfg2 = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'telegram-config.json'), 'utf8')); } catch(e) {}
+      const tplTrial = cfg2.trialExpiredTemplate || `Salam alikoum {name} ! 👋 Votre période d'essai LOGICOM de {days} jours est terminée. Vous avez aimé le logiciel ? Contactez-nous pour confirmer votre achat 😊 — Équipe LOGICOM 🇩🇿`;
+      const msg = tplTrial
+        .replace(/\{name\}/g, name || '')
+        .replace(/\{days\}/g, trialPeriod || 15)
+        .replace(/\{phone\}/g, phone || '')
+        .replace(/\{brand\}/g, '');
       try {
         await sendWhatsApp(phone, msg);
         db.run(`UPDATE clients SET dateDernierRappel='${todayDisplay}' WHERE id=${id}`);
@@ -611,7 +614,7 @@ function scheduleAutoWhatsAppReminders() {
     if (!db) return;
 
     // Load auto-reminder settings from config
-    let settings = { autoReminderEnabled: false, autoReminderDays: 30, autoReminderTemplate: '' };
+    let settings = { autoReminderEnabled: false, autoReminderDays: 30, autoReminderTemplate: '', trialExpiredTemplate: '' };
     try {
       const cfgPath = path.join(app.getPath('userData'), 'telegram-config.json');
       const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
