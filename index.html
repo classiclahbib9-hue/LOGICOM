@@ -391,6 +391,12 @@
       color: var(--text);
     }
 
+    .active-period {
+      background: var(--accent) !important;
+      color: white !important;
+      border-color: var(--accent) !important;
+    }
+
     .btn-sm {
       height: 28px;
       padding: 0 10px;
@@ -2140,7 +2146,20 @@
 
     <!-- ══ PANEL 5 : DASHBOARD ══ -->
     <div class="panel" id="p4">
-      <div class="toolbar" style="justify-content: flex-end;">
+      <div class="toolbar" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:13px; color:var(--muted); font-weight:600;">📅 Période :</span>
+          <button class="btn btn-sm dash-period-btn active-period" onclick="setDashPeriod(0)" data-p="0">Tout</button>
+          <button class="btn btn-sm dash-period-btn" onclick="setDashPeriod(30)" data-p="30">1 mois</button>
+          <button class="btn btn-sm dash-period-btn" onclick="setDashPeriod(90)" data-p="90">3 mois</button>
+          <button class="btn btn-sm dash-period-btn" onclick="setDashPeriod(180)" data-p="180">6 mois</button>
+          <button class="btn btn-sm dash-period-btn" onclick="setDashPeriod(365)" data-p="365">1 an</button>
+          <span style="color:var(--border);">|</span>
+          <input type="date" id="dashDateFrom" onchange="setDashCustomPeriod()" style="padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:12px;">
+          <span style="font-size:12px; color:var(--muted);">→</span>
+          <input type="date" id="dashDateTo" onchange="setDashCustomPeriod()" style="padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:12px;">
+          <span id="dashPeriodLabel" style="font-size:12px; color:var(--accent); font-weight:600;"></span>
+        </div>
         <button class="btn btn-ghost" onclick="printPage('Tableau de Bord LOGICOM')">🖨 Imprimer Stats</button>
       </div>
       <div class="dashboard-grid">
@@ -3854,15 +3873,60 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
     let installChart, paymentChart;
 
+    let dashPeriodDays = 0; // 0 = all time
+    let dashDateFrom = null, dashDateTo = null;
+
+    function setDashPeriod(days) {
+      dashPeriodDays = days;
+      dashDateFrom = null; dashDateTo = null;
+      document.getElementById('dashDateFrom').value = '';
+      document.getElementById('dashDateTo').value = '';
+      document.querySelectorAll('.dash-period-btn').forEach(b => {
+        b.classList.toggle('active-period', parseInt(b.dataset.p) === days);
+      });
+      const label = days === 0 ? 'Tous les temps' : `${days} derniers jours`;
+      document.getElementById('dashPeriodLabel').textContent = `— ${label}`;
+      renderDashboard();
+    }
+
+    function setDashCustomPeriod() {
+      dashDateFrom = document.getElementById('dashDateFrom').value;
+      dashDateTo = document.getElementById('dashDateTo').value;
+      if (!dashDateFrom && !dashDateTo) return;
+      dashPeriodDays = -1;
+      document.querySelectorAll('.dash-period-btn').forEach(b => b.classList.remove('active-period'));
+      const label = `${dashDateFrom || '...'} → ${dashDateTo || '...'}`;
+      document.getElementById('dashPeriodLabel').textContent = `— ${label}`;
+      renderDashboard();
+    }
+
+    function getFilteredClients() {
+      if (!clients) return [];
+      if (dashPeriodDays === 0 && !dashDateFrom && !dashDateTo) return clients;
+      return clients.filter(c => {
+        if (!c.created_at) return false;
+        const d = new Date(c.created_at);
+        if (dashDateFrom && d < new Date(dashDateFrom)) return false;
+        if (dashDateTo && d > new Date(dashDateTo + 'T23:59:59')) return false;
+        if (dashPeriodDays > 0) {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - dashPeriodDays);
+          if (d < cutoff) return false;
+        }
+        return true;
+      });
+    }
+
     function renderDashboard() {
       if (!clients) return;
+      const clients_filtered = getFilteredClients();
 
-      const totalClients = clients.length;
-      const installedClients = clients.filter(c => c.installer === 'Oui').length;
-      const materialClientsCount = clients.filter(c => c.material === 'Oui').length;
-      const paidClients = clients.filter(c => c.paymentStatus === 'Régler').length;
-      const partialPaid = clients.filter(c => c.paymentStatus === 'Verser').length;
-      const notPaid = clients.filter(c => c.paymentStatus === 'Non').length;
+      const totalClients = clients_filtered.length;
+      const installedClients = clients_filtered.filter(c => c.installer === 'Oui').length;
+      const materialClientsCount = clients_filtered.filter(c => c.material === 'Oui').length;
+      const paidClients = clients_filtered.filter(c => c.paymentStatus === 'Régler').length;
+      const partialPaid = clients_filtered.filter(c => c.paymentStatus === 'Verser').length;
+      const notPaid = clients_filtered.filter(c => c.paymentStatus === 'Non').length;
 
       // Stats Cards
       const setVal = (id, val) => {
@@ -3875,10 +3939,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       setVal('statNotInstalledCount', totalClients - installedClients);
       setVal('statMaterialCount', materialClientsCount);
       setVal('statZeroDebt', paidClients);
-      setVal('statTrialCount', clients.filter(c => c.trialStatus && c.trialStatus > 0).length);
+      setVal('statTrialCount', clients_filtered.filter(c => c.trialStatus && c.trialStatus > 0).length);
 
       let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0, caInstalle = 0;
-      clients.forEach(c => {
+      clients_filtered.forEach(c => {
         const val = getClientTotalValue(c);
         totalGlobal += val;
         if (c.installer === 'Oui') {
@@ -3896,7 +3960,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       setVal('statManqueGagner', Math.round(manqueGagner).toLocaleString('fr-DZ') + ' DA');
 
       const optionCounts = {};
-      clients.forEach(c => {
+      clients_filtered.forEach(c => {
         if (!c.options) return;
         const clientOptQtys = {}; // { oId: totalQtyForThisClient }
         c.options.forEach(item => {
