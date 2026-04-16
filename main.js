@@ -552,6 +552,56 @@ function scheduleDuePromiseAlerts() {
   setInterval(checkAndNotify, 24 * 60 * 60 * 1000);
 }
 
+function scheduleTrialExpiredMessages() {
+  async function runTrialCheck() {
+    const { isWhatsAppReady, sendWhatsApp } = require('./whatsapp');
+    if (!isWhatsAppReady()) return;
+
+    const db = getDB();
+    if (!db) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayDisplay = new Date().toLocaleDateString('fr-FR');
+
+    // Get trial clients whose trial has ended, not yet converted, not messaged today
+    const res = db.exec(`
+      SELECT id, name, phone, trialStartDate, trialPeriod, dateDernierRappel
+      FROM clients
+      WHERE trialStatus = 1
+        AND paymentStatus != 'Régler'
+        AND phone IS NOT NULL AND phone != ''
+        AND trialStartDate IS NOT NULL AND trialStartDate != ''
+        AND date(trialStartDate, '+' || COALESCE(trialPeriod, 15) || ' days') <= date('now')
+        AND (dateDernierRappel IS NULL OR dateDernierRappel = '' OR dateDernierRappel != '${todayDisplay}')
+    `);
+
+    if (!res.length || !res[0].values.length) return;
+
+    for (const row of res[0].values) {
+      const [id, name, phone, trialStartDate, trialPeriod] = row;
+      const msg =
+        `Salam alikoum ${name} ! 👋\n\n` +
+        `Votre période d'essai LOGICOM de *${trialPeriod || 15} jours* est maintenant terminée.\n\n` +
+        `Vous avez aimé le logiciel ? Contactez-nous pour confirmer votre achat et continuer à profiter de toutes les fonctionnalités. 😊\n\n` +
+        `— Équipe LOGICOM 🇩🇿`;
+      try {
+        await sendWhatsApp(phone, msg);
+        db.run(`UPDATE clients SET dateDernierRappel='${todayDisplay}' WHERE id=${id}`);
+        console.log(`[TrialExpired] ✅ Message sent to ${name}`);
+        await new Promise(r => setTimeout(r, 800));
+      } catch(e) {
+        console.error(`[TrialExpired] Failed for ${name}:`, e.message);
+      }
+    }
+
+    const { saveToFile } = require('./db');
+    saveToFile();
+  }
+
+  setTimeout(runTrialCheck, 35000); // 35s after startup
+  setInterval(runTrialCheck, 24 * 60 * 60 * 1000); // every 24h
+}
+
 function scheduleAutoWhatsAppReminders() {
   async function runAutoReminders() {
     const { isWhatsAppReady, sendWhatsApp } = require('./whatsapp');
@@ -655,6 +705,7 @@ app.whenReady().then(async () => {
   })
   scheduleDuePromiseAlerts()
   scheduleAutoWhatsAppReminders()
+  scheduleTrialExpiredMessages()
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })
