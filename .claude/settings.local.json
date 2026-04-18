@@ -6,7 +6,10 @@
       "Bash(npm install:*)",
       "Bash(node -e \"const XLSX = require\\('xlsx'\\); const wb = XLSX.readFile\\('C:/Users/PC/Desktop/CLAUDE AI SKILLS/Algerian_Darija_Dziri_Vocabulary.xlsx'\\); wb.SheetNames.forEach\\(name => { console.log\\('=== SHEET:', name, '==='\\); const ws = wb.Sheets[name]; const data = XLSX.utils.sheet_to_json\\(ws, {header:1}\\); data.slice\\(0,60\\).forEach\\(row => console.log\\(JSON.stringify\\(row\\)\\)\\); }\\);\")",
       "Bash(node -e \"require\\('./telegram.js'\\)\")",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(ls c:/Users/PC/software/LOGICOM/*.html)",
+      "Bash(curl \"https://api.telegram.org/bot8386228813:AAG8SRGnh29HYv7ooJ-AlqMM65L1nJk9tx8/getUpdates?offset=-1&timeout=0\")",
+      "Bash(npm run *)"
     ]
   }
 }
