@@ -2027,7 +2027,8 @@
     <div class="tab" onclick="switchTab(4)">📊 Devis & Récap</div>
     <div class="tab" onclick="switchTab(5)">💻 Matériel</div>
     <div class="tab" onclick="switchTab(6)"><span class="ring-bell">🔔</span> Rappels <span id="alertBadge" style="display:none; background:#ff4444; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; font-weight:bold; box-shadow:0 0 10px rgba(255,0,0,0.5)">!</span></div>
-    <div class="tab" onclick="switchTab(7)">🎙️ Assistant IA</div>
+    <div class="tab" onclick="switchTab(7)">📦 Étiquettes Colis</div>
+    <div class="tab" onclick="switchTab(8)">🎙️ Assistant IA</div>
   </div>
 
   <div class="container">
@@ -2572,94 +2573,6 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       </div>
     </div>
 
-    <!-- ══ PANEL 8 : ASSISTANT IA (VOICE CHAT) ══ -->
-    <div class="panel" id="p7">
-      <div class="toolbar">
-        <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🎙️ Assistant IA – يتحدث الدارجة</h2>
-        <div style="flex:1"></div>
-        <button class="btn btn-ghost btn-sm" onclick="toggleVoiceSettings()" title="Configuration">⚙️ Config</button>
-      </div>
-
-      <!-- API Key Config -->
-      <div id="voiceSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:16px; border-radius:12px; margin-bottom:16px;">
-        <h4 style="margin-bottom:12px; font-family:'Syne'; font-size:13px; color:var(--accent)">🔑 Configuration API</h4>
-
-        <!-- Provider selector -->
-        <div style="display:flex; gap:8px; margin-bottom:14px;">
-          <button id="btnProviderGroq" class="btn btn-primary btn-sm" onclick="setAiProvider('groq')" style="flex:1;">🦙 Groq (Gratuit)</button>
-          <button id="btnProviderClaude" class="btn btn-ghost btn-sm" onclick="setAiProvider('claude')" style="flex:1; border:1px solid var(--border);">🤖 Claude</button>
-          <button id="btnProviderOpenai" class="btn btn-ghost btn-sm" onclick="setAiProvider('openai')" style="flex:1; border:1px solid var(--border);">✨ ChatGPT</button>
-        </div>
-
-        <!-- Groq section -->
-        <div id="voiceGroqSection">
-          <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Créez un compte gratuit sur <b>console.groq.com</b> → API Keys → Create API Key</p>
-          <div class="field">
-            <label>Groq API Key (gratuit)</label>
-            <input type="password" id="claudeApiKey" placeholder="gsk_..." style="font-family:monospace;">
-          </div>
-        </div>
-
-        <!-- Claude section -->
-        <div id="voiceClaudeSection" style="display:none;">
-          <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Obtenez votre clé sur <b>console.anthropic.com</b> → API Keys</p>
-          <div class="field">
-            <label>Claude API Key (Anthropic)</label>
-            <input type="password" id="claudeAnthropicKey" placeholder="sk-ant-..." style="font-family:monospace;">
-          </div>
-        </div>
-
-        <!-- OpenAI / ChatGPT section -->
-        <div id="voiceOpenaiSection" style="display:none;">
-          <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Obtenez votre clé sur <b>platform.openai.com</b> → API Keys</p>
-          <div class="field">
-            <label>OpenAI API Key (ChatGPT)</label>
-            <input type="password" id="openaiApiKey" placeholder="sk-..." style="font-family:monospace;">
-          </div>
-          <div class="field">
-            <label>Modèle</label>
-            <select id="openaiModel" style="font-family:monospace;">
-              <option value="gpt-4.5-preview">GPT-4.5 Preview</option>
-              <option value="chatgpt-4o-latest">ChatGPT-4o Latest</option>
-              <option value="gpt-4o">GPT-4o</option>
-              <option value="gpt-4o-mini">GPT-4o Mini (rapide)</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
-          <button class="btn btn-primary btn-sm" onclick="saveVoiceSettings()">💾 Sauvegarder</button>
-        </div>
-      </div>
-
-      <!-- Chat Messages -->
-      <div id="voiceChatMessages" style="
-        flex:1; min-height:420px; max-height:420px; overflow-y:auto;
-        background:var(--card); border:1px solid var(--border);
-        border-radius:12px; padding:16px; margin-bottom:16px;
-        display:flex; flex-direction:column; gap:10px;
-      ">
-        <div class="vc-msg vc-bot" style="align-self:flex-start; max-width:75%; background:var(--tag-bg); padding:12px 16px; border-radius:12px 12px 12px 4px; font-size:14px; line-height:1.6;">
-          مرحبا! أنا المساعد ديالك. كلّمني بالدارجة أو بالفرنسية وأنا نجاوبك 😊<br>
-          <small style="color:var(--muted); font-size:11px;">اضغط على الميكروفون باش تبدأ تتكلم، ولا كتب مباشرة</small>
-        </div>
-      </div>
-
-      <!-- Input Area -->
-      <div style="display:flex; gap:10px; align-items:center;">
-        <button id="voiceMicBtn" onclick="toggleVoiceRecording()" style="
-          width:52px; height:52px; border-radius:50%; border:none; cursor:pointer;
-          background:var(--blue); color:white; font-size:22px;
-          display:flex; align-items:center; justify-content:center;
-          transition:all 0.2s; flex-shrink:0; box-shadow:0 2px 8px var(--shadow);
-        " title="تكلم (Parler)">🎙️</button>
-        <input type="text" id="voiceTextInput" placeholder="اكتب بالدارجة أو الفرنسية... / Tapez en darija ou français..."
-          style="flex:1; padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px; font-family:'DM Sans';"
-          onkeydown="if(event.key==='Enter') sendVoiceText()">
-        <button class="btn btn-primary" onclick="sendVoiceText()" style="height:52px; padding:0 20px;">Envoyer ➤</button>
-      </div>
-      <div id="voiceStatus" style="margin-top:8px; font-size:12px; color:var(--muted); text-align:center; min-height:18px;"></div>
-    </div>
 
   </div>
 
@@ -3117,7 +3030,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       }
       if (i === 5) renderMaterials();
       if (i === 6) { renderReminders(); loadApiKeys(); refreshWAStatus(); startWAStatusPolling(); }
-      if (i === 7) initVoiceChat();
+      if (i === 7) renderLabel();
+      if (i === 8) initVoiceChat();
     }
 
     // ═══════════════════════════ OPTIONS TABLE ═══════════════════════════
@@ -5090,6 +5004,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         const balance = total - paid;
         if (balance <= 0) return false;
         
+        // Skip if already reminded (permanently)
+        if (c.reminderSent) return false;
         // Avoid double reminders on the same day
         if (c.dateDernierRappel && c.dateDernierRappel.includes(todayDisplay)) return false;
         
@@ -5115,6 +5031,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         try {
           await ipcRenderer.invoke('send-whatsapp-with-file', { phone: finalPhone, message: msg });
           c.dateDernierRappel = todayDisplay + ' (Auto)';
+          c.reminderSent = true;
           await syncDB();
         } catch (e) {
           console.error("Auto-reminder failed for", c.name, e);
@@ -5164,10 +5081,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
       try {
         const result = await ipcRenderer.invoke('bulk-send-reminder-message', { clientIds: ids, template, channel });
-        // Update dateDernierRappel locally for the sent clients
+        // Update dateDernierRappel and mark as reminded permanently
         ids.forEach(id => {
           const c = clients.find(x => x.id === id);
-          if (c) c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
+          if (c) { c.dateDernierRappel = new Date().toLocaleDateString('fr-FR'); c.reminderSent = true; }
         });
         await syncDB();
         const channelLabel = channel === 'wa' ? '💬 WA' : channel === 'tg' ? '✈️ TG' : '💬 WA + ✈️ TG';
@@ -5323,11 +5240,14 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <td class="price-cell">${total.toLocaleString('fr-DZ')} DA</td>
             <td class="price-cell" style="color:var(--red); font-weight:700;">${balance.toLocaleString('fr-DZ')} DA</td>
             <td style="font-size:12px; ${deadlineColor}">${c.paymentDeadline || '-'}</td>
-            <td style="font-size:12px; color:var(--muted)">${c.dateDernierRappel || 'Jamais'}</td>
+            <td style="font-size:12px; color:var(--muted)">${c.reminderSent ? `<span style="color:var(--green,#22c55e);font-weight:700;">✅ Rappelé</span><br><span style="font-size:11px;">${c.dateDernierRappel || ''}</span>` : (c.dateDernierRappel || 'Jamais')}</td>
             <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲</button>
-                <button class="btn btn-ghost btn-sm" onclick="sendApiReminder(${c.id})" title="API Auto">🤖</button>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                ${c.reminderSent
+                  ? `<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px;color:var(--muted);" onclick="resetReminder(${c.id})" title="Réactiver rappel">🔄</button>`
+                  : `<button class="btn btn-sm" style="background:#25D366; color:white; border:none;" onclick="sendManualReminder(${c.id})">📲</button>
+                     <button class="btn btn-ghost btn-sm" onclick="sendApiReminder(${c.id})" title="API Auto">🤖</button>`
+                }
               </div>
             </td>
           </tr>`;
@@ -5387,8 +5307,19 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       
       await ipcRenderer.invoke('open-whatsapp', url);
       c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
+      c.reminderSent = true;
       syncDB();
       renderReminders();
+    }
+
+    function resetReminder(id) {
+      const c = clients.find(x => x.id === id);
+      if (!c) return;
+      c.reminderSent = false;
+      c.dateDernierRappel = '';
+      syncDB();
+      renderReminders();
+      toast(`🔄 Rappel réactivé pour ${c.name}`);
     }
 
     async function sendApiReminder(id) {
@@ -5781,5 +5712,409 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       }
     }
   </script>
+
+  <!-- ══ PANEL 9 : ÉTIQUETTES COLIS ══ -->
+  <style>
+    /* Label sizes */
+    .colis-label {
+      background: white;
+      color: black;
+      border: 3px solid #111;
+      font-family: 'DM Sans', sans-serif;
+      box-sizing: border-box;
+      position: relative;
+    }
+    .colis-label.size-a5 {
+      width: 148mm; height: 210mm;
+      padding: 14mm 16mm;
+      font-size: 14pt;
+    }
+    .colis-label.size-a6 {
+      width: 105mm; height: 148mm;
+      padding: 10mm 12mm;
+      font-size: 11pt;
+    }
+    .colis-label .label-logo {
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #666;
+      margin-bottom: 8mm;
+      text-transform: uppercase;
+      font-size: 0.75em;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4mm;
+    }
+    .colis-label .label-dest {
+      font-size: 1.7em;
+      font-weight: 800;
+      margin-bottom: 6mm;
+      line-height: 1.2;
+    }
+    .colis-label .label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.15em;
+      margin: 4mm 0;
+    }
+    .colis-label .label-count {
+      position: absolute;
+      bottom: 10mm;
+      right: 12mm;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.3em;
+      font-weight: 800;
+      background: #111;
+      color: white;
+      padding: 3mm 7mm;
+      border-radius: 6px;
+    }
+
+    /* Preview modal */
+    #modalEtiquette {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+    }
+    #modalEtiquette.open { display: flex; }
+    #modalEtiquette .et-modal-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      max-height: 95vh;
+      overflow-y: auto;
+    }
+    #modalEtiquette .et-modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      align-self: flex-start;
+    }
+    #modalEtiquette .et-modal-actions {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+    /* Label shadow in preview */
+    #etLabelWrap .colis-label {
+      box-shadow: 0 6px 32px rgba(0,0,0,0.22);
+    }
+
+    /* Print */
+    @media print {
+      #modalEtiquette, #modalEtiquette * { all: unset; }
+      body > *:not(#etPrintArea) { display: none !important; }
+      #etPrintArea {
+        display: block !important;
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+      }
+      #etPrintArea .colis-label {
+        box-shadow: none !important;
+        margin: 0 auto;
+      }
+    }
+  </style>
+
+  <!-- Hidden print area -->
+  <div id="etPrintArea" style="display:none;"></div>
+
+  <!-- Preview Modal -->
+  <div id="modalEtiquette">
+    <div class="et-modal-box">
+      <div class="et-modal-title">👁 Aperçu de l'étiquette</div>
+      <div id="etLabelWrap"></div>
+      <div class="et-modal-actions">
+        <button class="btn btn-ghost" style="flex:1;" onclick="document.getElementById('modalEtiquette').classList.remove('open')">✕ Fermer</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="doPrintLabel()">🖨 Imprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelEtiquettes">
+    <div class="toolbar">
+      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">📦 Étiquettes Colis</h2>
+    </div>
+
+    <div style="max-width:500px; margin:0 auto;">
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px 28px;">
+
+        <!-- Paper size -->
+        <div style="margin-bottom:18px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:8px;">📐 Format du papier</label>
+          <div style="display:flex; gap:10px;">
+            <label style="flex:1; cursor:pointer;">
+              <input type="radio" name="colisPaper" value="a5" checked onchange="renderLabel()" style="display:none;">
+              <div class="paper-size-btn" id="btnA5" onclick="selectPaper('a5')"
+                style="border:2px solid var(--accent); border-radius:10px; padding:10px; text-align:center; background:var(--accent); color:white; font-weight:700; font-size:14px;">
+                A5 <span style="font-size:11px; font-weight:400; display:block;">148 × 210 mm</span>
+              </div>
+            </label>
+            <label style="flex:1; cursor:pointer;">
+              <input type="radio" name="colisPaper" value="a6" onchange="renderLabel()" style="display:none;">
+              <div class="paper-size-btn" id="btnA6" onclick="selectPaper('a6')"
+                style="border:2px solid var(--border); border-radius:10px; padding:10px; text-align:center; background:transparent; color:var(--text); font-weight:700; font-size:14px;">
+                A6 <span style="font-size:11px; font-weight:400; display:block;">105 × 148 mm</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Nom -->
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">👤 Nom du destinataire</label>
+          <input type="text" id="colisNom" placeholder="Ex: Ahmed Benali"
+            style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:16px; font-weight:600; box-sizing:border-box;">
+        </div>
+
+        <!-- Tels -->
+        <div style="display:flex; gap:12px; margin-bottom:14px;">
+          <div style="flex:1;">
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">📞 Téléphone 1</label>
+            <input type="tel" id="colisTel1" placeholder="0555 000 000"
+              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; box-sizing:border-box;">
+          </div>
+          <div style="flex:1;">
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">📞 Téléphone 2 (optionnel)</label>
+            <input type="tel" id="colisTel2" placeholder="0661 000 000"
+              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; box-sizing:border-box;">
+          </div>
+        </div>
+
+        <!-- Nb colis -->
+        <div style="margin-bottom:22px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">📦 Nombre de colis</label>
+          <input type="number" id="colisNb" min="1" value="1"
+            style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:16px; font-weight:700; box-sizing:border-box;">
+        </div>
+
+        <!-- Customisation -->
+        <div style="border-top:1px solid var(--border); padding-top:16px; margin-bottom:20px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:12px;">🎨 Personnalisation</label>
+
+          <!-- Font size -->
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+            <span style="font-size:12px; color:var(--muted); min-width:80px;">Taille police</span>
+            <button onclick="changeFontSize(-1)" class="btn btn-ghost btn-sm" style="width:32px;height:32px;padding:0;font-size:16px;">−</button>
+            <span id="fontSizeDisplay" style="font-size:14px; font-weight:700; color:var(--text); min-width:38px; text-align:center;">100%</span>
+            <button onclick="changeFontSize(1)" class="btn btn-ghost btn-sm" style="width:32px;height:32px;padding:0;font-size:16px;">＋</button>
+            <button onclick="resetFontSize()" class="btn btn-ghost btn-sm" style="font-size:11px; padding:4px 8px;">Reset</button>
+          </div>
+
+          <!-- Bold toggle -->
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:12px; color:var(--muted); min-width:80px;">Style texte</span>
+            <button id="btnBold" onclick="toggleBold()" class="btn btn-ghost btn-sm"
+              style="font-weight:700; font-size:14px; padding:6px 16px; border:2px solid var(--border);">B Gras</button>
+            <button id="btnNormal" onclick="toggleBold(false)" class="btn btn-primary btn-sm"
+              style="font-size:14px; padding:6px 16px;">N Normal</button>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-ghost" style="flex:1; font-size:14px; padding:11px;" onclick="previewLabel()">👁 Aperçu</button>
+          <button class="btn btn-primary" style="flex:1; font-size:14px; padding:11px;" onclick="previewLabel(true)">🖨 Imprimer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let _colisPaper = 'a5';
+    let _fontSize = 100; // percent
+    let _fontBold = false;
+
+    function changeFontSize(delta) {
+      _fontSize = Math.min(200, Math.max(50, _fontSize + delta * 10));
+      document.getElementById('fontSizeDisplay').textContent = _fontSize + '%';
+    }
+
+    function resetFontSize() {
+      _fontSize = 100;
+      document.getElementById('fontSizeDisplay').textContent = '100%';
+    }
+
+    function toggleBold(on) {
+      _fontBold = (on === undefined) ? true : on;
+      const btnB = document.getElementById('btnBold');
+      const btnN = document.getElementById('btnNormal');
+      if (_fontBold) {
+        btnB.className = 'btn btn-primary btn-sm'; btnB.style.cssText = 'font-weight:700;font-size:14px;padding:6px 16px;';
+        btnN.className = 'btn btn-ghost btn-sm';   btnN.style.cssText = 'font-size:14px;padding:6px 16px;border:2px solid var(--border);';
+      } else {
+        btnN.className = 'btn btn-primary btn-sm'; btnN.style.cssText = 'font-size:14px;padding:6px 16px;';
+        btnB.className = 'btn btn-ghost btn-sm';   btnB.style.cssText = 'font-weight:700;font-size:14px;padding:6px 16px;border:2px solid var(--border);';
+      }
+    }
+
+    function selectPaper(size) {
+      _colisPaper = size;
+      const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6c63ff';
+      const border = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#333';
+      const text   = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff';
+      ['a5','a6'].forEach(s => {
+        const btn = document.getElementById('btn' + s.toUpperCase());
+        if (s === size) {
+          btn.style.border = '2px solid var(--accent)';
+          btn.style.background = 'var(--accent)';
+          btn.style.color = 'white';
+        } else {
+          btn.style.border = '2px solid var(--border)';
+          btn.style.background = 'transparent';
+          btn.style.color = 'var(--text)';
+        }
+      });
+    }
+
+    function buildLabelHTML() {
+      const nom  = document.getElementById('colisNom').value.trim();
+      const tel1 = document.getElementById('colisTel1').value.trim();
+      const tel2 = document.getElementById('colisTel2').value.trim();
+      const nb   = parseInt(document.getElementById('colisNb').value) || 1;
+      const scale = _fontSize / 100;
+      const weight = _fontBold ? '800' : '400';
+      return `
+        <div class="colis-label size-${_colisPaper}" style="font-size:${scale}em;">
+          <div class="label-logo" style="display:flex;align-items:center;gap:8px;"><img src="logo.png" style="height:32px;width:32px;object-fit:contain;"><span style="font-size:1.1em;font-weight:900;letter-spacing:3px;color:#1a1a2e;">DELFIV</span></div>
+          <div class="label-dest" style="font-weight:${_fontBold ? '900' : '800'};">${nom || '—'}</div>
+          <div class="label-row" style="font-weight:${weight};"><span>📞</span><span>${tel1 || '—'}</span></div>
+          ${tel2 ? `<div class="label-row" style="font-weight:${weight};"><span>📞</span><span>${tel2}</span></div>` : ''}
+          <div class="label-count"><span>📦</span><span>${nb} colis</span></div>
+        </div>`;
+    }
+
+    function previewLabel(autoPrint = false) {
+      const nom = document.getElementById('colisNom').value.trim();
+      if (!nom) { toast('❌ Entrez le nom du destinataire'); return; }
+      document.getElementById('etLabelWrap').innerHTML = buildLabelHTML();
+      document.getElementById('modalEtiquette').classList.add('open');
+      if (autoPrint) setTimeout(doPrintLabel, 120);
+    }
+
+    function doPrintLabel() {
+      const nom = document.getElementById('colisNom').value.trim();
+      if (!nom) { toast('❌ Entrez le nom du destinataire'); return; }
+      const printArea = document.getElementById('etPrintArea');
+      printArea.innerHTML = buildLabelHTML();
+      printArea.style.display = 'flex';
+      printArea.style.alignItems = 'center';
+      printArea.style.justifyContent = 'center';
+      printArea.style.position = 'fixed';
+      printArea.style.inset = '0';
+      printArea.style.background = 'white';
+      printArea.style.zIndex = '99999';
+
+      // inject @page size rule
+      const sizeMap = { a5: 'A5', a6: 'A6' };
+      let styleEl = document.getElementById('etPageStyle');
+      if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'etPageStyle'; document.head.appendChild(styleEl); }
+      styleEl.textContent = `@page { size: ${sizeMap[_colisPaper]}; margin: 0; }`;
+
+      window.print();
+      setTimeout(() => {
+        printArea.style.display = 'none';
+        printArea.innerHTML = '';
+      }, 500);
+    }
+
+    function renderLabel() {}
+  </script>
+
+  <!-- ══ PANEL 9 : ASSISTANT IA (VOICE CHAT) ══ -->
+  <div class="panel" id="p7">
+    <div class="toolbar">
+      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🎙️ Assistant IA – يتحدث الدارجة</h2>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleVoiceSettings()" title="Configuration">⚙️ Config</button>
+    </div>
+
+    <!-- API Key Config -->
+    <div id="voiceSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:16px; border-radius:12px; margin-bottom:16px;">
+      <h4 style="margin-bottom:12px; font-family:'Syne'; font-size:13px; color:var(--accent)">🔑 Configuration API</h4>
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <button id="btnProviderGroq" class="btn btn-primary btn-sm" onclick="setAiProvider('groq')" style="flex:1;">🦙 Groq (Gratuit)</button>
+        <button id="btnProviderClaude" class="btn btn-ghost btn-sm" onclick="setAiProvider('claude')" style="flex:1; border:1px solid var(--border);">🤖 Claude</button>
+        <button id="btnProviderOpenai" class="btn btn-ghost btn-sm" onclick="setAiProvider('openai')" style="flex:1; border:1px solid var(--border);">✨ ChatGPT</button>
+      </div>
+      <div id="voiceGroqSection">
+        <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Créez un compte gratuit sur <b>console.groq.com</b> → API Keys → Create API Key</p>
+        <div class="field">
+          <label>Groq API Key (gratuit)</label>
+          <input type="password" id="claudeApiKey" placeholder="gsk_..." style="font-family:monospace;">
+        </div>
+      </div>
+      <div id="voiceClaudeSection" style="display:none;">
+        <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Obtenez votre clé sur <b>console.anthropic.com</b> → API Keys</p>
+        <div class="field">
+          <label>Claude API Key (Anthropic)</label>
+          <input type="password" id="claudeAnthropicKey" placeholder="sk-ant-..." style="font-family:monospace;">
+        </div>
+      </div>
+      <div id="voiceOpenaiSection" style="display:none;">
+        <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Obtenez votre clé sur <b>platform.openai.com</b> → API Keys</p>
+        <div class="field">
+          <label>OpenAI API Key (ChatGPT)</label>
+          <input type="password" id="openaiApiKey" placeholder="sk-..." style="font-family:monospace;">
+        </div>
+        <div class="field">
+          <label>Modèle</label>
+          <select id="openaiModel" style="font-family:monospace;">
+            <option value="gpt-4.5-preview">GPT-4.5 Preview</option>
+            <option value="chatgpt-4o-latest">ChatGPT-4o Latest</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4o-mini">GPT-4o Mini (rapide)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn btn-primary btn-sm" onclick="saveVoiceSettings()">💾 Sauvegarder</button>
+      </div>
+    </div>
+
+    <!-- Chat Messages -->
+    <div id="voiceChatMessages" style="
+      flex:1; min-height:420px; max-height:420px; overflow-y:auto;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:12px; padding:16px; margin-bottom:16px;
+      display:flex; flex-direction:column; gap:10px;
+    ">
+      <div class="vc-msg vc-bot" style="align-self:flex-start; max-width:75%; background:var(--tag-bg); padding:12px 16px; border-radius:12px 12px 12px 4px; font-size:14px; line-height:1.6;">
+        مرحبا! أنا المساعد ديالك. كلّمني بالدارجة أو بالفرنسية وأنا نجاوبك 😊<br>
+        <small style="color:var(--muted); font-size:11px;">اضغط على الميكروفون باش تبدأ تتكلم، ولا كتب مباشرة</small>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button id="voiceMicBtn" onclick="toggleVoiceRecording()" style="
+        width:52px; height:52px; border-radius:50%; border:none; cursor:pointer;
+        background:var(--blue); color:white; font-size:22px;
+        display:flex; align-items:center; justify-content:center;
+        transition:all 0.2s; flex-shrink:0; box-shadow:0 2px 8px var(--shadow);
+      " title="تكلم (Parler)">🎙️</button>
+      <input type="text" id="voiceTextInput" placeholder="اكتب بالدارجة أو الفرنسية... / Tapez en darija ou français..."
+        style="flex:1; padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px; font-family:'DM Sans';"
+        onkeydown="if(event.key==='Enter') sendVoiceText()">
+      <button class="btn btn-primary" onclick="sendVoiceText()" style="height:52px; padding:0 20px;">Envoyer ➤</button>
+    </div>
+    <div id="voiceStatus" style="margin-top:8px; font-size:12px; color:var(--muted); text-align:center; min-height:18px;"></div>
+  </div>
 </body>
 </html>
