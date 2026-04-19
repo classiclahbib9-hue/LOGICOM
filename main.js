@@ -638,6 +638,7 @@ function scheduleAutoWhatsAppReminders() {
         AND phone IS NOT NULL AND phone != ''
         AND (created_at <= '${cutoffStr}' OR paymentDeadline <= date('now'))
         AND (dateDernierRappel IS NULL OR dateDernierRappel = '' OR dateDernierRappel != '${today}')
+        AND (reminderSent IS NULL OR reminderSent = 0)
       LIMIT 50
     `);
 
@@ -657,7 +658,7 @@ function scheduleAutoWhatsAppReminders() {
         .replace(/\{balance\}/g, balance.toLocaleString('fr-DZ'));
       try {
         await sendWhatsApp(phone, msg);
-        db.run(`UPDATE clients SET dateDernierRappel='${today}' WHERE id=${id}`);
+        db.run(`UPDATE clients SET dateDernierRappel='${today}', reminderSent=1 WHERE id=${id}`);
         sent++;
         await new Promise(r => setTimeout(r, 800));
       } catch(e) { console.error('[AutoReminder] Failed for', name, e.message); }

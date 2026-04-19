@@ -2201,6 +2201,13 @@
         </div>
         <div class="stat-card">
           <div class="stat-header">
+            <div class="sl">Taux de Conversion Essais</div>
+            <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+          </div>
+          <div class="sv" style="color:#22c55e" id="statTrialConvRate">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-header">
             <div class="sl">Clients Totaux</div>
             <div class="stat-icon"><i data-lucide="users"></i></div>
           </div>
@@ -2456,9 +2463,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
               <th>Client</th>
               <th>Téléphone</th>
               <th>Début Test</th>
-              <th>Jours Restants</th>
+              <th>Jours Rest.</th>
               <th>Statut</th>
-              <th width="200">Action</th>
+              <th>Raison</th>
+              <th width="220">Action</th>
             </tr>
           </thead>
           <tbody id="trialReminderBody"></tbody>
@@ -3858,6 +3866,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       setVal('statMaterialCount', materialClientsCount);
       setVal('statZeroDebt', paidClients);
       setVal('statTrialCount', clients_filtered.filter(c => c.trialStatus && c.trialStatus > 0).length);
+      const decidedTrials = clients_filtered.filter(c => c.trialOutcome === 'converted' || c.trialOutcome === 'lost');
+      const convertedTrials = clients_filtered.filter(c => c.trialOutcome === 'converted');
+      const convRate = decidedTrials.length > 0 ? Math.round(convertedTrials.length / decidedTrials.length * 100) : null;
+      setVal('statTrialConvRate', convRate !== null ? `${convRate}% (${convertedTrials.length}/${decidedTrials.length})` : '—');
 
       let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0, caInstalle = 0;
       clients_filtered.forEach(c => {
@@ -5258,20 +5270,53 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const trials = clients.filter(c => c.trialStatus && c.trialStatus > 0);
       trialBody.innerHTML = trials.map(c => {
         const info = getTrialInfo(c);
-        const statusBadge = info.status === 1 ? `<span class="trial-badge trial-active">EN COURS (${info.daysLeft}j)</span>` : `<span class="trial-badge trial-ended">TERMINÉ</span>`;
-        const actionBtn = info.status === 2 ? `<button class="btn btn-primary btn-sm" onclick="sendTrialFollowUp(${c.id})">📲 Contacter (Bilan Test)</button>` : `<button class="btn btn-ghost btn-sm" onclick="sendTrialFollowUp(${c.id})">📲 Relance</button>`;
-        
-        return `<tr>
+        const outcome = c.trialOutcome || '';
+
+        let statusBadge = '';
+        if (outcome === 'converted') statusBadge = `<span class="trial-badge" style="background:#22c55e;color:white;">✅ CONVERTI</span>`;
+        else if (outcome === 'lost')  statusBadge = `<span class="trial-badge" style="background:#ef4444;color:white;">❌ PERDU</span>`;
+        else if (outcome === 'pending') statusBadge = `<span class="trial-badge" style="background:#f59e0b;color:white;">⏳ EN ATTENTE</span>`;
+        else if (info.status === 1)  statusBadge = `<span class="trial-badge trial-active">EN COURS (${info.daysLeft}j)</span>`;
+        else                         statusBadge = `<span class="trial-badge trial-ended">TERMINÉ</span>`;
+
+        let actionBtn = '';
+        if (outcome === 'converted' || outcome === 'lost') {
+          actionBtn = `<button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="resetTrialOutcome(${c.id})">🔄 Réinitialiser</button>`;
+        } else if (info.status === 2 && !outcome) {
+          actionBtn = `<button class="btn btn-primary btn-sm" onclick="openTrialDecision(${c.id})">📋 Décision finale</button>
+                       <button class="btn btn-ghost btn-sm" onclick="sendTrialFollowUp(${c.id})" style="margin-left:4px;">📲</button>`;
+        } else if (outcome === 'pending') {
+          actionBtn = `<button class="btn btn-primary btn-sm" onclick="openTrialDecision(${c.id})">📋 Décision finale</button>
+                       <span style="font-size:11px;color:var(--muted);display:block;margin-top:3px;">Relance: ${c.trialFollowUpDate || '—'}</span>`;
+        } else {
+          actionBtn = `<button class="btn btn-ghost btn-sm" onclick="sendTrialFollowUp(${c.id})">📲 Relance</button>`;
+        }
+
+        const rowStyle = outcome === 'converted' ? 'background:rgba(34,197,94,0.06);'
+                       : outcome === 'lost'      ? 'background:rgba(239,68,68,0.06);'
+                       : outcome === 'pending'   ? 'background:rgba(245,158,11,0.06);' : '';
+
+        return `<tr style="${rowStyle}">
           <td style="font-weight:600">${c.name}</td>
           <td>${c.phone || '-'}</td>
           <td style="font-size:12px;">${c.trialStartDate || '-'}</td>
-          <td style="font-weight:bold; color:${info.daysLeft < 5 ? 'var(--red)' : 'var(--text)'}">${info.daysLeft} Jours</td>
+          <td style="font-weight:bold; color:${info.status===1 && info.daysLeft < 5 ? 'var(--red)' : 'var(--text)'}">${info.status===1 ? info.daysLeft+' j' : '—'}</td>
           <td>${statusBadge}</td>
+          <td>${c.trialOutcome === 'lost' ? `<span style="font-size:11px;color:var(--muted);">${c.trialLostReason || ''}</span>` : ''}</td>
           <td>${actionBtn}</td>
         </tr>`;
       }).join('');
-      
-      if (trials.length === 0) trialBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--muted)">Aucune version de test active.</td></tr>';
+
+      if (trials.length === 0) trialBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--muted)">Aucune version de test active.</td></tr>';
+
+      // Auto-open decision modal for newly expired trials (no outcome yet)
+      trials.forEach(c => {
+        const info = getTrialInfo(c);
+        if (info.status === 2 && !c.trialOutcome && !notifiedTrials.has('decision_' + c.id)) {
+          notifiedTrials.add('decision_' + c.id);
+          setTimeout(() => openTrialDecision(c.id), 600);
+        }
+      });
 
     }
 
@@ -6034,8 +6079,162 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       }, 500);
     }
 
+    // ═══════════════════════════ TRIAL DECISION SYSTEM ═══════════════════════════
+    let _trialDecisionClientId = null;
+    let _trialDecisionChoice = null;
+
+    function openTrialDecision(id) {
+      const c = clients.find(x => x.id === id);
+      if (!c) return;
+      _trialDecisionClientId = id;
+      _trialDecisionChoice = null;
+      document.getElementById('trialDecisionClientName').textContent = `Client : ${c.name}  •  Test de ${c.trialPeriod || 15} jours`;
+      document.getElementById('trialDecisionExtra').style.display = 'none';
+      document.getElementById('trialDecisionExtra').innerHTML = '';
+      document.getElementById('modalTrialDecision').style.display = 'flex';
+    }
+
+    function closeTrialDecision() {
+      document.getElementById('modalTrialDecision').style.display = 'none';
+      _trialDecisionClientId = null;
+      _trialDecisionChoice = null;
+    }
+
+    function setTrialDecision(choice) {
+      _trialDecisionChoice = choice;
+      const extra = document.getElementById('trialDecisionExtra');
+
+      if (choice === 'converted') {
+        extra.innerHTML = `
+          <div style="background:rgba(34,197,94,0.08); border:1px solid #22c55e; border-radius:12px; padding:16px;">
+            <p style="font-size:13px; color:#22c55e; font-weight:600; margin:0 0 12px;">✅ Conversion en client payant</p>
+            <div style="margin-bottom:10px;">
+              <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">Prix négocié (DA)</label>
+              <input type="number" id="tdConvertPrice" placeholder="Ex: 45000" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">Mode de paiement</label>
+              <select id="tdConvertMode" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+                <option>Versement</option><option>Chèque</option><option>Espèces</option><option>Virement</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="confirmTrialDecision()">✅ Confirmer la conversion</button>
+          </div>`;
+        extra.style.display = 'block';
+
+      } else if (choice === 'pending') {
+        extra.innerHTML = `
+          <div style="background:rgba(245,158,11,0.08); border:1px solid #f59e0b; border-radius:12px; padding:16px;">
+            <p style="font-size:13px; color:#f59e0b; font-weight:600; margin:0 0 12px;">⏳ Programmer une relance</p>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">Date de relance</label>
+              <input type="date" id="tdFollowUpDate" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); box-sizing:border-box;">
+            </div>
+            <button class="btn btn-primary" style="width:100%; background:#f59e0b; border-color:#f59e0b;" onclick="confirmTrialDecision()">⏳ Enregistrer la relance</button>
+          </div>`;
+        extra.style.display = 'block';
+
+      } else if (choice === 'lost') {
+        extra.innerHTML = `
+          <div style="background:rgba(239,68,68,0.08); border:1px solid #ef4444; border-radius:12px; padding:16px;">
+            <p style="font-size:13px; color:#ef4444; font-weight:600; margin:0 0 12px;">❌ Raison du refus</p>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+              ${['Prix trop élevé','Concurrent','Pas satisfait','Pas de budget','Pas de décision','Autre'].map(r =>
+                `<button onclick="selectLostReason(this,'${r}')" style="padding:6px 12px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; font-size:12px;">${r}</button>`
+              ).join('')}
+            </div>
+            <input type="text" id="tdLostReason" placeholder="Raison personnalisée…" style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); box-sizing:border-box; margin-bottom:12px;">
+            <button class="btn btn-danger" style="width:100%;" onclick="confirmTrialDecision()">❌ Confirmer le refus</button>
+          </div>`;
+        extra.style.display = 'block';
+      }
+    }
+
+    function selectLostReason(btn, reason) {
+      document.querySelectorAll('#trialDecisionExtra button[onclick*="selectLostReason"]').forEach(b => {
+        b.style.background = 'transparent'; b.style.color = 'var(--text)';
+      });
+      btn.style.background = '#ef4444'; btn.style.color = 'white';
+      document.getElementById('tdLostReason').value = reason;
+    }
+
+    async function confirmTrialDecision() {
+      const c = clients.find(x => x.id === _trialDecisionClientId);
+      if (!c) return;
+
+      if (_trialDecisionChoice === 'converted') {
+        const price = parseFloat(document.getElementById('tdConvertPrice').value) || 0;
+        const mode  = document.getElementById('tdConvertMode').value;
+        c.trialOutcome    = 'converted';
+        c.trialStatus     = 2;
+        c.paymentStatus   = 'Non'; // unpaid but now a real client
+        c.paymentMode     = mode;
+        if (price) c.negotiatedPrice = price;
+        c.installer       = 'Oui';
+        toast(`✅ ${c.name} converti en client payant !`);
+
+      } else if (_trialDecisionChoice === 'pending') {
+        const date = document.getElementById('tdFollowUpDate').value;
+        c.trialOutcome      = 'pending';
+        c.trialFollowUpDate = date || '';
+        toast(`⏳ Relance programmée pour ${c.name}`);
+
+      } else if (_trialDecisionChoice === 'lost') {
+        const reason = document.getElementById('tdLostReason').value.trim();
+        c.trialOutcome    = 'lost';
+        c.trialLostReason = reason;
+        c.finalState      = reason;
+        toast(`❌ ${c.name} marqué comme perdu`);
+      }
+
+      await syncDB();
+      closeTrialDecision();
+      renderReminders();
+      renderDashboard();
+    }
+
+    function resetTrialOutcome(id) {
+      const c = clients.find(x => x.id === id);
+      if (!c) return;
+      c.trialOutcome = '';
+      c.trialLostReason = '';
+      c.trialFollowUpDate = '';
+      syncDB();
+      renderReminders();
+      toast(`🔄 Décision réinitialisée pour ${c.name}`);
+    }
+
     function renderLabel() {}
   </script>
+
+  <!-- ══ MODAL DÉCISION ESSAI ══ -->
+  <div id="modalTrialDecision" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9500; align-items:center; justify-content:center;">
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:20px; padding:32px; max-width:480px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+      <h3 style="font-family:'Syne'; font-size:18px; margin:0 0 4px; color:var(--text);">📋 Décision finale — Essai terminé</h3>
+      <p id="trialDecisionClientName" style="color:var(--muted); font-size:13px; margin:0 0 24px;"></p>
+
+      <!-- 3 big choice buttons -->
+      <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+        <button onclick="setTrialDecision('converted')" style="display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:14px; border:2px solid #22c55e; background:rgba(34,197,94,0.08); cursor:pointer; text-align:left; transition:all 0.2s;" onmouseover="this.style.background='rgba(34,197,94,0.18)'" onmouseout="this.style.background='rgba(34,197,94,0.08)'">
+          <span style="font-size:28px;">✅</span>
+          <div><div style="font-weight:700; font-size:15px; color:#22c55e;">A acheté</div><div style="font-size:12px; color:var(--muted);">Convertir en client payant</div></div>
+        </button>
+        <button onclick="setTrialDecision('pending')" style="display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:14px; border:2px solid #f59e0b; background:rgba(245,158,11,0.08); cursor:pointer; text-align:left; transition:all 0.2s;" onmouseover="this.style.background='rgba(245,158,11,0.18)'" onmouseout="this.style.background='rgba(245,158,11,0.08)'">
+          <span style="font-size:28px;">⏳</span>
+          <div><div style="font-weight:700; font-size:15px; color:#f59e0b;">En réflexion</div><div style="font-size:12px; color:var(--muted);">Programmer une relance</div></div>
+        </button>
+        <button onclick="setTrialDecision('lost')" style="display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:14px; border:2px solid #ef4444; background:rgba(239,68,68,0.08); cursor:pointer; text-align:left; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.18)'" onmouseout="this.style.background='rgba(239,68,68,0.08)'">
+          <span style="font-size:28px;">❌</span>
+          <div><div style="font-weight:700; font-size:15px; color:#ef4444;">N'a pas acheté</div><div style="font-size:12px; color:var(--muted);">Capturer la raison du refus</div></div>
+        </button>
+      </div>
+
+      <!-- Extra fields shown conditionally -->
+      <div id="trialDecisionExtra" style="display:none; margin-bottom:20px;"></div>
+
+      <button class="btn btn-ghost" style="width:100%;" onclick="closeTrialDecision()">Annuler</button>
+    </div>
+  </div>
 
   <!-- ══ PANEL 9 : ASSISTANT IA (VOICE CHAT) ══ -->
   <div class="panel" id="p7">
