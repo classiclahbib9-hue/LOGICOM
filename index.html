@@ -3397,7 +3397,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); toggleCustomPrice(this, ${k}); recalculateNegotiatedPrice();">
             <span>${k} — ${options[k].name}</span>
           </label>
-          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="recalculateNegotiatedPrice(); flashPriceField()" onchange="recalculateNegotiatedPrice(); flashPriceField()" onblur="recalculateNegotiatedPrice()">` : ''}
+          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="setCustomOptionPrice(${k}, this.value)" onchange="setCustomOptionPrice(${k}, this.value)">` : ''}
           <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}" oninput="recalculateNegotiatedPrice()">
         </div>`;
       }).join('');
@@ -3488,8 +3488,25 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const priceInp = row.querySelector('.cl-custom-price');
       if (!priceInp) return;
       priceInp.style.display = cb.checked ? 'inline-block' : 'none';
-      if (!cb.checked) priceInp.value = '';
+      if (!cb.checked) {
+        priceInp.value = '';
+        delete customOptionPrices[optId];
+      }
       if (cb.checked) setTimeout(() => priceInp.focus(), 50);
+    }
+
+    // Store custom prices outside the DOM so they survive any re-render
+    const customOptionPrices = {}; // { optId: price }
+
+    function setCustomOptionPrice(optId, value) {
+      const v = parseInt(value);
+      if (!isNaN(v) && v > 0) {
+        customOptionPrices[optId] = v;
+      } else {
+        delete customOptionPrices[optId];
+      }
+      recalculateNegotiatedPrice();
+      flashPriceField();
     }
 
     function flashPriceField() {
@@ -3499,7 +3516,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       f.style.background = 'rgba(232,160,32,0.3)';
       setTimeout(() => f.style.background = '', 600);
     }
-    
+
     function recalculateNegotiatedPrice() {
       const checkboxes = document.querySelectorAll('.cl-cb:checked');
       const selectedOpts = Array.from(checkboxes).map(cb => {
@@ -3507,10 +3524,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         const qtyInp = row.querySelector('.cl-qty');
         return { tag: cb.value, qty: parseInt(qtyInp.value) || 1 };
       });
-      
+
       let total = 0;
-      const optionQtys = {}; // { oId: qty }
-      const materialQtys = {}; // { mId: qty }
+      const optionQtys = {};
+      const materialQtys = {};
 
       selectedOpts.forEach(item => {
         const tag = item.tag;
@@ -3531,16 +3548,12 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         }
       });
 
-      const clOptionsContainer = document.getElementById('clOptions');
       Object.keys(optionQtys).forEach(oId => {
-        const customPriceInp = clOptionsContainer
-          ? clOptionsContainer.querySelector(`.cl-custom-price[data-opt="${oId}"]`)
-          : document.querySelector(`.cl-custom-price[data-opt="${oId}"]`);
-        const isVisible = customPriceInp && customPriceInp.style.display !== 'none';
-        const enteredPrice = isVisible ? parseInt(customPriceInp.value) : NaN;
-        const unitPrice = isVisible
-          ? (isNaN(enteredPrice) ? 0 : enteredPrice)
-          : (options[oId]?.price || 0);
+        const id = parseInt(oId);
+        // Use stored custom price if available, otherwise use the option's fixed price
+        const unitPrice = (id in customOptionPrices)
+          ? customOptionPrices[id]
+          : (options[id]?.price || 0);
         total += unitPrice * optionQtys[oId];
       });
       Object.keys(materialQtys).forEach(mId => {
@@ -3588,6 +3601,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('trialDateBox').style.display = 'none';
       
       document.getElementById('clNegotiatedPrice').value = '';
+      Object.keys(customOptionPrices).forEach(k => delete customOptionPrices[k]);
       document.getElementById('clPaidAmount').value = '';
       document.getElementById('clPaymentDeadline').value = '';
       document.getElementById('clAutoReminder').checked = false;
