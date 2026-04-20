@@ -3397,7 +3397,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); toggleCustomPrice(this, ${k}); recalculateNegotiatedPrice();">
             <span>${k} — ${options[k].name}</span>
           </label>
-          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="recalculateNegotiatedPrice()">` : ''}
+          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="recalculateNegotiatedPrice()" onchange="recalculateNegotiatedPrice()" onblur="recalculateNegotiatedPrice()">` : ''}
           <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}" oninput="recalculateNegotiatedPrice()">
         </div>`;
       }).join('');
@@ -3522,11 +3522,16 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         }
       });
 
+      const clOptionsContainer = document.getElementById('clOptions');
       Object.keys(optionQtys).forEach(oId => {
-        const customPriceInp = document.querySelector(`.cl-custom-price[data-opt="${oId}"]`);
-        const customPrice = customPriceInp && customPriceInp.style.display !== 'none'
-          ? (parseInt(customPriceInp.value) || 0) : null;
-        const unitPrice = customPrice !== null ? customPrice : (options[oId]?.price || 0);
+        const customPriceInp = clOptionsContainer
+          ? clOptionsContainer.querySelector(`.cl-custom-price[data-opt="${oId}"]`)
+          : document.querySelector(`.cl-custom-price[data-opt="${oId}"]`);
+        const isVisible = customPriceInp && customPriceInp.style.display !== 'none';
+        const enteredPrice = isVisible ? parseInt(customPriceInp.value) : NaN;
+        const unitPrice = isVisible
+          ? (isNaN(enteredPrice) ? 0 : enteredPrice)
+          : (options[oId]?.price || 0);
         total += unitPrice * optionQtys[oId];
       });
       Object.keys(materialQtys).forEach(mId => {
