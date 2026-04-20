@@ -3397,12 +3397,22 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); toggleCustomPrice(this, ${k}); recalculateNegotiatedPrice();">
             <span>${k} — ${options[k].name}</span>
           </label>
-          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="setCustomOptionPrice(${k}, this.value)" onchange="setCustomOptionPrice(${k}, this.value)">` : ''}
+          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;">` : ''}
           <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}" oninput="recalculateNegotiatedPrice()">
         </div>`;
       }).join('');
       
       container.innerHTML = html;
+
+      // Attach custom price listeners directly — more reliable than inline handlers
+      container.querySelectorAll('.cl-custom-price').forEach(inp => {
+        inp.addEventListener('input', function() {
+          setCustomOptionPrice(parseInt(this.dataset.opt), this.value);
+        });
+        inp.addEventListener('change', function() {
+          setCustomOptionPrice(parseInt(this.dataset.opt), this.value);
+        });
+      });
     }
 
     function initClientMaterialsSelect() {
