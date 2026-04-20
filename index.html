@@ -4131,31 +4131,31 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     function getClientTotalValue(c) {
+      if (c.negotiatedPrice && c.negotiatedPrice > 0) return c.negotiatedPrice;
       if (!c.options || c.options.length === 0) return 0;
-      const optionQtys = {}; // { oId: qty }
-      const materialQtys = {}; // { mId: qty }
+      const optionQtys = {};
+      const materialQtys = {};
+      const customPrices = {};
 
       c.options.forEach(item => {
         const tag = typeof item === 'string' ? item : item.tag;
         const qty = typeof item === 'object' ? item.qty : 1;
-
+        if (typeof item === 'object' && item.customPrice !== undefined && tag.startsWith('opt_')) {
+          customPrices[parseInt(tag.split('_')[1])] = item.customPrice;
+        }
         if (tag.startsWith('act_')) {
-          const actId = parseInt(tag.split('_')[1]);
-          const act = activities.find(a => a.id === actId);
-          if (act) act.mandatory.forEach(oId => {
-            optionQtys[oId] = (optionQtys[oId] || 0) + qty;
-          });
+          const act = activities.find(a => a.id === parseInt(tag.split('_')[1]));
+          if (act) act.mandatory.forEach(oId => { optionQtys[oId] = (optionQtys[oId] || 0) + qty; });
         } else if (tag.startsWith('opt_')) {
-          const oId = parseInt(tag.split('_')[1]);
-          optionQtys[oId] = (optionQtys[oId] || 0) + qty;
+          optionQtys[parseInt(tag.split('_')[1])] = (optionQtys[parseInt(tag.split('_')[1])] || 0) + qty;
         } else if (tag.startsWith('mat_')) {
-          const mId = parseInt(tag.split('_')[1]);
-          materialQtys[mId] = (materialQtys[mId] || 0) + qty;
+          materialQtys[parseInt(tag.split('_')[1])] = (materialQtys[parseInt(tag.split('_')[1])] || 0) + qty;
         }
       });
       let total = 0;
       Object.keys(optionQtys).forEach(oId => {
-        total += (options[oId]?.price || 0) * optionQtys[oId];
+        const id = parseInt(oId);
+        total += ((id in customPrices) ? customPrices[id] : (options[oId]?.price || 0)) * optionQtys[oId];
       });
       Object.keys(materialQtys).forEach(mId => {
         total += (materials.find(m => m.id == mId)?.price || 0) * materialQtys[mId];
