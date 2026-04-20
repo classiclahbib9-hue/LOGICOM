@@ -3,6 +3,7 @@ const qrcode = require('qrcode-terminal');
 const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const https = require('https');
 const { parsePromiseWithGroq } = require('./promise-parser');
 
 let waClient = null;
@@ -28,6 +29,63 @@ function getAdminChatId() {
         if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8')).adminChatId || null;
     } catch(e) {}
     return null;
+}
+
+const WA_SYSTEM_PROMPT = `أنت مساعد ذكي اسمك "لوجي" تتكلم الدارجة الجزائرية فقط.
+تعمل لدى شركة LOGICOM الجزائرية متخصصة في بيع برامج تسيير الأعمال.
+منتجاتنا: برامج تسيير للسوبيرات، الصيدلية، المخبزة، القنصلية، المصانع، المطاعم. الأسعار تبدأ من 15,000 DA.
+جاوب دايما بالدارجة الجزائرية — ما تستعملش العربية الفصحى. إذا كلمك بالفرنسية جاوبه بالفرنسية.
+كون مختصر — جملتين أو ثلاثة تكفي. إذا السؤال تقني، قول يتصل بالدعم.`;
+
+const WA_FAQ = [
+    { kw: ['prix','tarif','pack','combien','qaddach','bchhal','sh7al','taman'], ans: '💰 الأسعار تبدأ من 15,000 DA حسب نوع النشاط. واش تاع شنو activité تاعك؟' },
+    { kw: ['superette','epicerie','hanout','magasin','supérette'], ans: '🏪 برنامج السوبيريت يشمل caisse + stock + clients\n💰 Prix à partir de 19,000 DA\n📞 اتصل بينا باش تجرب مجانا!' },
+    { kw: ['pharmacie','medicament','saidliya','dawa'], ans: '💊 برنامج الصيدلية يشمل médicaments + ordonnances + caisse\n📞 اتصل بينا باش تجرب مجانا!' },
+    { kw: ['boulangerie','pain','khobz','ferran'], ans: '🥖 برنامج المخبزة يشمل production + caisse + livraisons\n📞 اتصل بينا باش تجرب مجانا!' },
+    { kw: ['restaurant','cafe','snack','mat3am','kahwa'], ans: '🍕 برنامج المطعم يشمل caisse tactile + tables + livreurs\n📞 اتصل بينا باش تجرب مجانا!' },
+    { kw: ['install','setup','tanzil','rockeb'], ans: '⚙️ للتركيب: نزّل setup، شغّله كـadministrateur، اتبع الخطوات. إذا عندك مشكل contacti support.' },
+    { kw: ['facture','fatura','devis'], ans: '🧾 باش تدير facture: Menu → Ventes → Nouvelle facture' },
+    { kw: ['stock','makhzen'], ans: '📦 باش تدير stock: Menu → Stock → Bon d\'entrée / Bon de sortie' },
+    { kw: ['bug','mochkil','ma khdamch','khrab','problem'], ans: '🛠️ سكّر البرنامج وعاود افتحه. إذا مزال — contacti support LOGICOM.' },
+    { kw: ['essai','demo','gratuit','mjaani','njarreb'], ans: '🆓 تقدر تجرب مجانا! contacti-na وندّيرلك version demo.' },
+];
+
+function waDetectFaq(text) {
+    const t = text.toLowerCase();
+    return WA_FAQ.find(e => e.kw.some(k => t.includes(k))) || null;
+}
+
+function waAskGroq(text, groqKey) {
+    return new Promise((resolve) => {
+        const body = JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            max_tokens: 250,
+            messages: [
+                { role: 'system', content: WA_SYSTEM_PROMPT },
+                { role: 'user', content: text }
+            ]
+        });
+        const req = https.request({
+            hostname: 'api.groq.com',
+            path: '/openai/v1/chat/completions',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + groqKey,
+                'Content-Length': Buffer.byteLength(body)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                try { resolve(JSON.parse(data).choices?.[0]?.message?.content || null); }
+                catch(e) { resolve(null); }
+            });
+        });
+        req.on('error', () => resolve(null));
+        req.write(body);
+        req.end();
+    });
 }
 
 // Normalize any Algerian phone to 213XXXXXXXXX
@@ -112,66 +170,56 @@ function initWhatsApp(onQr, onAdminNotify) {
         try {
             const { getDB, savePaymentPromise } = require('./db');
             const db = getDB();
-            if (!db) return;
-
-            // Match sender to a client in the DB by phone
-            // senderPhone is always 213XXXXXXXXX (9 digits after 213)
-            const localPhone = '0' + senderPhone.slice(3); // 0XXXXXXXXX
-            const res = db.exec(
-                `SELECT id, name, phone, negotiatedPrice, paidAmount, promisedDate FROM clients
-                 WHERE replace(phone,' ','') = '${senderPhone}'
-                    OR replace(phone,' ','') = '${localPhone}'
-                    OR replace(phone,' ','') = '+${senderPhone}'
-                 LIMIT 1`
-            );
-            console.log(`[WhatsApp] Incoming from ${senderPhone} / ${localPhone} — matched: ${res.length > 0}`);
-            if (!res.length) return; // unknown sender
-
-            const cols = res[0].columns;
-            const row = res[0].values[0];
-            const client = {};
-            cols.forEach((c, i) => client[c] = row[i]);
-
-            const balance = Math.max(0, (client.negotiatedPrice || 0) - (client.paidAmount || 0));
-            if (balance <= 0) return; // already paid, skip
-
-            // Parse promise with Groq
             const groqKey = getGroqKey();
-            const parsed = await parsePromiseWithGroq(text, groqKey);
-            if (!parsed) return;
 
-            // Save to DB
-            savePaymentPromise(client.id, {
-                promisedDate:   parsed.promisedDate   || '',
-                promisedAmount: parsed.promisedAmount  || 0,
-                promisedMethod: parsed.promisedMethod  || '',
-                promiseNote:    parsed.promiseNote     || text.slice(0, 200),
-            });
+            // Try to match sender to a known client with a balance
+            let promiseHandled = false;
+            if (db) {
+                const localPhone = '0' + senderPhone.slice(3);
+                const res = db.exec(
+                    `SELECT id, name, phone, negotiatedPrice, paidAmount FROM clients
+                     WHERE replace(phone,' ','') = '${senderPhone}'
+                        OR replace(phone,' ','') = '${localPhone}'
+                        OR replace(phone,' ','') = '+${senderPhone}'
+                     LIMIT 1`
+                );
+                console.log(`[WhatsApp] Incoming from ${senderPhone} — matched: ${res.length > 0}`);
 
-            console.log(`[WhatsApp] Promise auto-saved for ${client.name}`);
+                if (res.length) {
+                    const client = {};
+                    res[0].columns.forEach((c, i) => client[c] = res[0].values[0][i]);
+                    const balance = Math.max(0, (client.negotiatedPrice || 0) - (client.paidAmount || 0));
 
-            // Notify admin via callback (Telegram bot will send the alert)
-            if (adminNotifyCallback) {
-                adminNotifyCallback({
-                    channel: 'WhatsApp',
-                    clientName: client.name,
-                    clientPhone: client.phone,
-                    parsed,
-                    rawMessage: text,
-                });
+                    if (balance > 0) {
+                        const parsed = await parsePromiseWithGroq(text, groqKey);
+                        if (parsed) {
+                            savePaymentPromise(client.id, {
+                                promisedDate:   parsed.promisedDate   || '',
+                                promisedAmount: parsed.promisedAmount  || 0,
+                                promisedMethod: parsed.promisedMethod  || '',
+                                promiseNote:    parsed.promiseNote     || text.slice(0, 200),
+                            });
+                            console.log(`[WhatsApp] Promise auto-saved for ${client.name}`);
+                            if (adminNotifyCallback) {
+                                adminNotifyCallback({ channel: 'WhatsApp', clientName: client.name, clientPhone: client.phone, parsed, rawMessage: text });
+                            }
+                            const confirmMsg =
+                                `✅ Merci ${client.name} ! On a bien noté votre promesse de paiement` +
+                                `${parsed.promisedDate ? ` pour le ${parsed.promisedDate}` : ''}` +
+                                `${parsed.promisedAmount ? ` de ${parsed.promisedAmount.toLocaleString('fr-DZ')} DA` : ''}` +
+                                `${parsed.promisedMethod ? ` par ${parsed.promisedMethod}` : ''}` +
+                                `.\n\nNous vous contacterons à cette date. Merci 🙏`;
+                            await waClient.sendMessage(msg.from, confirmMsg);
+                            promiseHandled = true;
+                        }
+                    }
+                }
             }
 
-            // Confirm back to the client on WhatsApp
-            const confirmMsg =
-                `✅ Merci ${client.name} ! On a bien noté votre promesse de paiement` +
-                `${parsed.promisedDate ? ` pour le *${parsed.promisedDate}*` : ''}` +
-                `${parsed.promisedAmount ? ` de *${parsed.promisedAmount.toLocaleString('fr-DZ')} DA*` : ''}` +
-                `${parsed.promisedMethod ? ` par *${parsed.promisedMethod}*` : ''}` +
-                `.\n\nNous vous contacterons à cette date. Merci ! 🙏`;
-            await waClient.sendMessage(msg.from, confirmMsg);
+            // Auto-response disabled
 
         } catch(e) {
-            console.error('[WhatsApp] Promise parse error:', e.message);
+            console.error('[WhatsApp] Message handler error:', e.message);
         }
     });
 

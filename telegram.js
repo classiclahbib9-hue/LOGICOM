@@ -541,7 +541,8 @@ async function initTelegram() {
             if (!text) return;
 
             // --- AUTO-LINK: store telegramChatId for any known client who messages the bot ---
-            try {
+            // Only runs outside wizard — team members adding new clients must not be intercepted here
+            if (!userStates[chatId]) try {
                 const db = getDB();
                 if (db) {
                     const already = db.exec(`SELECT id, name FROM clients WHERE telegramChatId = '${chatId}' LIMIT 1`);
@@ -561,10 +562,8 @@ async function initTelegram() {
                             saveToFile();
                             bot.sendMessage(chatId, `✅ Parfait ${clientName} ! Votre compte est maintenant lié. Vous recevrez vos rappels ici.`);
                             return;
-                        } else {
-                            bot.sendMessage(chatId, `❌ Numéro ${p} introuvable dans notre système. Vérifiez votre numéro ou contactez LOGICOM.`);
-                            return;
                         }
+                        // Phone not found → not a client linking their account, fall through normally
                     }
                 }
             } catch(e) { console.error('[AutoLink]', e.message); }
@@ -638,7 +637,7 @@ async function initTelegram() {
 
             // --- WIZARD STATE MACHINE ---
             const state = userStates[chatId];
-            if (state && (msg.reply_to_message || state.step === 'WAITING_TYPE')) {
+            if (state) {
 
                 if (state.step === 'WAITING_TYPE') {
                     const t2 = text.toLowerCase();

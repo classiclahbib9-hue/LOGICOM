@@ -3520,11 +3520,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       });
 
       Object.keys(optionQtys).forEach(oId => {
-        // Use custom price input if visible (for zero-price options like Dossiers Supplémentaires)
         const customPriceInp = document.querySelector(`.cl-custom-price[data-opt="${oId}"]`);
         const customPrice = customPriceInp && customPriceInp.style.display !== 'none'
-          ? (parseInt(customPriceInp.value) || 0)
-          : null;
+          ? (parseInt(customPriceInp.value) || 0) : null;
         const unitPrice = customPrice !== null ? customPrice : (options[oId]?.price || 0);
         total += unitPrice * optionQtys[oId];
       });
