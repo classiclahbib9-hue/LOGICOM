@@ -556,6 +556,9 @@ function scheduleTrialExpiredMessages() {
   async function runTrialCheck() {
     const { isWhatsAppReady, sendWhatsApp } = require('./whatsapp');
     if (!isWhatsAppReady()) return;
+    let cfg0 = {};
+    try { cfg0 = JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), 'telegram-config.json'), 'utf8')); } catch(e) {}
+    if (!cfg0.trialExpiredEnabled) return;
 
     const db = getDB();
     if (!db) return;
@@ -636,6 +639,7 @@ function scheduleAutoWhatsAppReminders() {
       WHERE paymentStatus != 'Régler'
         AND (negotiatedPrice - COALESCE(paidAmount,0)) > 0
         AND phone IS NOT NULL AND phone != ''
+        AND (trialStatus IS NULL OR trialStatus = 0)
         AND (created_at <= '${cutoffStr}' OR paymentDeadline <= date('now'))
         AND (dateDernierRappel IS NULL OR dateDernierRappel = '' OR dateDernierRappel != '${today}')
         AND (reminderSent IS NULL OR reminderSent = 0)
