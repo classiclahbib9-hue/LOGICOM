@@ -3489,8 +3489,16 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       if (!priceInp) return;
       priceInp.style.display = cb.checked ? 'inline-block' : 'none';
       if (!cb.checked) {
+        const oldPrice = customOptionPrices[optId] || 0;
         priceInp.value = '';
         delete customOptionPrices[optId];
+        if (oldPrice > 0) {
+          const totalInp = document.getElementById('clNegotiatedPrice');
+          if (totalInp) {
+            const current = parseInt(totalInp.value) || 0;
+            totalInp.value = Math.max(0, current - oldPrice) || '';
+          }
+        }
       }
       if (cb.checked) setTimeout(() => priceInp.focus(), 50);
     }
@@ -3499,14 +3507,21 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     const customOptionPrices = {}; // { optId: price }
 
     function setCustomOptionPrice(optId, value) {
-      const v = parseInt(value);
-      if (!isNaN(v) && v > 0) {
-        customOptionPrices[optId] = v;
-      } else {
-        delete customOptionPrices[optId];
+      const oldPrice = customOptionPrices[optId] || 0;
+      const newPrice = parseInt(value);
+      const validNew = (!isNaN(newPrice) && newPrice > 0) ? newPrice : 0;
+
+      if (validNew > 0) customOptionPrices[optId] = validNew;
+      else delete customOptionPrices[optId];
+
+      // Adjust total by delta — works for both new and edit modes
+      const totalInp = document.getElementById('clNegotiatedPrice');
+      if (totalInp) {
+        const current = parseInt(totalInp.value) || 0;
+        const updated = current - oldPrice + validNew;
+        totalInp.value = updated > 0 ? updated : '';
+        flashPriceField();
       }
-      recalculateNegotiatedPrice();
-      flashPriceField();
     }
 
     function flashPriceField() {
