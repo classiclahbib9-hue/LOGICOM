@@ -3397,10 +3397,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <input type="checkbox" value="opt_${k}" class="cl-opt-cb cl-cb" onchange="toggleQtyInput(this); toggleCustomPrice(this, ${k}); recalculateNegotiatedPrice();">
             <span>${k} — ${options[k].name}</span>
           </label>
-          ${isCustomPrice ? `
-            <input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="recalculateNegotiatedPrice()" onchange="recalculateNegotiatedPrice()" onblur="recalculateNegotiatedPrice()">
-            <button type="button" class="cl-custom-price-btn" style="display:none; padding:2px 8px; font-size:12px; background:var(--accent); color:#fff; border:none; border-radius:4px; cursor:pointer;" onclick="recalculateNegotiatedPrice(); this.textContent='✓'; setTimeout(()=>this.textContent='Appliquer',1200)">Appliquer</button>
-          ` : ''}
+          ${isCustomPrice ? `<input type="number" class="cl-custom-price" data-opt="${k}" placeholder="Prix DA" min="0" style="width:90px; padding:2px 6px; border:1px solid var(--accent); border-radius:4px; background:var(--card); color:var(--text); font-size:12px; display:none;" oninput="recalculateNegotiatedPrice(); flashPriceField()" onchange="recalculateNegotiatedPrice(); flashPriceField()" onblur="recalculateNegotiatedPrice()">` : ''}
           <input type="number" class="cl-qty" value="1" min="1" style="width:50px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:var(--card); color:var(--text); visibility:hidden;" data-tag="opt_${k}" oninput="recalculateNegotiatedPrice()">
         </div>`;
       }).join('');
@@ -3489,11 +3486,18 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     function toggleCustomPrice(cb, optId) {
       const row = cb.closest('.cl-row');
       const priceInp = row.querySelector('.cl-custom-price');
-      const applyBtn = row.querySelector('.cl-custom-price-btn');
       if (!priceInp) return;
       priceInp.style.display = cb.checked ? 'inline-block' : 'none';
-      if (applyBtn) applyBtn.style.display = cb.checked ? 'inline-block' : 'none';
-      if (!cb.checked) { priceInp.value = ''; if (applyBtn) applyBtn.textContent = 'Appliquer'; }
+      if (!cb.checked) priceInp.value = '';
+      if (cb.checked) setTimeout(() => priceInp.focus(), 50);
+    }
+
+    function flashPriceField() {
+      const f = document.getElementById('clNegotiatedPrice');
+      if (!f) return;
+      f.style.transition = 'background 0.2s';
+      f.style.background = 'rgba(232,160,32,0.3)';
+      setTimeout(() => f.style.background = '', 600);
     }
     
     function recalculateNegotiatedPrice() {
