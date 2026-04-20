@@ -4794,7 +4794,20 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         });
       }
       
-      const grandTotal = Object.keys(optionQtys).reduce((s, oId) => s + (options[oId]?.price || 0) * optionQtys[oId], 0);
+      // Build custom price lookup from client options
+      const clientCustomPrices = {};
+      if (client) {
+        client.options.forEach(item => {
+          if (typeof item === 'object' && item.tag && item.tag.startsWith('opt_') && item.customPrice !== undefined) {
+            clientCustomPrices[parseInt(item.tag.split('_')[1])] = item.customPrice;
+          }
+        });
+      }
+      const grandTotal = Object.keys(optionQtys).reduce((s, oId) => {
+        const id = parseInt(oId);
+        const unitPrice = (id in clientCustomPrices) ? clientCustomPrices[id] : (options[oId]?.price || 0);
+        return s + unitPrice * optionQtys[oId];
+      }, 0);
       const materialQtys = {};
       
       if (client) {
@@ -4820,7 +4833,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             console.warn(`Option ID ${oId} found in client but NOT in global options list.`);
             return '';
           }
-          const price = opt.price || 0;
+          const price = (parseInt(oId) in clientCustomPrices) ? clientCustomPrices[parseInt(oId)] : (opt.price || 0);
           return `<tr>
             <td style="color:#64748b; font-weight:700;">${oId}</td>
             <td><strong>${opt.name}</strong></td>
