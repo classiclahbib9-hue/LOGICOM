@@ -3655,14 +3655,29 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       initClientOptionsSelect();
       initClientMaterialsSelect();
       
+      Object.keys(customOptionPrices).forEach(k => delete customOptionPrices[k]);
       const checkboxes = document.querySelectorAll('.cl-cb');
       checkboxes.forEach(cb => {
         const item = c.options && c.options.find(o => (typeof o === 'string' ? o : o.tag) === cb.value);
         cb.checked = !!item;
-        const qtyInp = cb.closest('.cl-row').querySelector('.cl-qty');
+        const row = cb.closest('.cl-row');
+        const qtyInp = row.querySelector('.cl-qty');
         if (qtyInp) {
           qtyInp.style.visibility = cb.checked ? 'visible' : 'hidden';
           qtyInp.value = (item && typeof item === 'object') ? item.qty : 1;
+        }
+        // Restore custom price if saved
+        if (cb.checked && cb.value.startsWith('opt_')) {
+          const optId = parseInt(cb.value.split('_')[1]);
+          const priceInp = row.querySelector('.cl-custom-price');
+          if (priceInp) {
+            const savedCustomPrice = item && typeof item === 'object' ? item.customPrice : undefined;
+            if (savedCustomPrice !== undefined) {
+              customOptionPrices[optId] = savedCustomPrice;
+              priceInp.value = savedCustomPrice;
+            }
+            priceInp.style.display = 'inline-block';
+          }
         }
       });
 
@@ -3696,8 +3711,13 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
       const checkboxes = document.querySelectorAll('.cl-cb:checked');
       const selectedOpts = Array.from(checkboxes).map(cb => {
-        const qtyInp = cb.closest('.cl-row').querySelector('.cl-qty');
-        return { tag: cb.value, qty: parseInt(qtyInp.value) || 1 };
+        const row = cb.closest('.cl-row');
+        const qtyInp = row.querySelector('.cl-qty');
+        const optId = cb.value.startsWith('opt_') ? parseInt(cb.value.split('_')[1]) : null;
+        const cp = optId !== null && (optId in customOptionPrices) ? customOptionPrices[optId] : undefined;
+        const entry = { tag: cb.value, qty: parseInt(qtyInp.value) || 1 };
+        if (cp !== undefined) entry.customPrice = cp;
+        return entry;
       });
 
       if (!name) { toast('Le nom est obligatoire', true); return; }
