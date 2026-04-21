@@ -4728,7 +4728,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           negotiatedPrice: Number(c.negotiatedPrice || 0),
           paidAmount: Number(c.paidAmount || 0),
           paymentDeadline: c.paymentDeadline || '',
-          autoReminder: Number(c.autoReminder || 0)
+          autoReminder: Number(c.autoReminder || 0),
+          trialOutcome: c.trialOutcome || '',
+          trialLostReason: c.trialLostReason || ''
         }));
         if (clients.length > 0) {
           nextClientId = Math.max(...clients.map(c => c.id)) + 1;
@@ -5616,7 +5618,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           options: JSON.parse(c.options || '[]'),
           trialStatus: Number(c.trialStatus || 0),
           trialStartDate: c.trialStartDate || '',
-          added_by: c.added_by || ''
+          added_by: c.added_by || '',
+          trialOutcome: c.trialOutcome || '',
+          trialLostReason: c.trialLostReason || ''
       }));
       renderClients();
       renderReminders();

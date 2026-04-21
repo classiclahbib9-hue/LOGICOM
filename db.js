@@ -80,6 +80,8 @@ async function initDB() {
         try { db.run("ALTER TABLE clients ADD COLUMN paymentDeadline TEXT"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN autoReminder INTEGER DEFAULT 0"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN telegramChatId TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN trialOutcome TEXT DEFAULT ''"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN trialLostReason TEXT DEFAULT ''"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN promisedDate TEXT"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN promisedAmount INTEGER DEFAULT 0"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN promisedMethod TEXT"); } catch(e){}
@@ -169,7 +171,7 @@ function registerIpcHandlers() {
                 }
 
                 db.run('DELETE FROM clients');
-                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote, trialOutcome, trialLostReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                 const stmt = db.prepare(sql);
                 for (const c of data.clients) {
                     const p = preserved[c.id] || {};
@@ -184,7 +186,8 @@ function registerIpcHandlers() {
                         c.promisedDate || p.promisedDate || null,
                         c.promisedAmount || p.promisedAmount || 0,
                         c.promisedMethod || p.promisedMethod || null,
-                        c.promiseNote || p.promiseNote || null
+                        c.promiseNote || p.promiseNote || null,
+                        c.trialOutcome || '', c.trialLostReason || ''
                     ]);
                 }
                 stmt.free();
