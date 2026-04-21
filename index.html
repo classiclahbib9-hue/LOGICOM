@@ -71,7 +71,7 @@
     /* HEADER */
     header {
       background: var(--header-bg);
-      padding: 36px 40px 28px;
+      padding: 12px 40px 10px;
       text-align: center;
       border-bottom: 2px solid var(--accent);
       position: relative;
@@ -2029,6 +2029,7 @@
     <div class="tab" onclick="switchTab(6)"><span class="ring-bell">🔔</span> Rappels <span id="alertBadge" style="display:none; background:#ff4444; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; font-weight:bold; box-shadow:0 0 10px rgba(255,0,0,0.5)">!</span></div>
     <div class="tab" onclick="switchTab(7)">📦 Étiquettes Colis</div>
     <div class="tab" onclick="switchTab(8)">🎙️ Assistant IA</div>
+    <div class="tab" onclick="switchTab(9)">🔌 API Sync</div>
   </div>
 
   <div class="container">
@@ -2327,9 +2328,20 @@
       </div>
 
       <div id="apiSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
-        <h4 style="margin-bottom:15px; font-family:'Syne'; font-size:14px; color:var(--accent)">Configuration API WhatsApp (Automatique)</h4>
+        <h4 style="margin-bottom:15px; font-family:'Syne'; font-size:14px; color:var(--accent)">⚙️ Configuration</h4>
+
+        <!-- Sync Clients API -->
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">📥 Sync Clients (API LOGICOM)</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+            <div class="field" style="margin:0;"><label>URL Base</label><input type="text" id="syncApiUrl" placeholder="http://192.168.x.x:1647"></div>
+            <div class="field" style="margin:0;"><label>Username</label><input type="text" id="syncApiUsername" placeholder="ex: AHMED" oninput="this.value=this.value.toUpperCase()"></div>
+            <div class="field" style="margin:0;"><label>Mot de passe</label><input type="password" id="syncApiPassword" placeholder="••••••••"></div>
+          </div>
+        </div>
+
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-          <div class="field"><label>Endpoint API</label><input type="text" id="apiEndpoint" placeholder="https://api.example.com/send"></div>
+          <div class="field"><label>Endpoint API (WhatsApp/autre)</label><input type="text" id="apiEndpoint" placeholder="https://api.example.com/send"></div>
           <div class="field"><label>Clé API / Token</label><input type="password" id="apiKey" placeholder="Votre token secret..."></div>
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
@@ -3008,22 +3020,23 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     // ═══════════════════════════ TABS ═══════════════════════════
+    const TAB_PANEL_IDS = ['p0','p1','p2','p4','p3','p5','p6','panelEtiquettes','p7','pApiSync'];
+
     function switchTab(i) {
       document.querySelectorAll('.tab').forEach((t, j) => t.classList.toggle('active', i === j));
-      const panels = document.querySelectorAll('.panel');
-      panels.forEach((p, j) => {
-        p.classList.toggle('active', i === j);
-        if (i === j) {
-          // Re-trigger animations by removing and adding a class or just letting the CSS handle it if the div was display:none
-          p.style.animation = 'none';
-          p.offsetHeight; /* trigger reflow */
-          p.style.animation = null;
-        }
-      });
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(TAB_PANEL_IDS[i]);
+      if (target) {
+        target.classList.add('active');
+        target.style.animation = 'none';
+        target.offsetHeight;
+        target.style.animation = null;
+      }
       
       if (i === 0) renderOptions();
       if (i === 1) renderActivities();
       if (i === 2) renderClients();
+      if (i === 9) apiSyncLoadConfig();
       if (i === 3) renderDashboard();
       if (i === 4) {
         renderRecap();
@@ -5044,6 +5057,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     function saveApiSettings() {
+      localStorage.setItem('sync-api-url', document.getElementById('syncApiUrl').value.trim().replace(/\/$/, ''));
+      localStorage.setItem('sync-api-username', document.getElementById('syncApiUsername').value.trim());
+      localStorage.setItem('sync-api-password', document.getElementById('syncApiPassword').value);
       const endpoint = document.getElementById('apiEndpoint').value;
       const key = document.getElementById('apiKey').value;
       const template = document.getElementById('reminderTemplate').value;
@@ -5074,6 +5090,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     function loadApiSettings() {
+      document.getElementById('syncApiUrl').value = localStorage.getItem('sync-api-url') || '';
+      document.getElementById('syncApiUsername').value = localStorage.getItem('sync-api-username') || '';
+      document.getElementById('syncApiPassword').value = localStorage.getItem('sync-api-password') || '';
       document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || '';
       document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
       document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
@@ -5477,73 +5496,106 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     async function syncExternalClients() {
-      const endpoint = localStorage.getItem('logicom-api-endpoint');
-      if (!endpoint) return toast('Veuillez d\'abord configurer l\'URL de l\'API (⚙️)', true);
-      
-      toast('Synchronisation en cours... 📥');
-      try {
-        // We'll perform a real fetch to the endpoint
-        // NOTE: The user should ensure the API returns a JSON array of clients
-        /* 
-           Expected structure from the external API:
-           [
-             { "name": "...", "phone": "...", "brand": "...", "paymentStatus": "Non", "total": 45000 }, ...
-           ]
-        */
-        const response = await fetch(endpoint, {
-          headers: { 'Authorization': 'Bearer ' + localStorage.getItem('apiKey') }
-        });
-        
-        if (!response.ok) throw new Error('Erreur réseau / API');
-        const externalData = await response.json();
-        
-        if (!Array.isArray(externalData)) throw new Error('L\'API doit renvoyer une liste (Array).');
+      const baseUrl  = localStorage.getItem('sync-api-url');
+      const username = localStorage.getItem('sync-api-username');
+      const password = localStorage.getItem('sync-api-password');
 
-        let count = 0;
-        externalData.forEach(ex => {
-          // Check if already exists by phone or name
-          const exists = clients.find(c => c.phone === ex.phone || c.name === ex.name);
-          if (!exists) {
+      if (!baseUrl || !username || !password) {
+        return toast('⚙️ Configurez l\'URL, username et mot de passe API d\'abord', true);
+      }
+
+      toast('Connexion à l\'API... 🔄');
+      try {
+        // Step 1: Login via main process (no CORS)
+        const loginRaw = await ipcRenderer.invoke('sync-api-request', {
+          method: 'POST',
+          url: `${baseUrl}/login`,
+          body: { username, password, typeApp: 'DELYV' }
+        });
+        if (loginRaw.status !== 200) {
+          const err = JSON.parse(loginRaw.body || '{}');
+          throw new Error(err.message || `Login échoué (${loginRaw.status})`);
+        }
+        const loginData = JSON.parse(loginRaw.body);
+        const token = loginData.token;
+        if (!token) throw new Error('Aucun token reçu du serveur.');
+
+        // Step 2: Fetch clients via main process
+        toast('Récupération des clients... 📥');
+        const clientsRaw = await ipcRenderer.invoke('sync-api-request', {
+          method: 'GET',
+          url: `${baseUrl}/clients?typeApp=DELYV`,
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (clientsRaw.status !== 200) throw new Error(`Erreur récupération clients (${clientsRaw.status})`);
+        const apiClients = JSON.parse(clientsRaw.body);
+        if (!Array.isArray(apiClients)) throw new Error('Réponse API invalide (attendu: liste).');
+
+        // Step 3: Merge into local clients — update solde if exists, add if new
+        let added = 0, updated = 0;
+        const today = new Date().toISOString().split('T')[0];
+
+        apiClients.forEach(ex => {
+          const keyClient = String(ex.KEY_CLIENT || '');
+          const name      = ex.NOM_CLIENT || ex.name || 'Sans Nom';
+          const phone     = ex.TELEPHONE || ex.phone || '';
+          const solde     = Number(ex.SOLDE_LOGICOM || ex.solde || 0);
+          const ville     = ex.VILLE_FR || ex.ville || '';
+          const type      = ex.TYPE_ABONNEMENT || '';
+
+          // Try to match by KEY_CLIENT stored in note, or by name
+          const existing = clients.find(c =>
+            (c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
+            (phone && c.phone === phone) ||
+            c.name === name
+          );
+
+          if (existing) {
+            // Update solde (negotiatedPrice) and paidAmount so balance reflects API solde
+            if (solde > 0 && existing.negotiatedPrice !== solde) {
+              existing.negotiatedPrice = solde;
+              existing.paidAmount = 0;
+              updated++;
+            }
+          } else {
             clients.push({
               id: nextClientId++,
-              name: ex.name || 'Sans Nom',
-              phone: ex.phone || '',
-              brand: ex.brand || '',
-              potential: !!ex.potential,
-              address: ex.address || '',
+              name,
+              phone,
+              brand: type === 'G' ? 'Gold' : type === 'S' ? 'Silver' : '',
+              potential: false,
+              address: ville,
               source: 'Import API',
-              options: ex.options || [],
-              note: ex.note || '',
-              installer: ex.installer || 'Non',
-              material: ex.material || 'Non',
-              paymentStatus: ex.paymentStatus || 'Non',
-              paymentMode: ex.paymentMode || '',
+              options: [],
+              note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
+              installer: 'Non',
+              material: 'Non',
+              paymentStatus: solde > 0 ? 'Non' : 'Oui',
+              paymentMode: '',
               finalState: '',
               noPurchaseReason: '',
-              created_at: new Date().toISOString().split('T')[0],
-              called: false
+              created_at: today,
+              called: false,
+              trialStatus: 0,
+              negotiatedPrice: solde,
+              paidAmount: 0,
+              paymentDeadline: '',
+              autoReminder: solde > 0 ? 1 : 0,
+              trialOutcome: '',
+              trialLostReason: ''
             });
-            count++;
+            added++;
           }
         });
 
-        if (count > 0) {
-          await syncDB();
-          renderClients();
-          renderReminders();
-          toast(`${count} nouveaux clients synchronisés ! ✓`);
-        } else {
-          toast('Tous les clients sont déjà à jour.');
-        }
+        await syncDB();
+        renderClients();
+        renderReminders();
+        toast(`✅ Sync terminé : ${added} ajouté(s), ${updated} mis à jour`);
 
       } catch (err) {
-        console.error('API Sync Error:', err);
-        toast('Echec de la synchronisation : ' + err.message, true);
-        
-        // Demo fallback for the user if they haven't set up the API yet
-        if (!localStorage.getItem('logicom-api-endpoint').startsWith('http')) {
-          toast('Note: Entrez une URL réelle pour tester. (Démo en console)', true);
-        }
+        console.error('[Sync API]', err);
+        toast('❌ ' + err.message, true);
       }
     }
 
@@ -5651,7 +5703,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
     function setAiProvider(p) {
       aiProvider = p;
-      ['groq', 'claude', 'openai'].forEach(id => {
+      ['groq', 'claude', 'openai', 'minimax'].forEach(id => {
         const btn = document.getElementById('btnProvider' + id.charAt(0).toUpperCase() + id.slice(1));
         if (!btn) return;
         btn.className = 'btn btn-sm ' + (p === id ? 'btn-primary' : 'btn-ghost');
@@ -5660,6 +5712,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('voiceGroqSection').style.display = p === 'groq' ? 'block' : 'none';
       document.getElementById('voiceClaudeSection').style.display = p === 'claude' ? 'block' : 'none';
       document.getElementById('voiceOpenaiSection').style.display = p === 'openai' ? 'block' : 'none';
+      document.getElementById('voiceMinimaxSection').style.display = p === 'minimax' ? 'block' : 'none';
     }
 
     const VOICE_SYSTEM_PROMPT = `أنت مساعد ذكي تتكلم الدارجة الجزائرية فقط.
@@ -5683,6 +5736,8 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       if (savedOpenaiKey) document.getElementById('openaiApiKey').value = savedOpenaiKey;
       const savedOpenaiModel = localStorage.getItem('openai_model') || 'gpt-4.5-preview';
       document.getElementById('openaiModel').value = savedOpenaiModel;
+      const savedMinimaxKey = localStorage.getItem('minimax_api_key') || '';
+      if (savedMinimaxKey) document.getElementById('minimaxApiKey').value = savedMinimaxKey;
       setAiProvider(aiProvider);
 
       // Setup Web Speech API recognition
@@ -5737,6 +5792,8 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       const openaiKey = document.getElementById('openaiApiKey').value.trim();
       if (openaiKey) localStorage.setItem('openai_api_key', openaiKey);
       localStorage.setItem('openai_model', document.getElementById('openaiModel').value);
+      const minimaxKey = document.getElementById('minimaxApiKey').value.trim();
+      if (minimaxKey) localStorage.setItem('minimax_api_key', minimaxKey);
       localStorage.setItem('ai_provider', aiProvider);
       document.getElementById('voiceSettingsBox').style.display = 'none';
       toast('✅ Configuration sauvegardée !');
@@ -5808,12 +5865,14 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       let apiKey = '';
       if (provider === 'claude') apiKey = localStorage.getItem('anthropic_api_key') || document.getElementById('claudeAnthropicKey').value.trim();
       else if (provider === 'openai') apiKey = localStorage.getItem('openai_api_key') || document.getElementById('openaiApiKey').value.trim();
+      else if (provider === 'minimax') apiKey = localStorage.getItem('minimax_api_key') || document.getElementById('minimaxApiKey').value.trim();
       else apiKey = localStorage.getItem('claude_api_key') || document.getElementById('claudeApiKey').value.trim();
 
       if (!apiKey) {
         const errMsgs = {
           claude: '⚙️ Veuillez configurer votre Claude API Key (console.anthropic.com)',
           openai: '⚙️ Veuillez configurer votre OpenAI API Key (platform.openai.com)',
+          minimax: '⚙️ Veuillez configurer votre OpenRouter API Key (openrouter.ai) pour Minimax M2.5',
           groq: '⚙️ Veuillez configurer votre Groq API Key (gratuit sur console.groq.com)'
         };
         appendVoiceMessage(errMsgs[provider] || errMsgs.groq, 'assistant');
@@ -5826,7 +5885,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       setVoiceStatus('🤔 كيفكّر... / Réflexion...');
 
       try {
-        const ipcChannel = provider === 'claude' ? 'claude-chat' : provider === 'openai' ? 'openai-chat' : 'groq-chat';
+        const ipcChannel = provider === 'claude' ? 'claude-chat' : provider === 'openai' ? 'openai-chat' : provider === 'minimax' ? 'minimax-chat' : 'groq-chat';
         const openaiModel = localStorage.getItem('openai_model') || 'gpt-4.5-preview';
         console.log(`[${provider}Chat] Sending, apiKey starts with:`, apiKey.substring(0, 10));
         const messages = [
@@ -5987,24 +6046,24 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
   </div>
 
   <div class="panel" id="panelEtiquettes">
-    <div style="max-width:500px; margin:-12px auto 0;">
-      <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px 28px;">
+    <div style="max-width:500px; margin:0 auto;">
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 22px;">
 
         <!-- Paper size -->
-        <div style="margin-bottom:18px;">
-          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:8px;">📐 Format du papier</label>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:6px;">📐 Format du papier</label>
           <div style="display:flex; gap:10px;">
             <label style="flex:1; cursor:pointer;">
               <input type="radio" name="colisPaper" value="a5" checked onchange="renderLabel()" style="display:none;">
               <div class="paper-size-btn" id="btnA5" onclick="selectPaper('a5')"
-                style="border:2px solid var(--accent); border-radius:10px; padding:10px; text-align:center; background:var(--accent); color:white; font-weight:700; font-size:14px;">
+                style="border:2px solid var(--accent); border-radius:10px; padding:7px; text-align:center; background:var(--accent); color:white; font-weight:700; font-size:14px;">
                 A5 <span style="font-size:11px; font-weight:400; display:block;">148 × 210 mm</span>
               </div>
             </label>
             <label style="flex:1; cursor:pointer;">
               <input type="radio" name="colisPaper" value="a6" onchange="renderLabel()" style="display:none;">
               <div class="paper-size-btn" id="btnA6" onclick="selectPaper('a6')"
-                style="border:2px solid var(--border); border-radius:10px; padding:10px; text-align:center; background:transparent; color:var(--text); font-weight:700; font-size:14px;">
+                style="border:2px solid var(--border); border-radius:10px; padding:7px; text-align:center; background:transparent; color:var(--text); font-weight:700; font-size:14px;">
                 A6 <span style="font-size:11px; font-weight:400; display:block;">105 × 148 mm</span>
               </div>
             </label>
@@ -6012,60 +6071,75 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         </div>
 
         <!-- Nom -->
-        <div style="margin-bottom:14px;">
-          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">👤 Nom du destinataire</label>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">👤 Nom du destinataire</label>
           <input type="text" id="colisNom" placeholder="Ex: Ahmed Benali"
-            style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:16px; font-weight:600; box-sizing:border-box;">
+            style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; font-weight:600; box-sizing:border-box;">
         </div>
 
         <!-- Tels -->
-        <div style="display:flex; gap:12px; margin-bottom:14px;">
+        <div style="display:flex; gap:12px; margin-bottom:10px;">
           <div style="flex:1;">
-            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">📞 Téléphone 1</label>
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">📞 Téléphone 1</label>
             <input type="tel" id="colisTel1" placeholder="0555 000 000"
-              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; box-sizing:border-box;">
+              style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
           </div>
           <div style="flex:1;">
-            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">📞 Téléphone 2 (optionnel)</label>
+            <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">📞 Téléphone 2 (optionnel)</label>
             <input type="tel" id="colisTel2" placeholder="0661 000 000"
-              style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; box-sizing:border-box;">
+              style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
           </div>
         </div>
 
         <!-- Nb colis -->
-        <div style="margin-bottom:22px;">
-          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:5px;">📦 Nombre de colis</label>
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">📦 Nombre de colis</label>
           <input type="number" id="colisNb" min="1" value="1"
-            style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:16px; font-weight:700; box-sizing:border-box;">
+            style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; font-weight:700; box-sizing:border-box;">
+        </div>
+
+        <!-- Expéditeur -->
+        <div style="border-top:1px solid var(--border); padding-top:10px; margin-bottom:10px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:6px;">↩️ Expéditeur (retour si non livré)</label>
+          <div style="display:flex; gap:12px;">
+            <div style="flex:1;">
+              <input type="text" id="colisExpNom" placeholder="Votre nom / société"
+                style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
+            </div>
+            <div style="flex:1;">
+              <input type="tel" id="colisExpTel" placeholder="Votre téléphone"
+                style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
+            </div>
+          </div>
         </div>
 
         <!-- Customisation -->
-        <div style="border-top:1px solid var(--border); padding-top:16px; margin-bottom:20px;">
-          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:12px;">🎨 Personnalisation</label>
+        <div style="padding-top:2px; margin-bottom:12px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:8px;">🎨 Personnalisation</label>
 
           <!-- Font size -->
-          <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
             <span style="font-size:12px; color:var(--muted); min-width:80px;">Taille police</span>
-            <button onclick="changeFontSize(-1)" class="btn btn-ghost btn-sm" style="width:32px;height:32px;padding:0;font-size:16px;">−</button>
-            <span id="fontSizeDisplay" style="font-size:14px; font-weight:700; color:var(--text); min-width:38px; text-align:center;">100%</span>
-            <button onclick="changeFontSize(1)" class="btn btn-ghost btn-sm" style="width:32px;height:32px;padding:0;font-size:16px;">＋</button>
-            <button onclick="resetFontSize()" class="btn btn-ghost btn-sm" style="font-size:11px; padding:4px 8px;">Reset</button>
+            <button onclick="changeFontSize(-1)" class="btn btn-ghost btn-sm" style="width:28px;height:28px;padding:0;font-size:15px;">−</button>
+            <span id="fontSizeDisplay" style="font-size:13px; font-weight:700; color:var(--text); min-width:38px; text-align:center;">100%</span>
+            <button onclick="changeFontSize(1)" class="btn btn-ghost btn-sm" style="width:28px;height:28px;padding:0;font-size:15px;">＋</button>
+            <button onclick="resetFontSize()" class="btn btn-ghost btn-sm" style="font-size:11px; padding:3px 7px;">Reset</button>
           </div>
 
           <!-- Bold toggle -->
           <div style="display:flex; align-items:center; gap:12px;">
             <span style="font-size:12px; color:var(--muted); min-width:80px;">Style texte</span>
             <button id="btnBold" onclick="toggleBold()" class="btn btn-ghost btn-sm"
-              style="font-weight:700; font-size:14px; padding:6px 16px; border:2px solid var(--border);">B Gras</button>
+              style="font-weight:700; font-size:13px; padding:5px 13px; border:2px solid var(--border);">B Gras</button>
             <button id="btnNormal" onclick="toggleBold(false)" class="btn btn-primary btn-sm"
-              style="font-size:14px; padding:6px 16px;">N Normal</button>
+              style="font-size:13px; padding:5px 13px;">N Normal</button>
           </div>
         </div>
 
         <!-- Buttons -->
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-ghost" style="flex:1; font-size:14px; padding:11px;" onclick="previewLabel()">👁 Aperçu</button>
-          <button class="btn btn-primary" style="flex:1; font-size:14px; padding:11px;" onclick="previewLabel(true)">🖨 Imprimer</button>
+          <button class="btn btn-ghost" style="flex:1; font-size:14px; padding:9px;" onclick="previewLabel()">👁 Aperçu</button>
+          <button class="btn btn-primary" style="flex:1; font-size:14px; padding:9px;" onclick="previewLabel(true)">🖨 Imprimer</button>
         </div>
       </div>
     </div>
@@ -6119,12 +6193,20 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
     }
 
     function buildLabelHTML() {
-      const nom  = document.getElementById('colisNom').value.trim();
-      const tel1 = document.getElementById('colisTel1').value.trim();
-      const tel2 = document.getElementById('colisTel2').value.trim();
-      const nb   = parseInt(document.getElementById('colisNb').value) || 1;
-      const scale = _fontSize / 100;
+      const nom    = document.getElementById('colisNom').value.trim();
+      const tel1   = document.getElementById('colisTel1').value.trim();
+      const tel2   = document.getElementById('colisTel2').value.trim();
+      const nb     = parseInt(document.getElementById('colisNb').value) || 1;
+      const expNom = document.getElementById('colisExpNom').value.trim();
+      const expTel = document.getElementById('colisExpTel').value.trim();
+      const scale  = _fontSize / 100;
       const weight = _fontBold ? '800' : '400';
+      const senderBlock = (expNom || expTel) ? `
+          <div style="margin-top:12px; background:#fff3cd; border:2px dashed #e67e22; border-radius:8px; padding:8px 12px;">
+            <div style="font-size:0.7em; font-weight:900; color:#c0392b; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">⚠️ Si non livré — Retourner à :</div>
+            ${expNom ? `<div style="font-size:0.82em; font-weight:700; color:#1a1a2e;">${expNom}</div>` : ''}
+            ${expTel ? `<div style="font-size:0.82em; color:#1a1a2e;">📞 ${expTel}</div>` : ''}
+          </div>` : '';
       return `
         <div class="colis-label size-${_colisPaper}" style="font-size:${scale}em;">
           <div class="label-logo" style="display:flex;align-items:center;gap:8px;"><img src="logo.png" style="height:32px;width:32px;object-fit:contain;"><span style="font-size:1.1em;font-weight:900;letter-spacing:3px;color:#1a1a2e;">DELFIV</span></div>
@@ -6132,6 +6214,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           <div class="label-row" style="font-weight:${weight};"><span>📞</span><span>${tel1 || '—'}</span></div>
           ${tel2 ? `<div class="label-row" style="font-weight:${weight};"><span>📞</span><span>${tel2}</span></div>` : ''}
           <div class="label-count"><span>📦</span><span>${nb} colis</span></div>
+          ${senderBlock}
         </div>`;
     }
 
@@ -6341,6 +6424,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         <button id="btnProviderGroq" class="btn btn-primary btn-sm" onclick="setAiProvider('groq')" style="flex:1;">🦙 Groq (Gratuit)</button>
         <button id="btnProviderClaude" class="btn btn-ghost btn-sm" onclick="setAiProvider('claude')" style="flex:1; border:1px solid var(--border);">🤖 Claude</button>
         <button id="btnProviderOpenai" class="btn btn-ghost btn-sm" onclick="setAiProvider('openai')" style="flex:1; border:1px solid var(--border);">✨ ChatGPT</button>
+        <button id="btnProviderMinimax" class="btn btn-ghost btn-sm" onclick="setAiProvider('minimax')" style="flex:1; border:1px solid var(--border);">🌟 Minimax</button>
       </div>
       <div id="voiceGroqSection">
         <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Créez un compte gratuit sur <b>console.groq.com</b> → API Keys → Create API Key</p>
@@ -6370,6 +6454,13 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
             <option value="gpt-4o">GPT-4o</option>
             <option value="gpt-4o-mini">GPT-4o Mini (rapide)</option>
           </select>
+        </div>
+      </div>
+      <div id="voiceMinimaxSection" style="display:none;">
+        <p style="font-size:11px; color:var(--muted); margin-bottom:10px;">Obtenez votre clé gratuite sur <b>openrouter.ai</b> → Keys (modèle: minimax/minimax-m2.5:free)</p>
+        <div class="field">
+          <label>OpenRouter API Key (Minimax M2.5 Free)</label>
+          <input type="password" id="minimaxApiKey" placeholder="sk-or-..." style="font-family:monospace;">
         </div>
       </div>
       <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:8px;">
@@ -6405,5 +6496,225 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
     </div>
     <div id="voiceStatus" style="margin-top:8px; font-size:12px; color:var(--muted); text-align:center; min-height:18px;"></div>
   </div>
+
+  <!-- placeholder panel index 8 = Assistant IA already at p7 above -->
+  <!-- ══ PANEL 10 : API SYNC ══ -->
+  <div class="panel" id="pApiSync">
+
+    <div class="toolbar">
+      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🔌 API LOGICOM — Sync Clients</h2>
+      <div style="flex:1"></div>
+      <button class="btn btn-ghost btn-sm" onclick="apiSyncClearLog()">🗑 Vider log</button>
+      <button class="btn btn-primary" onclick="runApiSync()">▶ Lancer Sync</button>
+    </div>
+
+    <!-- Config -->
+    <div style="background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px;">
+      <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">⚙️ Configuration</div>
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px;">
+        <div>
+          <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">URL Base</label>
+          <input type="text" id="as_url" placeholder="http://26.181.59.54:1647/apiv2"
+            style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Username</label>
+          <input type="text" id="as_user" placeholder="LAHBIB" oninput="this.value=this.value.toUpperCase()"
+            style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Mot de passe</label>
+          <input type="password" id="as_pass" placeholder="••••••••"
+            style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:10px;">
+        <button class="btn btn-ghost btn-sm" onclick="apiSyncSaveConfig()">💾 Sauvegarder</button>
+        <span id="as_config_status" style="font-size:12px; color:var(--muted); align-self:center;"></span>
+      </div>
+    </div>
+
+    <!-- Log area: split into request / response -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;">
+
+      <!-- Requests sent -->
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px;">
+        <div style="font-size:12px; font-weight:700; color:#f59e0b; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">📤 Envoyé</div>
+        <div id="as_sent" style="font-family:monospace; font-size:12px; color:var(--text); white-space:pre-wrap; max-height:400px; overflow-y:auto; line-height:1.6;">
+          <span style="color:var(--muted)">En attente...</span>
+        </div>
+      </div>
+
+      <!-- Responses received -->
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px;">
+        <div style="font-size:12px; font-weight:700; color:#22c55e; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">📥 Reçu</div>
+        <div id="as_recv" style="font-family:monospace; font-size:12px; color:var(--text); white-space:pre-wrap; max-height:400px; overflow-y:auto; line-height:1.6;">
+          <span style="color:var(--muted)">En attente...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result summary -->
+    <div id="as_summary" style="display:none; background:rgba(34,197,94,0.08); border:1px solid #22c55e; border-radius:12px; padding:14px; font-size:13px; color:var(--text);">
+    </div>
+  </div>
+
+  <script>
+    // ══ API SYNC TAB ══
+    function apiSyncSaveConfig() {
+      localStorage.setItem('sync-api-url',      document.getElementById('as_url').value.trim().replace(/\/$/,''));
+      localStorage.setItem('sync-api-username', document.getElementById('as_user').value.trim());
+      localStorage.setItem('sync-api-password', document.getElementById('as_pass').value);
+      document.getElementById('as_config_status').textContent = '✅ Sauvegardé';
+      setTimeout(() => document.getElementById('as_config_status').textContent = '', 2000);
+    }
+
+    function apiSyncLoadConfig() {
+      document.getElementById('as_url').value  = localStorage.getItem('sync-api-url') || '';
+      document.getElementById('as_user').value = localStorage.getItem('sync-api-username') || '';
+      document.getElementById('as_pass').value = localStorage.getItem('sync-api-password') || '';
+    }
+
+    function apiSyncClearLog() {
+      document.getElementById('as_sent').innerHTML    = '<span style="color:var(--muted)">En attente...</span>';
+      document.getElementById('as_recv').innerHTML    = '<span style="color:var(--muted)">En attente...</span>';
+      document.getElementById('as_summary').style.display = 'none';
+    }
+
+    function asLog(side, label, data) {
+      const el = document.getElementById(side === 'sent' ? 'as_sent' : 'as_recv');
+      const color = side === 'sent' ? '#f59e0b' : '#22c55e';
+      const json = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+      el.innerHTML += `<div style="margin-bottom:10px;">
+        <div style="color:${color}; font-weight:700; margin-bottom:3px;">── ${label}</div>
+        <div style="color:var(--text);">${json}</div>
+      </div>`;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    async function runApiSync() {
+      const baseUrl  = document.getElementById('as_url').value.trim().replace(/\/$/,'') || localStorage.getItem('sync-api-url');
+      const username = document.getElementById('as_user').value.trim() || localStorage.getItem('sync-api-username');
+      const password = document.getElementById('as_pass').value || localStorage.getItem('sync-api-password');
+
+      if (!baseUrl || !username || !password) {
+        document.getElementById('as_sent').innerHTML = '<span style="color:#f87171;">❌ Remplissez URL, username et mot de passe</span>';
+        return;
+      }
+
+      // Clear logs
+      document.getElementById('as_sent').innerHTML = '';
+      document.getElementById('as_recv').innerHTML = '';
+      document.getElementById('as_summary').style.display = 'none';
+
+      // ── STEP 1: LOGIN ──────────────────────────────────
+      const loginBody = { username, password, typeApp: 'DELYV' };
+      asLog('sent', `POST ${baseUrl}/login`, loginBody);
+
+      let token = null;
+      try {
+        const loginRaw = await ipcRenderer.invoke('sync-api-request', {
+          method: 'POST',
+          url: `${baseUrl}/login`,
+          body: loginBody
+        });
+
+        asLog('recv', `HTTP ${loginRaw.status}`, (() => {
+          try { return JSON.parse(loginRaw.body); } catch(e) { return loginRaw.body; }
+        })());
+
+        if (loginRaw.status !== 200) {
+          const err = JSON.parse(loginRaw.body || '{}');
+          document.getElementById('as_recv').innerHTML += `<span style="color:#f87171;">❌ Login échoué: ${err.message || loginRaw.status}</span>`;
+          return;
+        }
+
+        const loginData = JSON.parse(loginRaw.body);
+        token = loginData.token;
+        if (!token) {
+          document.getElementById('as_recv').innerHTML += '<span style="color:#f87171;">❌ Aucun token dans la réponse</span>';
+          return;
+        }
+      } catch(e) {
+        asLog('recv', 'ERREUR', e.message || String(e));
+        return;
+      }
+
+      // ── STEP 2: GET CLIENTS ────────────────────────────
+      asLog('sent', `GET ${baseUrl}/clients?typeApp=DELYV`, { Authorization: `Bearer ${token.substring(0,20)}...` });
+
+      try {
+        const clientsRaw = await ipcRenderer.invoke('sync-api-request', {
+          method: 'GET',
+          url: `${baseUrl}/clients?typeApp=DELYV`,
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        let apiClients;
+        try { apiClients = JSON.parse(clientsRaw.body); } catch(e) { apiClients = clientsRaw.body; }
+
+        asLog('recv', `HTTP ${clientsRaw.status} — ${Array.isArray(apiClients) ? apiClients.length + ' clients' : 'réponse brute'}`, apiClients);
+
+        if (clientsRaw.status !== 200 || !Array.isArray(apiClients)) return;
+
+        // ── STEP 3: MERGE ──────────────────────────────────
+        let added = 0, updated = 0;
+        const today = new Date().toISOString().split('T')[0];
+
+        apiClients.forEach(ex => {
+          const keyClient = String(ex.KEY_CLIENT || '');
+          const name      = ex.NOM_CLIENT || ex.name || 'Sans Nom';
+          const phone     = ex.TELEPHONE  || ex.phone || '';
+          const solde     = Number(ex.SOLDE_LOGICOM || ex.solde || 0);
+          const ville     = ex.VILLE_FR   || ex.ville || '';
+          const type      = ex.TYPE_ABONNEMENT || '';
+
+          const existing = clients.find(c =>
+            (c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
+            (phone && c.phone === phone) ||
+            c.name === name
+          );
+
+          if (existing) {
+            if (solde > 0 && existing.negotiatedPrice !== solde) {
+              existing.negotiatedPrice = solde;
+              existing.paidAmount = 0;
+              updated++;
+            }
+          } else {
+            clients.push({
+              id: nextClientId++, name, phone,
+              brand: type === 'G' ? 'Gold' : type === 'S' ? 'Silver' : '',
+              potential: false, address: ville, source: 'Import API',
+              options: [], note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
+              installer: 'Non', material: 'Non',
+              paymentStatus: solde > 0 ? 'Non' : 'Oui', paymentMode: '',
+              finalState: '', noPurchaseReason: '', created_at: today,
+              called: false, trialStatus: 0,
+              negotiatedPrice: solde, paidAmount: 0, paymentDeadline: '',
+              autoReminder: solde > 0 ? 1 : 0, trialOutcome: '', trialLostReason: ''
+            });
+            added++;
+          }
+        });
+
+        await syncDB();
+        renderClients();
+        renderReminders();
+
+        const summary = document.getElementById('as_summary');
+        summary.style.display = 'block';
+        summary.innerHTML = `✅ <strong>Sync terminé</strong> — ${apiClients.length} clients reçus · <strong>${added}</strong> ajoutés · <strong>${updated}</strong> mis à jour`;
+
+      } catch(e) {
+        asLog('recv', 'ERREUR', e.message || String(e));
+      }
+    }
+
+    // Load saved config when switching to this tab
+    document.addEventListener('DOMContentLoaded', () => {
+      apiSyncLoadConfig();
+    });
+  </script>
 </body>
 </html>

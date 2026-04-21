@@ -485,9 +485,75 @@ ipcMain.handle('claude-chat', async (_event, { apiKey, messages }) => {
   });
 });
 
+ipcMain.handle('minimax-chat', async (_event, { apiKey, messages }) => {
+  console.log('[MinimaxChat] IPC received, key starts:', apiKey && apiKey.substring(0, 10));
+  const https = require('https');
+  const body = JSON.stringify({
+    model: 'minimax/minimax-m2.5:free',
+    max_tokens: 500,
+    messages
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'openrouter.ai',
+      path: '/api/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          if (res.statusCode !== 200) {
+            reject(new Error(json.error?.message || `HTTP ${res.statusCode}: ${data}`));
+          } else {
+            resolve(json.choices?.[0]?.message?.content || '...');
+          }
+        } catch(e) { reject(new Error('Parse error: ' + data)); }
+      });
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+});
+
 ipcMain.handle('update-telegram-config', (event, data) => {
   const { updateConfig } = require('./telegram');
   return updateConfig(data);
+});
+
+ipcMain.handle('sync-api-request', async (_e, { method, url, headers, body }) => {
+  const http  = require('http');
+  const https = require('https');
+  const { URL } = require('url');
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const lib = parsed.protocol === 'https:' ? https : http;
+    const bodyStr = body ? JSON.stringify(body) : null;
+    const opts = {
+      hostname: parsed.hostname,
+      port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+      path: parsed.pathname + parsed.search,
+      method: method || 'GET',
+      headers: { 'Content-Type': 'application/json', ...headers }
+    };
+    if (bodyStr) opts.headers['Content-Length'] = Buffer.byteLength(bodyStr);
+    const req = lib.request(opts, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve({ status: res.statusCode, body: data }));
+    });
+    req.on('error', e => reject(e.message));
+    if (bodyStr) req.write(bodyStr);
+    req.end();
+  });
 });
 
 ipcMain.handle('save-groq-key', (event, groqApiKey) => {
