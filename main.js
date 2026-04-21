@@ -10,11 +10,14 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
+    show: false,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
     }
   })
+  mainWindow.maximize()
+  mainWindow.show()
 
   mainWindow.loadFile('index.html')
 }
