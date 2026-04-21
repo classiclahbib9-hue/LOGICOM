@@ -5987,11 +5987,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
   </div>
 
   <div class="panel" id="panelEtiquettes">
-    <div class="toolbar">
-      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">📦 Étiquettes Colis</h2>
-    </div>
-
-    <div style="display:grid; grid-template-columns:480px 1fr; gap:32px; align-items:start;">
+    <div style="max-width:500px; margin:-12px auto 0;">
       <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px 28px;">
 
         <!-- Paper size -->
@@ -6072,12 +6068,6 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           <button class="btn btn-primary" style="flex:1; font-size:14px; padding:11px;" onclick="previewLabel(true)">🖨 Imprimer</button>
         </div>
       </div>
-
-      <!-- Live preview column -->
-      <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:24px 28px; min-height:300px;">
-        <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:14px;">👁 Aperçu en direct</label>
-        <div id="etLivePreview" style="display:flex; justify-content:center;"></div>
-      </div>
     </div>
   </div>
 
@@ -6089,13 +6079,11 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
     function changeFontSize(delta) {
       _fontSize = Math.min(200, Math.max(50, _fontSize + delta * 10));
       document.getElementById('fontSizeDisplay').textContent = _fontSize + '%';
-      renderLabel();
     }
 
     function resetFontSize() {
       _fontSize = 100;
       document.getElementById('fontSizeDisplay').textContent = '100%';
-      renderLabel();
     }
 
     function toggleBold(on) {
@@ -6109,7 +6097,6 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         btnN.className = 'btn btn-primary btn-sm'; btnN.style.cssText = 'font-size:14px;padding:6px 16px;';
         btnB.className = 'btn btn-ghost btn-sm';   btnB.style.cssText = 'font-weight:700;font-size:14px;padding:6px 16px;border:2px solid var(--border);';
       }
-      renderLabel();
     }
 
     function selectPaper(size) {
@@ -6129,7 +6116,6 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           btn.style.color = 'var(--text)';
         }
       });
-      renderLabel();
     }
 
     function buildLabelHTML() {
@@ -6182,20 +6168,6 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         printArea.innerHTML = '';
       }, 500);
     }
-
-    function renderLabel() {
-      const wrap = document.getElementById('etLivePreview');
-      if (wrap) wrap.innerHTML = buildLabelHTML();
-    }
-
-    // Wire up live preview on every input change
-    document.addEventListener('DOMContentLoaded', () => {
-      ['colisNom','colisTel1','colisTel2','colisNb'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', renderLabel);
-      });
-      renderLabel();
-    });
 
     // ═══════════════════════════ TRIAL DECISION SYSTEM ═══════════════════════════
     let _trialDecisionClientId = null;
