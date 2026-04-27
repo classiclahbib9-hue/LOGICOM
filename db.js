@@ -6,8 +6,29 @@ const { ipcMain, app, Notification } = require('electron');
 let db;
 let SQL;
 const dbPath = path.join(__dirname, 'test.db');
+const backupDir = path.join(__dirname, 'backups');
 
 function safeLog(...args) {} // Logging disabled
+
+function makeBackup() {
+    try {
+        if (!fs.existsSync(dbPath)) return;
+        if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir);
+        const ts = new Date().toISOString().replace(/[:.]/g, '-');
+        const dest = path.join(backupDir, `logicom-${ts}.db`);
+        fs.copyFileSync(dbPath, dest);
+        // Keep only last 10 backups
+        const files = fs.readdirSync(backupDir)
+            .filter(f => f.endsWith('.db'))
+            .map(f => ({ f, t: fs.statSync(path.join(backupDir, f)).mtimeMs }))
+            .sort((a, b) => b.t - a.t);
+        files.slice(10).forEach(({ f }) => {
+            try { fs.unlinkSync(path.join(backupDir, f)); } catch(e) {}
+        });
+    } catch(e) {
+        console.error('[Backup] Failed:', e.message);
+    }
+}
 
 async function initDB() {
     SQL = await initSqlJs({
@@ -104,6 +125,7 @@ async function initDB() {
 }
 
 function saveToFile() {
+    makeBackup();
     const data = db.export();
     const buffer = Buffer.from(data);
     fs.writeFileSync(dbPath, buffer);
@@ -161,7 +183,7 @@ function registerIpcHandlers() {
             }
 
             if (data.clients) {
-                // Preserve telegramChatId and promise fields before deleting
+                // Preserve fields not always carried in memory
                 const preserved = {};
                 const pRes = db.exec(`SELECT id, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote FROM clients`);
                 if (pRes.length) {
@@ -170,27 +192,34 @@ function registerIpcHandlers() {
                     });
                 }
 
-                db.run('DELETE FROM clients');
-                const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote, trialOutcome, trialLostReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-                const stmt = db.prepare(sql);
-                for (const c of data.clients) {
-                    const p = preserved[c.id] || {};
-                    stmt.run([
-                        c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source,
-                        JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non',
-                        c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '',
-                        c.created_at || '', (c.called?1:0), c.dateDernierRappel || '', (c.trialStatus || 0),
-                        c.trialStartDate || '', c.trialPeriod || 15, c.category || 'Nouveau', c.added_by || '',
-                        c.negotiatedPrice || 0, c.paidAmount || 0, c.paymentDeadline || '', (c.autoReminder?1:0),
-                        c.telegramChatId || p.telegramChatId || null,
-                        c.promisedDate || p.promisedDate || null,
-                        c.promisedAmount || p.promisedAmount || 0,
-                        c.promisedMethod || p.promisedMethod || null,
-                        c.promiseNote || p.promiseNote || null,
-                        c.trialOutcome || '', c.trialLostReason || ''
-                    ]);
+                db.run('BEGIN');
+                try {
+                    db.run('DELETE FROM clients');
+                    const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote, trialOutcome, trialLostReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    const stmt = db.prepare(sql);
+                    for (const c of data.clients) {
+                        const p = preserved[c.id] || {};
+                        stmt.run([
+                            c.id, c.name, c.phone, c.brand, (c.potential?1:0), c.address, c.source,
+                            JSON.stringify(c.options || []), c.note || '', c.installer || '', c.material || 'Non',
+                            c.paymentStatus || '', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '',
+                            c.created_at || '', (c.called?1:0), c.dateDernierRappel || '', (c.trialStatus || 0),
+                            c.trialStartDate || '', c.trialPeriod || 15, c.category || 'Nouveau', c.added_by || '',
+                            c.negotiatedPrice || 0, c.paidAmount || 0, c.paymentDeadline || '', (c.autoReminder?1:0),
+                            c.telegramChatId || p.telegramChatId || null,
+                            c.promisedDate || p.promisedDate || null,
+                            c.promisedAmount || p.promisedAmount || 0,
+                            c.promisedMethod || p.promisedMethod || null,
+                            c.promiseNote || p.promiseNote || null,
+                            c.trialOutcome || '', c.trialLostReason || ''
+                        ]);
+                    }
+                    stmt.free();
+                    db.run('COMMIT');
+                } catch(txErr) {
+                    db.run('ROLLBACK');
+                    throw txErr;
                 }
-                stmt.free();
             }
 
             if (data.materials) {

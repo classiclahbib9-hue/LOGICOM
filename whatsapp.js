@@ -106,7 +106,7 @@ function initWhatsApp(onQr, onAdminNotify) {
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: getSessionPath() }),
         puppeteer: {
-            headless: false,
+            headless: true,
             executablePath: (() => {
                 const paths = [
                     'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -123,6 +123,14 @@ function initWhatsApp(onQr, onAdminNotify) {
                 '--disable-dev-shm-usage',
                 '--no-first-run',
                 '--no-zygote',
+                '--single-process',
+                '--max-old-space-size=512',
+                '--disable-extensions',
+                '--disable-background-networking',
+                '--disable-sync',
+                '--disable-translate',
+                '--hide-scrollbars',
+                '--mute-audio',
             ],
             timeout: 60000,
         },

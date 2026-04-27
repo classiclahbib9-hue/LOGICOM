@@ -3053,7 +3053,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         }, 50);
       }
       if (i === 5) renderMaterials();
-      if (i === 6) { renderReminders(); loadApiKeys(); refreshWAStatus(); startWAStatusPolling(); }
+      if (i === 6) { renderReminders(); loadApiKeys(); refreshWAStatus(); startWAStatusPolling(); const b = document.getElementById('alertBadge'); if(b) b.style.display = 'none'; }
       if (i === 7) renderLabel();
       if (i === 8) initVoiceChat();
     }
@@ -5679,11 +5679,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       toast('Nouveau client ajouté via Telegram ! 🔔');
     });
 
-    // AUTO-SAVE every 2 minutes for extra safety
+    // AUTO-SAVE every 30 seconds for extra safety
     setInterval(() => {
       console.log('--- AUTO-SAVE ---');
       syncDB();
-    }, 120000);
+    }, 30000);
 
     loadData().then(() => {
       loadApiSettings();
@@ -5913,64 +5913,184 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
 
   <!-- ══ PANEL 9 : ÉTIQUETTES COLIS ══ -->
   <style>
-    /* Label sizes */
+    /* ── Label base ── */
     .colis-label {
-      background: white;
-      color: black;
-      border: 3px solid #111;
+      background: #ffffff;
+      color: #0d0d0d;
+      border: 2px solid #0d0d0d;
       font-family: 'DM Sans', sans-serif;
       box-sizing: border-box;
       position: relative;
+      overflow: hidden;
     }
     .colis-label.size-a5 {
       width: 148mm; height: 210mm;
-      padding: 14mm 16mm;
-      font-size: 14pt;
+      padding: 0;
+      font-size: 13pt;
     }
     .colis-label.size-a6 {
       width: 105mm; height: 148mm;
-      padding: 10mm 12mm;
-      font-size: 11pt;
-    }
-    .colis-label .label-logo {
-      font-weight: 700;
-      letter-spacing: 2px;
-      color: #666;
-      margin-bottom: 8mm;
-      text-transform: uppercase;
-      font-size: 0.75em;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 4mm;
-    }
-    .colis-label .label-dest {
-      font-size: 1.7em;
-      font-weight: 800;
-      margin-bottom: 6mm;
-      line-height: 1.2;
-    }
-    .colis-label .label-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 1.15em;
-      margin: 4mm 0;
-    }
-    .colis-label .label-count {
-      position: absolute;
-      bottom: 10mm;
-      right: 12mm;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 1.3em;
-      font-weight: 800;
-      background: #111;
-      color: white;
-      padding: 3mm 7mm;
-      border-radius: 6px;
+      padding: 0;
+      font-size: 10pt;
     }
 
-    /* Preview modal */
+    /* ── Header band ── */
+    .cl-header {
+      background: #0d0d0d;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5mm 7mm;
+    }
+    .cl-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cl-header-brand img {
+      height: 28px;
+      width: 28px;
+      object-fit: contain;
+      filter: brightness(0) invert(1);
+    }
+    .cl-header-brand span {
+      font-weight: 900;
+      font-size: 1.2em;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .cl-header-tag {
+      font-size: 0.72em;
+      font-weight: 700;
+      letter-spacing: 1px;
+      opacity: 0.75;
+      text-transform: uppercase;
+    }
+
+    /* ── Body ── */
+    .cl-body {
+      padding: 6mm 7mm 4mm;
+    }
+
+    /* ── Section labels ── */
+    .cl-section-label {
+      font-size: 0.62em;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 2mm;
+    }
+
+    /* ── Destination block ── */
+    .cl-dest-block {
+      border: 2px solid #0d0d0d;
+      border-radius: 6px;
+      padding: 5mm 6mm;
+      margin-bottom: 5mm;
+    }
+    .cl-dest-name {
+      font-size: 1.9em;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 3mm;
+      word-break: break-word;
+    }
+    .cl-phone-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 1.25em;
+      font-weight: 700;
+      margin-bottom: 2mm;
+    }
+    .cl-phone-icon {
+      width: 1.4em;
+      height: 1.4em;
+      background: #0d0d0d;
+      color: white;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75em;
+      flex-shrink: 0;
+    }
+    .cl-address-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 1em;
+      color: #333;
+      margin-top: 3mm;
+    }
+
+    /* ── Divider with barcode stripes ── */
+    .cl-barcode-divider {
+      width: 100%;
+      height: 10mm;
+      display: flex;
+      overflow: hidden;
+      margin: 4mm 0;
+    }
+    .cl-barcode-divider > span {
+      display: block;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    /* ── Package count badge ── */
+    .cl-count-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0d0d0d;
+      color: white;
+      border-radius: 6px;
+      padding: 3mm 5mm;
+      margin-bottom: 5mm;
+    }
+    .cl-count-label { font-size: 0.72em; letter-spacing: 1px; text-transform: uppercase; opacity: 0.7; }
+    .cl-count-value { font-size: 1.6em; font-weight: 900; letter-spacing: 2px; }
+
+    /* ── Return block ── */
+    .cl-return-block {
+      border: 2px dashed #c0392b;
+      border-radius: 6px;
+      padding: 4mm 5mm;
+      background: #fff8f0;
+    }
+    .cl-return-title {
+      font-size: 0.65em;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #c0392b;
+      margin-bottom: 2mm;
+    }
+    .cl-return-info {
+      font-size: 0.88em;
+      font-weight: 700;
+      color: #1a1a2e;
+      line-height: 1.5;
+    }
+
+    /* ── Footer ── */
+    .cl-footer {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: #f5f5f5;
+      border-top: 1px solid #ddd;
+      padding: 2mm 7mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.6em;
+      color: #999;
+    }
+
+    /* ── Preview modal ── */
     #modalEtiquette {
       display: none;
       position: fixed;
@@ -6005,20 +6125,18 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       gap: 10px;
       width: 100%;
     }
-    /* Label shadow in preview */
     #etLabelWrap .colis-label {
-      box-shadow: 0 6px 32px rgba(0,0,0,0.22);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.28);
     }
 
-    /* Print */
+    /* ── Print ── */
     @media print {
       #modalEtiquette, #modalEtiquette * { all: unset; }
       body > *:not(#etPrintArea) { display: none !important; }
       #etPrintArea {
-        display: block !important;
+        display: flex !important;
         position: fixed;
         inset: 0;
-        display: flex;
         align-items: center;
         justify-content: center;
         background: white;
@@ -6073,20 +6191,27 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         <!-- Nom -->
         <div style="margin-bottom:10px;">
           <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">👤 Nom du destinataire</label>
-          <input type="text" id="colisNom" placeholder="Ex: Ahmed Benali"
+          <input type="text" id="colisNom" placeholder="Ex: Ahmed Benali" oninput="renderLabel()"
             style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; font-weight:600; box-sizing:border-box;">
+        </div>
+
+        <!-- Adresse -->
+        <div style="margin-bottom:10px;">
+          <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">📍 Adresse / Wilaya (optionnel)</label>
+          <input type="text" id="colisAdresse" placeholder="Ex: Alger, Bab El Oued" oninput="renderLabel()"
+            style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
         </div>
 
         <!-- Tels -->
         <div style="display:flex; gap:12px; margin-bottom:10px;">
           <div style="flex:1;">
             <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">📞 Téléphone 1</label>
-            <input type="tel" id="colisTel1" placeholder="0555 000 000"
+            <input type="tel" id="colisTel1" placeholder="0555 000 000" oninput="renderLabel()"
               style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
           </div>
           <div style="flex:1;">
             <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">📞 Téléphone 2 (optionnel)</label>
-            <input type="tel" id="colisTel2" placeholder="0661 000 000"
+            <input type="tel" id="colisTel2" placeholder="0661 000 000" oninput="renderLabel()"
               style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
           </div>
         </div>
@@ -6094,7 +6219,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         <!-- Nb colis -->
         <div style="margin-bottom:10px;">
           <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:4px;">📦 Nombre de colis</label>
-          <input type="number" id="colisNb" min="1" value="1"
+          <input type="number" id="colisNb" min="1" value="1" oninput="renderLabel()"
             style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:15px; font-weight:700; box-sizing:border-box;">
         </div>
 
@@ -6103,11 +6228,11 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           <label style="font-size:12px; color:var(--muted); display:block; margin-bottom:6px;">↩️ Expéditeur (retour si non livré)</label>
           <div style="display:flex; gap:12px;">
             <div style="flex:1;">
-              <input type="text" id="colisExpNom" placeholder="Votre nom / société"
+              <input type="text" id="colisExpNom" placeholder="Votre nom / société" oninput="renderLabel()"
                 style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
             </div>
             <div style="flex:1;">
-              <input type="tel" id="colisExpTel" placeholder="Votre téléphone"
+              <input type="tel" id="colisExpTel" placeholder="Votre téléphone" oninput="renderLabel()"
                 style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:14px; box-sizing:border-box;">
             </div>
           </div>
@@ -6142,6 +6267,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           <button class="btn btn-primary" style="flex:1; font-size:14px; padding:9px;" onclick="previewLabel(true)">🖨 Imprimer</button>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -6150,14 +6276,29 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
     let _fontSize = 100; // percent
     let _fontBold = false;
 
+    function renderLabel() {
+      const wrap = document.getElementById('etLiveWrap');
+      if (!wrap) return;
+      wrap.innerHTML = buildLabelHTML();
+      // A5: 148mm×210mm ≈ 559×793px | A6: 105mm×148mm ≈ 397×562px at 96dpi
+      const [labelW, labelH] = _colisPaper === 'a5' ? [559, 793] : [397, 562];
+      const previewW = 240;
+      const scale = previewW / labelW;
+      wrap.style.transform = `scale(${scale})`;
+      const outer = document.getElementById('etLiveOuter');
+      if (outer) outer.style.height = Math.round(labelH * scale) + 'px';
+    }
+
     function changeFontSize(delta) {
       _fontSize = Math.min(200, Math.max(50, _fontSize + delta * 10));
       document.getElementById('fontSizeDisplay').textContent = _fontSize + '%';
+      renderLabel();
     }
 
     function resetFontSize() {
       _fontSize = 100;
       document.getElementById('fontSizeDisplay').textContent = '100%';
+      renderLabel();
     }
 
     function toggleBold(on) {
@@ -6171,6 +6312,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         btnN.className = 'btn btn-primary btn-sm'; btnN.style.cssText = 'font-size:14px;padding:6px 16px;';
         btnB.className = 'btn btn-ghost btn-sm';   btnB.style.cssText = 'font-weight:700;font-size:14px;padding:6px 16px;border:2px solid var(--border);';
       }
+      renderLabel();
     }
 
     function selectPaper(size) {
@@ -6190,31 +6332,77 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           btn.style.color = 'var(--text)';
         }
       });
+      renderLabel();
+    }
+
+    function buildBarcode() {
+      const bars = [];
+      const widths = [2,1,3,1,2,4,1,2,1,3,2,1,4,1,2,3,1,2,1,4,2,1,3,2,1,2,4,1,3,1,2,1];
+      let col = true;
+      for (const w of widths) {
+        bars.push(`<span style="width:${w}px;background:${col?'#0d0d0d':'transparent'};"></span>`);
+        col = !col;
+      }
+      return bars.join('');
     }
 
     function buildLabelHTML() {
       const nom    = document.getElementById('colisNom').value.trim();
+      const adresse= document.getElementById('colisAdresse').value.trim();
       const tel1   = document.getElementById('colisTel1').value.trim();
       const tel2   = document.getElementById('colisTel2').value.trim();
       const nb     = parseInt(document.getElementById('colisNb').value) || 1;
       const expNom = document.getElementById('colisExpNom').value.trim();
       const expTel = document.getElementById('colisExpTel').value.trim();
       const scale  = _fontSize / 100;
-      const weight = _fontBold ? '800' : '400';
-      const senderBlock = (expNom || expTel) ? `
-          <div style="margin-top:12px; background:#fff3cd; border:2px dashed #e67e22; border-radius:8px; padding:8px 12px;">
-            <div style="font-size:0.7em; font-weight:900; color:#c0392b; letter-spacing:1px; text-transform:uppercase; margin-bottom:4px;">⚠️ Si non livré — Retourner à :</div>
-            ${expNom ? `<div style="font-size:0.82em; font-weight:700; color:#1a1a2e;">${expNom}</div>` : ''}
-            ${expTel ? `<div style="font-size:0.82em; color:#1a1a2e;">📞 ${expTel}</div>` : ''}
-          </div>` : '';
+      const fw     = _fontBold ? '800' : '400';
+      const date   = new Date().toLocaleDateString('fr-DZ', { day:'2-digit', month:'2-digit', year:'numeric' });
+
+      const returnBlock = (expNom || expTel) ? `
+        <div class="cl-return-block">
+          <div class="cl-return-title">⚠ Si non livré — Retourner à</div>
+          <div class="cl-return-info">
+            ${expNom ? `<div>${expNom}</div>` : ''}
+            ${expTel ? `<div>📞 ${expTel}</div>` : ''}
+          </div>
+        </div>` : '';
+
       return `
-        <div class="colis-label size-${_colisPaper}" style="font-size:${scale}em;">
-          <div class="label-logo" style="display:flex;align-items:center;gap:8px;"><img src="logo.png" style="height:32px;width:32px;object-fit:contain;"><span style="font-size:1.1em;font-weight:900;letter-spacing:3px;color:#1a1a2e;">DELFIV</span></div>
-          <div class="label-dest" style="font-weight:${_fontBold ? '900' : '800'};">${nom || '—'}</div>
-          <div class="label-row" style="font-weight:${weight};"><span>📞</span><span>${tel1 || '—'}</span></div>
-          ${tel2 ? `<div class="label-row" style="font-weight:${weight};"><span>📞</span><span>${tel2}</span></div>` : ''}
-          <div class="label-count"><span>📦</span><span>${nb} colis</span></div>
-          ${senderBlock}
+        <div class="colis-label size-${_colisPaper}" style="font-size:${scale}em;font-weight:${fw};">
+          <div class="cl-header">
+            <div class="cl-header-brand">
+              <img src="logo.png" alt="">
+              <span>DELPOS</span>
+            </div>
+            <div class="cl-header-tag">Livraison Express</div>
+          </div>
+
+          <div class="cl-body">
+            <div class="cl-section-label">Destinataire</div>
+            <div class="cl-dest-block">
+              <div class="cl-dest-name">${nom || '—'}</div>
+              <div class="cl-phone-row">
+                <span class="cl-phone-icon">☎</span>
+                <span>${tel1 || '—'}</span>
+              </div>
+              ${tel2 ? `<div class="cl-phone-row"><span class="cl-phone-icon">☎</span><span>${tel2}</span></div>` : ''}
+              ${adresse ? `<div class="cl-address-row"><span>📍</span><span>${adresse}</span></div>` : ''}
+            </div>
+
+            <div class="cl-barcode-divider">${buildBarcode()}</div>
+
+            <div class="cl-count-bar">
+              <span class="cl-count-label">Nombre de colis</span>
+              <span class="cl-count-value">📦 ${nb}</span>
+            </div>
+
+            ${returnBlock}
+          </div>
+
+          <div class="cl-footer">
+            <span>Date : ${date}</span>
+            <span>DELPOS Livraison • logicom.dz</span>
+          </div>
         </div>`;
     }
 

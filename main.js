@@ -750,10 +750,61 @@ function scheduleAutoWhatsAppReminders() {
   setInterval(runAutoReminders, 24 * 60 * 60 * 1000);
 }
 
+// ── Pending clients sync (from bot-server.js queue) ─────────────────────────
+const PENDING_FILE = path.join(__dirname, 'pending-clients.json');
+
+function importPendingClients() {
+  if (!fs.existsSync(PENDING_FILE)) return;
+  let pending = [];
+  try { pending = JSON.parse(fs.readFileSync(PENDING_FILE, 'utf8')); } catch(e) { return; }
+  if (!pending.length) return;
+  const db = getDB();
+  if (!db) return;
+  let imported = 0;
+  const stmt = db.prepare(`INSERT INTO clients
+    (name, phone, brand, potential, address, source, options, note, installer, material,
+     paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called,
+     trialStatus, trialStartDate, trialPeriod, category, added_by)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  for (const c of pending) {
+    try {
+      stmt.run([
+        c.name, c.phone, c.brand, c.potential || 1, c.address || '', c.source || 'Telegram',
+        c.options || '[]', c.note || '', c.installer || 'Non', c.material || 'Non',
+        c.paymentStatus || 'Non', c.paymentMode || '', c.finalState || '', c.noPurchaseReason || '',
+        c.created_at || new Date().toISOString().split('T')[0], c.called || 0,
+        c.trialStatus || 0, c.trialStartDate || '', c.trialPeriod || 15,
+        c.category || 'Nouveau', c.added_by || 'Bot'
+      ]);
+      imported++;
+    } catch(e) { console.error('[PendingSync] row error:', e.message); }
+  }
+  stmt.free();
+  const { saveToFile } = require('./db');
+  saveToFile();
+  // Clear the queue
+  fs.writeFileSync(PENDING_FILE, '[]');
+  console.log(`[PendingSync] Imported ${imported} client(s) from bot queue`);
+  // Notify renderer to refresh
+  const { BrowserWindow } = require('electron');
+  BrowserWindow.getAllWindows().forEach(w => w.webContents.send('refresh-clients'));
+}
+
+function watchPendingClients() {
+  fs.watchFile(PENDING_FILE, { interval: 5000 }, () => {
+    try {
+      const list = JSON.parse(fs.readFileSync(PENDING_FILE, 'utf8'));
+      if (list.length > 0) importPendingClients();
+    } catch(e) {}
+  });
+}
+
 app.whenReady().then(async () => {
   console.log('App ready, initializing DB...');
   await initDB()
   console.log('DB Initialized!');
+  importPendingClients();   // import any clients added while PC was off
+  watchPendingClients();    // watch for real-time additions while app is open
   registerIpcHandlers()
   startApiServer(getDB())
   initTelegram()
