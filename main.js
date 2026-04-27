@@ -201,11 +201,9 @@ ipcMain.handle('open-whatsapp', async (event, url) => {
 ipcMain.handle('link-telegram-chatid', async (event, { clientId, chatId }) => {
   const db = getDB();
   if (!db) { console.error('[LinkTG] DB not ready'); return { ok: false }; }
-  console.log(`[LinkTG] Linking clientId=${clientId} chatId=${chatId}`);
-  db.run(`UPDATE clients SET telegramChatId='${chatId}' WHERE id=${parseInt(clientId)}`);
-  // Verify it was saved
-  const check = db.exec(`SELECT id, name, telegramChatId FROM clients WHERE id=${parseInt(clientId)}`);
-  if (check.length) console.log('[LinkTG] After update:', check[0].values[0]);
+  const cid = parseInt(clientId);
+  if (!cid || isNaN(cid)) return { ok: false };
+  db.run(`UPDATE clients SET telegramChatId=? WHERE id=?`, [String(chatId), cid]);
   const { saveToFile } = require('./db');
   saveToFile();
   console.log('[LinkTG] Saved to file ✅');
@@ -230,7 +228,8 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
     adminChatId = cfg.adminChatId || null;
   } catch(e) {}
 
-  const idList = clientIds.map(id => parseInt(id)).join(',');
+  const idList = clientIds.map(id => parseInt(id)).filter(id => !isNaN(id) && id > 0).join(',');
+  if (!idList) return { total: 0, sentWA: 0, sentTG: 0, failedWA: 0, failedTG: 0 };
   const res = db.exec(`SELECT id, name, phone, brand, negotiatedPrice, paidAmount FROM clients WHERE id IN (${idList})`);
   const rows = res.length ? res[0].values.map(row => {
     const obj = {};
@@ -362,7 +361,7 @@ ipcMain.handle('send-whatsapp-with-file', async (event, { phone, message, filePa
 });
 
 ipcMain.handle('groq-chat', async (event, { apiKey, messages }) => {
-  console.log('[GroqChat] IPC received, key starts:', apiKey && apiKey.substring(0, 8));
+  console.log('[GroqChat] IPC received');
   const https = require('https');
   const body = JSON.stringify({
     model: 'llama-3.1-8b-instant',
@@ -401,7 +400,7 @@ ipcMain.handle('groq-chat', async (event, { apiKey, messages }) => {
 });
 
 ipcMain.handle('openai-chat', async (_event, { apiKey, messages, model }) => {
-  console.log('[OpenAIChat] IPC received, model:', model, 'key starts:', apiKey && apiKey.substring(0, 7));
+  console.log('[OpenAIChat] IPC received, model:', model);
   const https = require('https');
   const body = JSON.stringify({
     model: model || 'gpt-4.5-preview', // GPT-4.5 (latest as of 2025)
@@ -440,7 +439,7 @@ ipcMain.handle('openai-chat', async (_event, { apiKey, messages, model }) => {
 });
 
 ipcMain.handle('claude-chat', async (_event, { apiKey, messages }) => {
-  console.log('[ClaudeChat] IPC received, key starts:', apiKey && apiKey.substring(0, 10));
+  console.log('[ClaudeChat] IPC received');
   const https = require('https');
 
   // Convert messages: extract system prompt, keep user/assistant turns
@@ -486,7 +485,7 @@ ipcMain.handle('claude-chat', async (_event, { apiKey, messages }) => {
 });
 
 ipcMain.handle('minimax-chat', async (_event, { apiKey, messages }) => {
-  console.log('[MinimaxChat] IPC received, key starts:', apiKey && apiKey.substring(0, 10));
+  console.log('[MinimaxChat] IPC received');
   const https = require('https');
   const body = JSON.stringify({
     model: 'minimax/minimax-m2.5:free',
@@ -661,7 +660,7 @@ function scheduleTrialExpiredMessages() {
         .replace(/\{brand\}/g, '');
       try {
         await sendWhatsApp(phone, msg);
-        db.run(`UPDATE clients SET dateDernierRappel='${todayDisplay}' WHERE id=${id}`);
+        db.run(`UPDATE clients SET dateDernierRappel=? WHERE id=?`, [todayDisplay, id]);
         console.log(`[TrialExpired] ✅ Message sent to ${name}`);
         await new Promise(r => setTimeout(r, 800));
       } catch(e) {
@@ -731,7 +730,7 @@ function scheduleAutoWhatsAppReminders() {
         .replace(/\{balance\}/g, balance.toLocaleString('fr-DZ'));
       try {
         await sendWhatsApp(phone, msg);
-        db.run(`UPDATE clients SET dateDernierRappel='${today}', reminderSent=1 WHERE id=${id}`);
+        db.run(`UPDATE clients SET dateDernierRappel=?, reminderSent=1 WHERE id=?`, [today, id]);
         sent++;
         await new Promise(r => setTimeout(r, 800));
       } catch(e) { console.error('[AutoReminder] Failed for', name, e.message); }

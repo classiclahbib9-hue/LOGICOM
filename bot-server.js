@@ -59,10 +59,10 @@ function dbExec(sql) {
     try { return db.exec(sql); } catch(e) { return []; }
 }
 
-function dbRun(sql) {
+function dbRun(sql, params) {
     loadDB();
     if (!db) return;
-    try { db.run(sql); saveDB(); } catch(e) { console.error('[DB] run error:', e.message); }
+    try { db.run(sql, params || []); saveDB(); } catch(e) { console.error('[DB] run error:', e.message); }
 }
 
 // ── Pending queue — survives PC off, Electron imports on next startup ────────
@@ -108,10 +108,10 @@ function getUnpaidClients(days) {
 }
 
 function savePaymentPromise(clientId, { promisedDate, promisedAmount, promisedMethod, promiseNote }) {
-    dbRun(`UPDATE clients SET
-        promisedDate='${promisedDate}', promisedAmount=${promisedAmount || 0},
-        promisedMethod='${promisedMethod}', promiseNote='${(promiseNote||'').replace(/'/g,"''")}'
-        WHERE id=${clientId}`);
+    dbRun(
+        `UPDATE clients SET promisedDate=?, promisedAmount=?, promisedMethod=?, promiseNote=? WHERE id=?`,
+        [promisedDate || '', promisedAmount || 0, promisedMethod || '', promiseNote || '', clientId]
+    );
 }
 
 // ── HTTP helpers ─────────────────────────────────────────────────────────────
@@ -396,7 +396,8 @@ async function startBot() {
 
                 // Payment promise detection
                 try {
-                    const res = dbExec(`SELECT id, name, negotiatedPrice, paidAmount FROM clients WHERE telegramChatId='${chatId}' LIMIT 1`);
+                    const safeChatId = String(chatId).replace(/[^0-9\-]/g, '');
+                    const res = dbExec(`SELECT id, name, negotiatedPrice, paidAmount FROM clients WHERE telegramChatId='${safeChatId}' LIMIT 1`);
                     if (res.length && res[0].values.length) {
                         const c = {}; res[0].columns.forEach((col,i) => c[col] = res[0].values[0][i]);
                         const balance = Math.max(0, (c.negotiatedPrice||0) - (c.paidAmount||0));

@@ -183,12 +183,13 @@ function initWhatsApp(onQr, onAdminNotify) {
             // Try to match sender to a known client with a balance
             let promiseHandled = false;
             if (db) {
-                const localPhone = '0' + senderPhone.slice(3);
+                const safePhone = senderPhone.replace(/[^0-9]/g, '');
+                const localPhone = '0' + safePhone.slice(3);
                 const res = db.exec(
                     `SELECT id, name, phone, negotiatedPrice, paidAmount FROM clients
-                     WHERE replace(phone,' ','') = '${senderPhone}'
+                     WHERE replace(phone,' ','') = '${safePhone}'
                         OR replace(phone,' ','') = '${localPhone}'
-                        OR replace(phone,' ','') = '+${senderPhone}'
+                        OR replace(phone,' ','') = '+${safePhone}'
                      LIMIT 1`
                 );
                 console.log(`[WhatsApp] Incoming from ${senderPhone} — matched: ${res.length > 0}`);

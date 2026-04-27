@@ -464,7 +464,7 @@ async function initTelegram() {
         } catch (e) {}
     }
 
-    console.log('Initializing Telegram Bot with token:', config.token.substring(0, 5) + '...');
+    console.log('Initializing Telegram Bot...');
     
     try {
         const bot = new TelegramBot(config.token, {
@@ -545,7 +545,8 @@ async function initTelegram() {
             if (!userStates[chatId]) try {
                 const db = getDB();
                 if (db) {
-                    const already = db.exec(`SELECT id, name FROM clients WHERE telegramChatId = '${chatId}' LIMIT 1`);
+                    const safeCid = String(chatId).replace(/[^0-9\-]/g, '');
+                    const already = db.exec(`SELECT id, name FROM clients WHERE telegramChatId = '${safeCid}' LIMIT 1`);
                     if (already.length && already[0].values.length) {
                         const clientName = already[0].values[0][1];
                         bot.sendMessage(chatId, `✅ Votre compte (${clientName}) est déjà lié à Telegram !`);
@@ -553,12 +554,12 @@ async function initTelegram() {
                     }
                     const phoneMatch = text.match(/0[5-7]\d{8}/);
                     if (phoneMatch) {
-                        const p = phoneMatch[0];
+                        const p = phoneMatch[0].replace(/[^0-9]/g, '');
                         const p213 = '213' + p.slice(1);
                         const check = db.exec(`SELECT id, name FROM clients WHERE replace(replace(phone,' ',''),'+','') IN ('${p}','${p213}') LIMIT 1`);
                         if (check.length && check[0].values.length) {
                             const clientName = check[0].values[0][1];
-                            db.run(`UPDATE clients SET telegramChatId='${chatId}' WHERE replace(replace(phone,' ',''),'+','') IN ('${p}','${p213}')`);
+                            db.run(`UPDATE clients SET telegramChatId='${safeCid}' WHERE replace(replace(phone,' ',''),'+','') IN ('${p}','${p213}')`);
                             saveToFile();
                             bot.sendMessage(chatId, `✅ Parfait ${clientName} ! Votre compte est maintenant lié. Vous recevrez vos rappels ici.`);
                             return;
@@ -795,9 +796,10 @@ async function initTelegram() {
                 try {
                     const db = getDB();
                     if (db) {
+                        const safeCid2 = String(chatId).replace(/[^0-9\-]/g, '');
                         const res = db.exec(
                             `SELECT id, name, negotiatedPrice, paidAmount FROM clients
-                             WHERE telegramChatId = '${chatId}' LIMIT 1`
+                             WHERE telegramChatId = '${safeCid2}' LIMIT 1`
                         );
                         if (res.length) {
                             const cols = res[0].columns;

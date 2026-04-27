@@ -10,3 +10,9 @@ release/
 .env
 supabase.env
 .claude/worktrees/
+bot-config.json
+pending-clients.json
+telegram-config.json
+*-config.json
+*.db
+
