@@ -30,18 +30,26 @@ function getAdminId()    { return loadConfig().adminChatId || null; }
 
 // ── SQL.js DB (shared file with Electron app) ────────────────────────────────
 let SQL, db;
+let dbLastMtime = 0; // track last file modification time to avoid redundant reloads
 
 async function initDB() {
     SQL = await initSqlJs({ locateFile: f => path.join(__dirname, 'node_modules/sql.js/dist', f) });
     loadDB();
-    // Watch for changes made by the Electron app and reload
-    fs.watchFile(DB_PATH, { interval: 3000 }, () => { loadDB(); });
+    // Only reload when Electron actually writes a new version of the file
+    fs.watchFile(DB_PATH, { interval: 3000 }, (curr) => {
+        if (curr.mtimeMs !== dbLastMtime) {
+            loadDB();
+        }
+    });
 }
 
 function loadDB() {
     try {
         if (fs.existsSync(DB_PATH)) {
+            const stat = fs.statSync(DB_PATH);
+            if (stat.mtimeMs === dbLastMtime && db) return; // already up to date
             db = new SQL.Database(fs.readFileSync(DB_PATH));
+            dbLastMtime = stat.mtimeMs;
         }
     } catch(e) { console.error('[DB] reload error:', e.message); }
 }
@@ -50,17 +58,16 @@ function saveDB() {
     try {
         if (!db) return;
         fs.writeFileSync(DB_PATH, Buffer.from(db.export()));
+        dbLastMtime = fs.statSync(DB_PATH).mtimeMs; // update mtime so we don't re-reload our own write
     } catch(e) { console.error('[DB] save error:', e.message); }
 }
 
 function dbExec(sql) {
-    loadDB(); // always read fresh
     if (!db) return [];
     try { return db.exec(sql); } catch(e) { return []; }
 }
 
 function dbRun(sql, params) {
-    loadDB();
     if (!db) return;
     try { db.run(sql, params || []); saveDB(); } catch(e) { console.error('[DB] run error:', e.message); }
 }
