@@ -2115,6 +2115,12 @@
             <label style="font-size:11px; color:var(--muted); font-family:'Syne'; font-weight:700;">AU</label>
             <input type="date" id="filterDateEnd" onchange="renderClients()" style="background:transparent; border:none; color:var(--text); font-family:'DM Sans'; outline:none; font-size:13px; width:100%;">
           </div>
+          <select id="sortClients" onchange="renderClients()" class="premium-select" style="min-width:160px; border-color:var(--accent);">
+            <option value="newest">🕐 Plus récents en premier</option>
+            <option value="oldest">🕰 Plus anciens en premier</option>
+            <option value="name_az">🔤 Nom A → Z</option>
+            <option value="name_za">🔤 Nom Z → A</option>
+          </select>
           <div style="flex:1;"></div>
           <button class="btn btn-ghost" onclick="printClientReport()" style="border-color:var(--accent); color:var(--text); font-family:'Syne'; font-weight:700; font-size:12px; height:40px; margin-left:auto; background:rgba(232, 160, 32, 0.05);">🖨 Imprimer Rapport</button>
         </div>
@@ -3333,6 +3339,16 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
         return matchQ && matchPhone && matchCategory && matchInstall && matchPayment && matchMaterial && matchDate && matchTrial;
       });
+
+      const sortMode = document.getElementById('sortClients').value;
+      filtered.sort((a, b) => {
+        if (sortMode === 'newest') return (b.id || 0) - (a.id || 0);
+        if (sortMode === 'oldest') return (a.id || 0) - (b.id || 0);
+        if (sortMode === 'name_az') return (a.name || '').localeCompare(b.name || '', 'fr');
+        if (sortMode === 'name_za') return (b.name || '').localeCompare(a.name || '', 'fr');
+        return 0;
+      });
+
       document.getElementById('clientBody').innerHTML = filtered.map(c => {
         const potLabel = c.potential ? '<span style="color:var(--green)">Oui</span>' : '<span style="color:var(--muted)">Non</span>';
         const paid = c.paymentStatus === 'Verser' || c.paymentStatus === 'Régler';
@@ -3428,17 +3444,19 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       });
     }
 
-    function initClientMaterialsSelect() {
+    function initClientMaterialsSelect(clearSelections = false) {
       const container = document.getElementById('clMaterials');
       if (!container) return;
-      
-      // Save current selections to restore them after refresh
+
+      // Save current selections to restore them after refresh (skip when opening a new client)
       const currentSelections = {};
-      container.querySelectorAll('.cl-mat-cb:checked').forEach(cb => {
-        const row = cb.closest('.cl-row');
-        const qtyInp = row.querySelector('.cl-qty');
-        currentSelections[cb.value] = parseInt(qtyInp.value) || 1;
-      });
+      if (!clearSelections) {
+        container.querySelectorAll('.cl-mat-cb:checked').forEach(cb => {
+          const row = cb.closest('.cl-row');
+          const qtyInp = row.querySelector('.cl-qty');
+          currentSelections[cb.value] = parseInt(qtyInp.value) || 1;
+        });
+      }
 
       let html = `<div style="font-size:11px; font-weight:700; color:var(--muted); margin-bottom:4px; text-transform:uppercase;">💻 Matériel En Stock</div>`;
       html += materials.map(m => {
@@ -3650,7 +3668,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('srchOpt').value = '';
       document.getElementById('srchMat').value = '';
       initClientOptionsSelect();
-      initClientMaterialsSelect();
+      initClientMaterialsSelect(true);
       document.getElementById('modalClient').classList.add('open');
     }
 
