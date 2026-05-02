@@ -2185,6 +2185,14 @@
           </div>
           <div class="sv red" id="statManqueGagner">0 DA</div>
         </div>
+        <div class="stat-card" id="statConversionsCard" style="display:none;">
+          <div class="stat-header">
+            <div class="sl">Convertis cette période</div>
+            <div class="stat-icon"><i data-lucide="trending-up"></i></div>
+          </div>
+          <div class="sv green" id="statConversionsCount">0</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px; font-family:'DM Sans';">clients anciens installés dans cette période</div>
+        </div>
         <div class="stat-card">
           <div class="stat-header">
             <div class="sl">Clients en Test (30j)</div>
@@ -2656,20 +2664,15 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         <!-- ══ COL MILIEU : Infos client ══ -->
         <div style="display:flex; flex-direction:column; border-right:1px solid var(--border); overflow:hidden;">
           <div style="flex:1; overflow-y:auto; padding:12px 14px;">
-            <div style="display:flex; gap:8px; margin-bottom:10px; background:var(--tag-bg); padding:8px; border-radius:10px;">
-              <button id="btnTypeNormal" class="btn btn-ghost" onclick="setClientType('normal')" style="flex:1; border:1px solid var(--border); font-family:'Syne'; font-weight:700; font-size:11px; padding:6px 4px;">👤 NORMAL</button>
-              <button id="btnTypeTest" class="btn btn-ghost" onclick="setClientType('test')" style="flex:1; border:1px solid var(--border); font-family:'Syne'; font-weight:700; font-size:11px; padding:6px 4px;">🧪 EN TEST</button>
+            <div style="background:var(--tag-bg); padding:8px; border-radius:10px; margin-bottom:10px; display:flex; gap:8px;">
+              <button id="btnModeNouveau" class="btn btn-ghost active" onclick="setClientMode('nouveau')" style="flex:1; border:1px solid var(--border); font-family:'Syne'; font-weight:700; font-size:11px; padding:6px 4px;">✨ NOUVEAU</button>
+              <button id="btnModeTest" class="btn btn-ghost" onclick="setClientMode('test')" style="flex:1; border:1px solid var(--border); font-family:'Syne'; font-weight:700; font-size:11px; padding:6px 4px;">🧪 EN TEST</button>
+              <button id="btnModeExistant" class="btn btn-ghost" onclick="setClientMode('existant')" style="flex:1; border:1px solid var(--border); font-family:'Syne'; font-weight:700; font-size:11px; padding:6px 4px;">🔄 EXISTANT</button>
             </div>
+            <input type="hidden" id="clCategory" value="Nouveau">
             <div class="field"><label>Nom complet</label><input type="text" id="clName" placeholder="ex: Jean Dupont" oninput="if(!document.getElementById('clDate').value) document.getElementById('clDate').value = new Date().toISOString().split('T')[0]"></div>
             <div class="field"><label>Téléphone</label><input type="text" id="clPhone" placeholder="ex: 0550 00 00 00"></div>
             <div class="field"><label>Marque / Spécialité</label><input type="text" id="clBrand" placeholder="ex: Superette Alami"></div>
-            <div class="field">
-              <label>Catégorie de Client</label>
-              <select id="clCategory">
-                <option value="Nouveau">✨ 100% Nouveau Prospect</option>
-                <option value="Existant">🔄 Client Existant (Vente Additionnelle)</option>
-              </select>
-            </div>
             <div class="field">
               <label>Potentiel (Prêt à acheter ?)</label>
               <select id="clPotential" onchange="toggleNoPurchaseReason()">
@@ -3464,9 +3467,19 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       container.innerHTML = html;
     }
 
+    function setClientMode(mode) {
+      document.getElementById('btnModeNouveau').classList.toggle('active', mode === 'nouveau');
+      document.getElementById('btnModeTest').classList.toggle('active', mode === 'test');
+      document.getElementById('btnModeExistant').classList.toggle('active', mode === 'existant');
+      document.getElementById('clCategory').value = mode === 'existant' ? 'Existant' : 'Nouveau';
+      const isTrial = mode === 'test';
+      document.getElementById('clIsTrial').checked = isTrial;
+      document.getElementById('trialDateBox').style.display = isTrial ? 'block' : 'none';
+    }
+
+    function setClientCategory(cat) { setClientMode(cat === 'Existant' ? 'existant' : 'nouveau'); }
     function setClientType(type) {
-      document.getElementById('btnTypeNormal').classList.toggle('active', type === 'normal');
-      document.getElementById('btnTypeTest').classList.toggle('active', type === 'test');
+      // kept for backward compat — use setClientMode instead
       
       const isTest = (type === 'test');
       document.getElementById('clIsTrial').checked = isTest;
@@ -3624,7 +3637,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('clName').value = '';
       document.getElementById('clPhone').value = '';
       document.getElementById('clBrand').value = '';
-      document.getElementById('clCategory').value = 'Nouveau';
+      setClientMode('nouveau');
       document.getElementById('clPotential').value = '0';
       document.getElementById('clAddress').value = '';
       document.getElementById('clSource').value = 'Réseaux sociaux';
@@ -3666,7 +3679,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('clName').value = c.name;
       document.getElementById('clPhone').value = c.phone;
       document.getElementById('clBrand').value = c.brand;
-      document.getElementById('clCategory').value = c.category || 'Nouveau';
+      setClientCategory(c.category || 'Nouveau');
       document.getElementById('clPotential').value = c.potential ? '1' : '0';
       document.getElementById('clAddress').value = c.address;
       document.getElementById('clSource').value = c.source;
@@ -3680,7 +3693,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('clDate').value = c.created_at || '';
       document.getElementById('clCalled').checked = c.called || false;
       const isTrial = !!(c.trialStatus && c.trialStatus > 0);
-      setClientType(isTrial ? 'test' : 'normal');
+      setClientMode(isTrial ? 'test' : (c.category === 'Existant' ? 'existant' : 'nouveau'));
       document.getElementById('clTrialStartDate').value = c.trialStartDate || '';
       document.getElementById('clTrialPeriod').value = c.trialPeriod || 15;
       syncTrialDates('start');
@@ -3773,6 +3786,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
         c.name = name; c.phone = phone; c.brand = brand; c.category = category;
         c.potential = potential; c.address = address; c.source = source; c.options = selectedOpts;
+        if (installer === 'Oui' && c.installer !== 'Oui' && !c.installed_at)
+          c.installed_at = new Date().toISOString().split('T')[0];
         c.installer = installer; c.material = material; c.paymentStatus = paymentStatus; c.paymentMode = paymentMode; c.finalState = finalState; c.noPurchaseReason = noPurchaseReason;
         c.created_at = createdAt; c.called = called;
         c.trialStatus = trialStatus; c.trialStartDate = trialStartDate; c.trialPeriod = trialPeriod;
@@ -3964,17 +3979,64 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       setVal('statTrialConvRate', convRate !== null ? `${convRate}% (${convertedTrials.length}/${decidedTrials.length})` : '—');
 
       let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0, caInstalle = 0;
-      clients_filtered.forEach(c => {
-        const val = getClientTotalValue(c);
-        totalGlobal += val;
-        if (c.installer === 'Oui') {
+      const periodActive = dashPeriodDays !== 0 || dashDateFrom || dashDateTo;
+      const convCard = document.getElementById('statConversionsCard');
+      if (periodActive) {
+        // When a period is selected:
+        // - CA Installé  = clients whose installed_at falls in the period
+        // - Manque Gagner = clients registered (created_at) in the period who are still NOT installed
+        const installedInPeriod = clients.filter(c => {
+          if (!c.installed_at) return false;
+          const d = new Date(c.installed_at);
+          if (dashDateFrom && d < new Date(dashDateFrom)) return false;
+          if (dashDateTo && d > new Date(dashDateTo + 'T23:59:59')) return false;
+          if (dashPeriodDays > 0) {
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - dashPeriodDays);
+            if (d < cutoff) return false;
+          }
+          return true;
+        });
+        // Conversions = installed in period but registered BEFORE the period
+        const conversions = installedInPeriod.filter(c => {
+          if (!c.created_at) return false;
+          const reg = new Date(c.created_at);
+          if (dashDateFrom && reg >= new Date(dashDateFrom)) return false;
+          if (dashPeriodDays > 0) {
+            const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - dashPeriodDays);
+            if (reg >= cutoff) return false;
+          }
+          return true;
+        });
+        setVal('statConversionsCount', conversions.length);
+        if (convCard) convCard.style.display = conversions.length > 0 ? '' : 'none';
+        installedInPeriod.forEach(c => {
+          const val = getClientTotalValue(c);
+          totalGlobal += val;
           caInstalle += val;
           if (c.paymentStatus === 'Non') resteRecouvrer += val;
-          else if (c.paymentStatus === 'Verser') resteRecouvrer += (val * 0.5); 
-        } else {
-          manqueGagner += val;
-        }
-      });
+          else if (c.paymentStatus === 'Verser') resteRecouvrer += (val * 0.5);
+        });
+        clients_filtered.forEach(c => {
+          if (c.installer !== 'Oui') {
+            const val = getClientTotalValue(c);
+            totalGlobal += val;
+            manqueGagner += val;
+          }
+        });
+      } else {
+        if (convCard) convCard.style.display = 'none';
+        clients_filtered.forEach(c => {
+          const val = getClientTotalValue(c);
+          totalGlobal += val;
+          if (c.installer === 'Oui') {
+            caInstalle += val;
+            if (c.paymentStatus === 'Non') resteRecouvrer += val;
+            else if (c.paymentStatus === 'Verser') resteRecouvrer += (val * 0.5);
+          } else {
+            manqueGagner += val;
+          }
+        });
+      }
 
       setVal('statTotalGlobal', Math.round(totalGlobal).toLocaleString('fr-DZ') + ' DA');
       setVal('statCaInstalle', Math.round(caInstalle).toLocaleString('fr-DZ') + ' DA');
@@ -4565,14 +4627,25 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     function printClientReport() {
-      // 1. Calculate Stats
-      const total = clients.length;
-      const inst = clients.filter(c => c.installer === 'Oui').length;
+      // 1. Apply active date filters
+      const fDateStart = document.getElementById('filterDateStart').value;
+      const fDateEnd = document.getElementById('filterDateEnd').value;
+      const filteredClients = clients.filter(c => {
+        if (!fDateStart && !fDateEnd) return true;
+        if (!c.created_at) return false;
+        if (fDateStart && c.created_at < fDateStart) return false;
+        if (fDateEnd && c.created_at > fDateEnd) return false;
+        return true;
+      });
+
+      // 2. Calculate Stats on filtered set
+      const total = filteredClients.length;
+      const inst = filteredClients.filter(c => c.installer === 'Oui').length;
       const nonInst = total - inst;
-      
+
       let manqueGagner = 0;
       let caInstalle = 0;
-      clients.forEach(c => {
+      filteredClients.forEach(c => {
           const val = getClientTotalValue(c);
           if (c.installer === 'Oui') caInstalle += val;
           else manqueGagner += val;
@@ -4595,6 +4668,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <div>
               <h1 style="margin:0; font-size:28px; font-weight:800; color:#0f172a; text-transform:uppercase; letter-spacing:1px; line-height:1;">Rapport d'Activité</h1>
               <p style="margin:8px 0 0; color:#64748b; font-size:13px; font-weight:500;">Généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+              ${(fDateStart || fDateEnd) ? `<p style="margin:4px 0 0; color:#1a4fa0; font-size:12px; font-weight:700; font-family:'DM Sans',sans-serif;">📅 Période : ${fDateStart ? new Date(fDateStart).toLocaleDateString('fr-FR') : '…'} → ${fDateEnd ? new Date(fDateEnd).toLocaleDateString('fr-FR') : '…'}</p>` : ''}
             </div>
             <div style="text-align:right;">
               <div style="font-weight:800; font-size:26px; color:#0f172a; letter-spacing:-0.5px;">LOGI<span style="color:#1a4fa0;">COM</span></div>
@@ -6536,6 +6610,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         c.paymentStatus   = 'Non'; // unpaid but now a real client
         c.paymentMode     = mode;
         if (price) c.negotiatedPrice = price;
+        if (!c.installed_at) c.installed_at = new Date().toISOString().split('T')[0];
         c.installer       = 'Oui';
         toast(`✅ ${c.name} converti en client payant !`);
 

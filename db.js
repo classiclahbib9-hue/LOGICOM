@@ -107,6 +107,7 @@ async function initDB() {
         try { db.run("ALTER TABLE clients ADD COLUMN promisedAmount INTEGER DEFAULT 0"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN promisedMethod TEXT"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN promiseNote TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN installed_at TEXT"); } catch(e){}
 
         db.run(`
           CREATE TABLE IF NOT EXISTS materials (
@@ -185,17 +186,17 @@ function registerIpcHandlers() {
             if (data.clients) {
                 // Preserve fields not always carried in memory
                 const preserved = {};
-                const pRes = db.exec(`SELECT id, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote FROM clients`);
+                const pRes = db.exec(`SELECT id, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote, installed_at FROM clients`);
                 if (pRes.length) {
                     pRes[0].values.forEach(row => {
-                        preserved[row[0]] = { telegramChatId: row[1], promisedDate: row[2], promisedAmount: row[3], promisedMethod: row[4], promiseNote: row[5] };
+                        preserved[row[0]] = { telegramChatId: row[1], promisedDate: row[2], promisedAmount: row[3], promisedMethod: row[4], promiseNote: row[5], installed_at: row[6] };
                     });
                 }
 
                 db.run('BEGIN');
                 try {
                     db.run('DELETE FROM clients');
-                    const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote, trialOutcome, trialLostReason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                    const sql = `INSERT OR REPLACE INTO clients (id, name, phone, brand, potential, address, source, options, note, installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at, called, dateDernierRappel, trialStatus, trialStartDate, trialPeriod, category, added_by, negotiatedPrice, paidAmount, paymentDeadline, autoReminder, telegramChatId, promisedDate, promisedAmount, promisedMethod, promiseNote, trialOutcome, trialLostReason, installed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
                     const stmt = db.prepare(sql);
                     for (const c of data.clients) {
                         const p = preserved[c.id] || {};
@@ -211,7 +212,8 @@ function registerIpcHandlers() {
                             c.promisedAmount || p.promisedAmount || 0,
                             c.promisedMethod || p.promisedMethod || null,
                             c.promiseNote || p.promiseNote || null,
-                            c.trialOutcome || '', c.trialLostReason || ''
+                            c.trialOutcome || '', c.trialLostReason || '',
+                            c.installed_at || p.installed_at || null
                         ]);
                     }
                     stmt.free();
