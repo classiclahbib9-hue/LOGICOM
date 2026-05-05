@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { app } = require('electron');
+const { getBot } = require('./telegram');
 
 const PORT = 3737;
 let dbRef = null; // set by startApiServer()
@@ -53,9 +54,21 @@ function send(res, status, data) {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
   });
   res.end(body);
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => {
+      try { resolve(JSON.parse(data || '{}')); }
+      catch(e) { reject(e); }
+    });
+    req.on('error', reject);
+  });
 }
 
 function auth(req, res) {
@@ -76,7 +89,7 @@ function startApiServer(db) {
 
   if (server) return; // already running
 
-  server = http.createServer((req, res) => {
+  server = http.createServer(async (req, res) => {
     if (req.method === 'OPTIONS') { send(res, 204, {}); return; }
 
     const url = new URL(req.url, `http://localhost:${PORT}`);
@@ -116,6 +129,26 @@ function startApiServer(db) {
         totalRevenue, collected,
         remaining: totalRevenue - collected
       });
+    } else if (route === '/api/telegram/send' && req.method === 'POST') {
+      let body;
+      try { body = await readBody(req); }
+      catch(e) { send(res, 400, { error: 'Invalid JSON body' }); return; }
+
+      const { chat_id, text, parse_mode } = body;
+      if (!chat_id || !text) {
+        send(res, 400, { error: 'chat_id and text are required' }); return;
+      }
+
+      const bot = getBot();
+      if (!bot) { send(res, 503, { error: 'Telegram bot not running' }); return; }
+
+      try {
+        const opts = parse_mode ? { parse_mode } : {};
+        const result = await bot.sendMessage(String(chat_id), text, opts);
+        send(res, 200, { ok: true, message_id: result.message_id });
+      } catch(e) {
+        send(res, 502, { error: e.message });
+      }
     } else {
       send(res, 404, { error: 'Route not found' });
     }

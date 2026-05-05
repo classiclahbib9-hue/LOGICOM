@@ -2016,6 +2016,7 @@
     <div class="tab" onclick="switchTab(7)">📦 Étiquettes Colis</div>
     <div class="tab" onclick="switchTab(8)">🎙️ Assistant IA</div>
     <div class="tab" onclick="switchTab(9)">🔌 API Sync</div>
+    <div class="tab" onclick="switchTab(10)">🛠️ Sur Mesure</div>
   </div>
 
   <div class="container">
@@ -3016,7 +3017,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     // ═══════════════════════════ TABS ═══════════════════════════
-    const TAB_PANEL_IDS = ['p0','p1','p2','p4','p3','p5','p6','panelEtiquettes','p7','pApiSync'];
+    const TAB_PANEL_IDS = ['p0','p1','p2','p4','p3','p5','p6','panelEtiquettes','p7','pApiSync','pSurMesure'];
 
     function switchTab(i) {
       document.querySelectorAll('.tab').forEach((t, j) => t.classList.toggle('active', i === j));
@@ -6983,6 +6984,338 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
     document.addEventListener('DOMContentLoaded', () => {
       apiSyncLoadConfig();
     });
+  </script>
+
+  <!-- ══ PANEL 11 : SUR MESURE ══ -->
+  <div class="panel" id="pSurMesure">
+    <div class="toolbar" style="flex-wrap:wrap; gap:10px;">
+      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🛠️ Demandes Sur Mesure</h2>
+      <button onclick="smOpenForm()" style="
+        padding: 10px 22px;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: 'Syne', sans-serif;
+        letter-spacing: 0.5px;
+        color: var(--navy);
+        background: linear-gradient(145deg, #f4c060, #e8a020);
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        box-shadow: 0 6px 0 #a06010, 0 8px 16px rgba(232,160,32,0.35);
+        transform: translateY(0);
+        transition: transform 0.1s, box-shadow 0.1s;
+        position: relative;
+        top: 0;
+      "
+      onmousedown="this.style.transform='translateY(4px)'; this.style.boxShadow='0 2px 0 #a06010, 0 4px 8px rgba(232,160,32,0.2)';"
+      onmouseup="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 0 #a06010, 0 8px 16px rgba(232,160,32,0.35)';"
+      onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 0 #a06010, 0 8px 16px rgba(232,160,32,0.35)';"
+      >＋ Nouvelle demande</button>
+      <input id="smSearch" type="text" placeholder="🔍 Rechercher..." oninput="smRender()"
+        style="margin-left:auto; padding:8px 14px; border-radius:8px; border:1px solid var(--border);
+               background:var(--navy2); color:var(--text); font-size:14px; min-width:200px;">
+    </div>
+
+    <!-- Stats bar -->
+    <div id="smStats" style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; padding:0 4px;"></div>
+
+    <!-- Cards grid -->
+    <div id="smList" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px;"></div>
+
+    <!-- Modal form -->
+    <div id="smModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); backdrop-filter:blur(6px); z-index:9999; align-items:center; justify-content:center;">
+      <div style="
+        background: linear-gradient(160deg, var(--card) 0%, var(--navy2) 100%);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        width: 540px;
+        max-width: 95vw;
+        max-height: 92vh;
+        overflow-y: auto;
+        box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+        animation: smSlideIn .22s cubic-bezier(0.34,1.56,0.64,1);
+      ">
+        <!-- Modal header -->
+        <div style="
+          padding: 22px 28px 18px;
+          border-bottom: 1px solid var(--border);
+          display: flex; align-items: center; justify-content: space-between;
+          background: linear-gradient(90deg, rgba(232,160,32,.08), transparent);
+          border-radius: 20px 20px 0 0;
+        ">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#e8a020,#f4c060); display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 4px 12px rgba(232,160,32,.35);">🛠️</div>
+            <div>
+              <div id="smFormTitle" style="font-family:'Syne'; font-weight:700; font-size:16px; color:var(--text);">Nouvelle demande</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:1px;">Remplissez les infos du client</div>
+            </div>
+          </div>
+          <button onclick="smCloseForm()" style="width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:var(--navy2); color:var(--muted); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .15s;"
+            onmouseover="this.style.background='var(--border)'; this.style.color='var(--text)'"
+            onmouseout="this.style.background='var(--navy2)'; this.style.color='var(--muted)'">✕</button>
+        </div>
+
+        <!-- Modal body -->
+        <div style="padding: 24px 28px; display:flex; flex-direction:column; gap:16px;">
+
+          <!-- Row 1: Name + Phone -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="sm-field">
+              <label class="sm-label">👤 Nom client <span style="color:var(--accent);">*</span></label>
+              <input id="smName" type="text" placeholder="Ahmed Benali" class="sm-input">
+            </div>
+            <div class="sm-field">
+              <label class="sm-label">📞 Téléphone</label>
+              <input id="smPhone" type="text" placeholder="0661 23 45 67" class="sm-input">
+            </div>
+          </div>
+
+          <!-- Row 2: Activity + Priority -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div class="sm-field">
+              <label class="sm-label">🏢 Activité / Domaine</label>
+              <input id="smActivity" type="text" placeholder="Pharmacie, Boulangerie…" class="sm-input">
+            </div>
+            <div class="sm-field">
+              <label class="sm-label">⚡ Priorité</label>
+              <select id="smPriority" class="sm-input">
+                <option value="normale">🟡 Normale</option>
+                <option value="haute">🔴 Haute</option>
+                <option value="basse">🟢 Basse</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Demand -->
+          <div class="sm-field">
+            <label class="sm-label">📋 Demande personnalisée <span style="color:var(--accent);">*</span></label>
+            <textarea id="smDemand" rows="4" placeholder="Décrire la fonctionnalité ou la personnalisation demandée…" class="sm-input" style="resize:vertical;"></textarea>
+          </div>
+
+          <!-- Note -->
+          <div class="sm-field">
+            <label class="sm-label">📝 Note interne</label>
+            <textarea id="smNote" rows="2" placeholder="Observations équipe, devis estimé…" class="sm-input" style="resize:vertical;"></textarea>
+          </div>
+        </div>
+
+        <!-- Modal footer -->
+        <div style="
+          padding: 16px 28px 22px;
+          display:flex; gap:10px; justify-content:flex-end;
+          border-top: 1px solid var(--border);
+        ">
+          <button onclick="smCloseForm()" style="
+            padding:10px 20px; border-radius:10px; border:1px solid var(--border);
+            background:transparent; color:var(--muted); font-size:14px; cursor:pointer;
+            transition:all .15s; font-family:'DM Sans',sans-serif;
+          "
+          onmouseover="this.style.background='var(--border)'; this.style.color='var(--text)'"
+          onmouseout="this.style.background='transparent'; this.style.color='var(--muted)'">Annuler</button>
+
+          <button onclick="smSave()" style="
+            padding:10px 26px; border-radius:10px; border:none;
+            background:linear-gradient(135deg,#e8a020,#f4c060);
+            color:#0a1628; font-size:14px; font-weight:700; cursor:pointer;
+            font-family:'Syne',sans-serif; letter-spacing:.3px;
+            box-shadow:0 4px 16px rgba(232,160,32,.4);
+            transition:all .15s;
+          "
+          onmouseover="this.style.boxShadow='0 6px 24px rgba(232,160,32,.6)'; this.style.transform='translateY(-1px)'"
+          onmouseout="this.style.boxShadow='0 4px 16px rgba(232,160,32,.4)'; this.style.transform='translateY(0)'">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes smSlideIn {
+        from { opacity:0; transform:scale(.92) translateY(20px); }
+        to   { opacity:1; transform:scale(1)  translateY(0); }
+      }
+      .sm-field { display:flex; flex-direction:column; gap:6px; }
+      .sm-label { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.4px; text-transform:uppercase; }
+      .sm-input {
+        width:100%; padding:10px 14px;
+        border-radius:10px;
+        border:1px solid var(--border);
+        background:var(--navy);
+        color:var(--text);
+        font-size:14px;
+        font-family:'DM Sans',sans-serif;
+        transition:border-color .15s, box-shadow .15s;
+        outline:none;
+      }
+      .sm-input:focus {
+        border-color:var(--accent);
+        box-shadow:0 0 0 3px rgba(232,160,32,.15);
+      }
+      .sm-input::placeholder { color:var(--muted); opacity:.7; }
+    </style>
+  </div>
+
+  <script>
+    // ══ SUR MESURE ══════════════════════════════════════════════════════════════
+    const SM_KEY = 'logicom_surMesure';
+    let smEditId = null;
+
+    function smLoad() {
+      try { return JSON.parse(localStorage.getItem(SM_KEY) || '[]'); } catch(e) { return []; }
+    }
+    function smSaveAll(arr) { localStorage.setItem(SM_KEY, JSON.stringify(arr)); }
+
+    const SM_STATUS = ['en_attente','en_cours','terminé','annulé'];
+    const SM_STATUS_LABEL = { en_attente:'⏳ En attente', en_cours:'🔧 En cours', terminé:'✅ Terminé', annulé:'❌ Annulé' };
+    const SM_STATUS_COLOR = { en_attente:'#e8a020', en_cours:'#3b82f6', terminé:'#4ade80', annulé:'#ff6347' };
+    const SM_PRIORITY_LABEL = { haute:'🔴 Haute', normale:'🟡 Normale', basse:'🟢 Basse' };
+
+    function smOpenForm(id = null) {
+      smEditId = id;
+      const items = smLoad();
+      const item = id != null ? items.find(x => x.id === id) : null;
+      document.getElementById('smFormTitle').textContent = item ? 'Modifier la demande' : 'Nouvelle demande';
+      document.getElementById('smName').value     = item?.name     || '';
+      document.getElementById('smPhone').value    = item?.phone    || '';
+      document.getElementById('smActivity').value = item?.activity || '';
+      document.getElementById('smPriority').value = item?.priority || 'normale';
+      document.getElementById('smDemand').value   = item?.demand   || '';
+      document.getElementById('smNote').value     = item?.note     || '';
+      document.getElementById('smModal').style.display = 'flex';
+    }
+
+    function smCloseForm() {
+      document.getElementById('smModal').style.display = 'none';
+      smEditId = null;
+    }
+
+    function smSave() {
+      const name   = document.getElementById('smName').value.trim();
+      const demand = document.getElementById('smDemand').value.trim();
+      if (!name || !demand) { alert('Nom et demande sont obligatoires.'); return; }
+
+      const items = smLoad();
+      if (smEditId != null) {
+        const idx = items.findIndex(x => x.id === smEditId);
+        if (idx !== -1) {
+          items[idx] = { ...items[idx],
+            name, demand,
+            phone:    document.getElementById('smPhone').value.trim(),
+            activity: document.getElementById('smActivity').value.trim(),
+            priority: document.getElementById('smPriority').value,
+            note:     document.getElementById('smNote').value.trim(),
+          };
+        }
+      } else {
+        items.unshift({
+          id:       Date.now(),
+          name, demand,
+          phone:    document.getElementById('smPhone').value.trim(),
+          activity: document.getElementById('smActivity').value.trim(),
+          priority: document.getElementById('smPriority').value,
+          note:     document.getElementById('smNote').value.trim(),
+          status:   'en_attente',
+          created:  new Date().toLocaleDateString('fr-DZ'),
+        });
+      }
+      smSaveAll(items);
+      smCloseForm();
+      smRender();
+    }
+
+    function smDelete(id) {
+      if (!confirm('Supprimer cette demande ?')) return;
+      smSaveAll(smLoad().filter(x => x.id !== id));
+      smRender();
+    }
+
+    function smSetStatus(id, status) {
+      const items = smLoad();
+      const idx = items.findIndex(x => x.id === id);
+      if (idx !== -1) { items[idx].status = status; smSaveAll(items); smRender(); }
+    }
+
+    function smRender() {
+      const all   = smLoad();
+      const q     = (document.getElementById('smSearch')?.value || '').toLowerCase();
+      const items = q ? all.filter(x =>
+        (x.name||'').toLowerCase().includes(q) ||
+        (x.demand||'').toLowerCase().includes(q) ||
+        (x.activity||'').toLowerCase().includes(q) ||
+        (x.phone||'').includes(q)
+      ) : all;
+
+      // Stats
+      const statEl = document.getElementById('smStats');
+      const counts = { en_attente:0, en_cours:0, terminé:0, annulé:0 };
+      all.forEach(x => { if (counts[x.status] !== undefined) counts[x.status]++; });
+      statEl.innerHTML = Object.entries(counts).map(([s, n]) =>
+        `<div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:8px 16px; font-size:13px;">
+          <span style="color:${SM_STATUS_COLOR[s]}; font-weight:700;">${n}</span>
+          <span style="color:var(--muted); margin-left:6px;">${SM_STATUS_LABEL[s]}</span>
+        </div>`
+      ).join('');
+
+      const list = document.getElementById('smList');
+      if (!items.length) {
+        list.innerHTML = '<p style="color:var(--muted); grid-column:1/-1; text-align:center; padding:40px;">Aucune demande sur mesure.</p>';
+        return;
+      }
+
+      list.innerHTML = items.map(item => {
+        const sc = SM_STATUS_COLOR[item.status] || '#999';
+        const sl = SM_STATUS_LABEL[item.status] || item.status;
+        const pl = SM_PRIORITY_LABEL[item.priority] || item.priority;
+        const statusOpts = SM_STATUS.map(s =>
+          `<option value="${s}" ${s === item.status ? 'selected' : ''}>${SM_STATUS_LABEL[s]}</option>`
+        ).join('');
+        return `
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:10px; position:relative;">
+          <!-- Header row -->
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+            <div>
+              <div style="font-weight:700; font-size:15px;">${item.name}</div>
+              ${item.activity ? `<div style="font-size:12px; color:var(--muted);">${item.activity}</div>` : ''}
+              ${item.phone    ? `<div style="font-size:12px; color:var(--muted);">📞 ${item.phone}</div>` : ''}
+            </div>
+            <span style="font-size:11px; color:${sc}; border:1px solid ${sc}; border-radius:20px; padding:3px 10px; white-space:nowrap;">${sl}</span>
+          </div>
+
+          <!-- Demand -->
+          <div style="background:var(--navy2); border-radius:8px; padding:10px 12px; font-size:13px; line-height:1.5; color:var(--text);">
+            ${item.demand.replace(/\n/g, '<br>')}
+          </div>
+
+          ${item.note ? `<div style="font-size:12px; color:var(--muted); font-style:italic;">📝 ${item.note}</div>` : ''}
+
+          <!-- Footer -->
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px;">
+            <div style="display:flex; gap:6px; align-items:center;">
+              <span style="font-size:11px; color:var(--muted);">${pl}</span>
+              <span style="font-size:11px; color:var(--muted);">· ${item.created || ''}</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <select onchange="smSetStatus(${item.id}, this.value)"
+                style="font-size:11px; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--navy2); color:var(--text); cursor:pointer;">
+                ${statusOpts}
+              </select>
+              <button onclick="smOpenForm(${item.id})" style="font-size:12px; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer;">✏️</button>
+              <button onclick="smDelete(${item.id})" style="font-size:12px; padding:4px 10px; border-radius:6px; border:none; background:var(--danger); color:var(--red); cursor:pointer;">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('smModal').addEventListener('click', function(e) {
+      if (e.target === this) smCloseForm();
+    });
+
+    // Render when tab is activated (hooked into switchTab)
+    const _origSwitchTab = switchTab;
+    switchTab = function(i) {
+      _origSwitchTab(i);
+      if (i === 10) smRender();
+    };
   </script>
 </body>
 </html>

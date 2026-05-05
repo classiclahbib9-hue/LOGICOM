@@ -7,36 +7,71 @@ const path = require('path');
 const https = require('https');
 const { app, Notification } = require('electron');
 
-const GROQ_SYSTEM_PROMPT = `أنت مساعد ذكي اسمك "لوجي" تتكلم الدارجة الجزائرية فقط.
+// ── Activities from DB ────────────────────────────────────────────────────────
+function loadActivities() {
+    try {
+        const db = getDB();
+        if (!db) return [];
+        const res = db.exec('SELECT id, name, subtitle, icon, mandatory, optional FROM activities ORDER BY id');
+        if (!res || !res.length) return [];
+        return res[0].values.map(row => ({
+            id: row[0], name: row[1], subtitle: row[2], icon: row[3] || '📦',
+            mandatory: JSON.parse(row[4] || '[]'),
+            optional:  JSON.parse(row[5] || '[]'),
+        }));
+    } catch(e) { return []; }
+}
+
+function calcActivityPrices(act, optMap) {
+    const base     = act.mandatory.reduce((s, id) => s + (optMap[id]?.price || 0), 0);
+    const complet  = base + act.optional.reduce((s, id) => s + (optMap[id]?.price || 0), 0);
+    return { base, complet };
+}
+
+function loadOptions() {
+    try {
+        const db = getDB();
+        if (!db) return {};
+        const res = db.exec('SELECT id, name, price FROM options');
+        if (!res || !res.length) return {};
+        const map = {};
+        res[0].values.forEach(row => { map[row[0]] = { name: row[1], price: row[2] }; });
+        return map;
+    } catch(e) { return {}; }
+}
+
+function buildSystemPrompt() {
+    const activities = loadActivities();
+    const actLines = activities.length
+        ? activities.map(a => `- ${a.icon} ${a.name} : ${a.subtitle || ''}`).join('\n')
+        : '- (aucune activité enregistrée)';
+    return `أنت مساعد ذكي اسمك "لوجي" تتكلم الدارجة الجزائرية النقية فقط.
 تعمل لدى شركة LOGICOM الجزائرية متخصصة في بيع برامج تسيير الأعمال.
 
-== منتجات LOGICOM ==
-- برنامج تسيير السوبيرات والحوانت (caisse + stock + clients)
-- برنامج الصيدلية (médicaments + ordonnances + caisse)
-- برنامج المخبزة (production + caisse + livraisons)
-- برنامج القنصلية / مواد البناء (stock + bons de commande)
-- برنامج الصناعة (nomenclature + ordres de fabrication + stock matières)
-- برنامج المطعم / الكافيه (caisse tactile + tables + livreurs)
-الأسعار تبدأ من 15,000 DA وتختلف حسب الباكاج.
+== منتجات LOGICOM (من قاعدة البيانات) ==
+${actLines}
+الأسعار تختلف حسب النشاط — اطلب من العميل يحدد نشاطه باش تعطيه الثمن الصحيح.
 الدعم التقني متوفر والتركيب في عين المكان.
 
-== أسلوب الكلام ==
-IMPORTANT: جاوب دايما بالدارجة الجزائرية — ما تستعملش العربية الفصحى أبدا.
-أمثلة دارجة حقيقية: "واش راك؟", "كيفاش نقدر نعاونك؟", "بصح", "مزيان", "روح", "جي", "بلا ما", "ماشي مشكل", "واخا", "صافي", "بزاف", "شويا", "دروك", "ديما", "يزي", "عادي", "هاني هنا باش نعاونك".
-إذا كلمك المستخدم بالفرنسية، جاوبه بالفرنسية مع بعض كلمات دارجة.
+== أسلوب الكلام — دارجة جزائرية خالصة ==
+CRITICAL: تكلم بالدارجة الجزائرية فقط — مش المغربية، مش الفصحى، مش مصرية.
+كلمات جزائرية أصيلة تستعملها دايما:
+  - تحية: "واش راك؟" / "لاباس؟" / "كيراك؟"
+  - موافقة: "وين لا" / "صح" / "حاضر" / "يزيك" / "تمام"
+  - نفي: "لا والو" / "ما كاينش" / "مانيش" / "ما عندكش"
+  - استفهام: "واش؟" / "كيفاش؟" / "علاش؟" / "وين؟" / "فين؟"
+  - تعبير: "بزاف" / "شوية" / "دروك" / "ديما" / "برك"
+  - مساعدة: "كيفاش نعاونك؟" / "قولي واش تحتاج" / "هاني هنا"
+  - ختام: "صافي" / "يسلم" / "ربي يعاونك"
+
+ممنوع استعمال كلمات مغربية مثل: "واخا", "مزيان", "بغيت", "خويا", "أش كاين", "دابا", "فين غادي", "ملي", "بلاصة".
+إذا كلمك المستخدم بالفرنسية، جاوبه بالفرنسية مع كلمات دارجة جزائرية.
 كون مختصر ومفيد — جملتين أو ثلاثة تكفي. ما تكتبش ردود طويلة.
 إذا السؤال تقني معقد، قول ليه يتصل بالدعم التقني تاع LOGICOM.
 
 == الأوامر ==
 /nouveau — إضافة عميل جديد
 /reset — مسح تاريخ المحادثة`;
-
-// ── Packs & FAQ ───────────────────────────────────────────────────────────────
-const PACKS_FILE = path.join(__dirname, 'packs.json');
-
-function loadPacks() {
-    try { return JSON.parse(fs.readFileSync(PACKS_FILE, 'utf8')); }
-    catch(e) { return {}; }
 }
 
 const SECTEUR_KEYWORDS = {
@@ -297,21 +332,38 @@ function detectSecteur(text) {
     return Object.keys(SECTEUR_KEYWORDS).find(s => SECTEUR_KEYWORDS[s].some(kw => t.includes(kw))) || null;
 }
 
-function formatPack(secteur, lang) {
-    const packs = loadPacks();
-    const p = packs[secteur];
-    if (!p) return null;
-    const inclus = p.inclus.map(i => `  ✅ ${i}`).join('\n');
+function formatActivityPack(activityName, lang) {
+    const activities = loadActivities();
+    const optMap = loadOptions();
+    const act = activities.find(a => a.name.toLowerCase().includes(activityName.toLowerCase()));
+    if (!act) return null;
+    const { base, complet } = calcActivityPrices(act, optMap);
+    const priceBase    = base.toLocaleString('fr-DZ');
+    const priceComplet = complet.toLocaleString('fr-DZ');
     if (lang === 'dz') {
         return {
-            text: `🎯 *${p.nom}*\n\n💰 Prix : *${p.prix} DA*\n\nChnou kayen f-pack :\n${inclus}\n\nBach tachri wella t3allem aktar, contacti-na ! 📞`,
-            youtube: p.youtube,
+            text: `${act.icon} *${act.name}*\n_${act.subtitle || ''}_\n\n💰 Pack de base : *${priceBase} DA*\n💎 Pack complet : *${priceComplet} DA*\n\nContacti-na باش تعرف التفاصيل ! 📞`,
+            youtube: null,
         };
     }
     return {
-        text: `🎯 *${p.nom}*\n\n💰 Prix : *${p.prix} DA*\n\nCe pack inclut :\n${inclus}\n\nPour acheter ou en savoir plus, contactez-nous ! 📞`,
-        youtube: p.youtube,
+        text: `${act.icon} *${act.name}*\n_${act.subtitle || ''}_\n\n💰 Pack de base : *${priceBase} DA*\n💎 Pack complet : *${priceComplet} DA*\n\nContactez-nous pour plus de détails ! 📞`,
+        youtube: null,
     };
+}
+
+function formatAllActivities(lang) {
+    const activities = loadActivities();
+    const optMap = loadOptions();
+    if (!activities.length) return null;
+    const lines = activities.map(a => {
+        const { base } = calcActivityPrices(a, optMap);
+        return `${a.icon} *${a.name}* — à partir de ${base.toLocaleString('fr-DZ')} DA`;
+    }).join('\n');
+    if (lang === 'dz') {
+        return `📦 *برامج LOGICOM :*\n\n${lines}\n\nقولي واش نشاطك ونعطيك التفاصيل كاملة ! 📞`;
+    }
+    return `📦 *Nos solutions LOGICOM :*\n\n${lines}\n\nDites-nous votre activité pour plus de détails ! 📞`;
 }
 
 function findFaq(text, lang) {
@@ -325,6 +377,46 @@ function findFaq(text, lang) {
         }
     }
     return null;
+}
+
+// Related options: when option X is matched, also suggest these extras with a tip
+const RELATED_OPTIONS = {
+    3:  [{ id: 29, tip_fr: 'Si vous avez plusieurs caisses, ajoutez l\'option Multi-caisses.', tip_dz: 'إذا عندك أكثر من caisse واحدة، زيد option Multi-caisses.' }],
+    29: [{ id: 3,  tip_fr: 'Multi-caisses fonctionne avec l\'option Caisse / Banques.', tip_dz: 'Multi-caisses تخدم مع option Caisse / Banques.' }],
+    1:  [{ id: 101, tip_fr: 'Pour chaque poste réseau supplémentaire, ajoutez Poste Réseau.', tip_dz: 'كل poste réseau زيادة تحتاج option Poste Réseau.' }],
+    15: [{ id: 1,  tip_fr: 'La gestion des entrepôts nécessite le module de base Achats/Ventes.', tip_dz: 'Gestion des entrepôts تحتاج module Achats/Ventes.' }],
+    44: [{ id: 1,  tip_fr: 'La production nécessite le module de base Achats/Ventes.', tip_dz: 'Production تحتاج module Achats/Ventes.' }],
+    40: [{ id: 45, tip_fr: 'Vous pouvez aussi opter pour la Synchronisation cloud.', tip_dz: 'تقدر كذلك تخدم بـ Synchronisation cloud.' }],
+    2:  [{ id: 29, tip_fr: 'Si vous avez plusieurs caisses en supérette, ajoutez Multi-caisses.', tip_dz: 'إذا عندك caisses متعددة في supérette، زيد Multi-caisses.' }],
+    7:  [{ id: 6,  tip_fr: 'Les numéros de séries fonctionnent bien avec la gestion des Lots.', tip_dz: 'Numéros de séries تخدم بشكل مزيان مع option Lots.' }],
+};
+
+function findOptionByKeyword(text) {
+    const optMap = loadOptions();
+    const t = text.toLowerCase();
+    const matched = [];
+    for (const [id, opt] of Object.entries(optMap)) {
+        const words = opt.name.toLowerCase().split(/[\s\/\(\),]+/).filter(w => w.length >= 3);
+        if (words.some(w => t.includes(w))) {
+            matched.push(parseInt(id));
+        }
+    }
+    if (!matched.length) return [];
+
+    // Build result: matched options + related suggestions (deduplicated)
+    const seen = new Set(matched);
+    const result = matched.map(id => ({ id, ...optMap[id], isMatch: true, tip: null }));
+
+    for (const id of matched) {
+        const related = RELATED_OPTIONS[id] || [];
+        for (const rel of related) {
+            if (!seen.has(rel.id) && optMap[rel.id]) {
+                seen.add(rel.id);
+                result.push({ id: rel.id, ...optMap[rel.id], isMatch: false, tip: rel });
+            }
+        }
+    }
+    return result;
 }
 
 function sendWithYoutube(bot, chatId, text, youtube) {
@@ -350,6 +442,42 @@ function getGroqKey() {
         }
     } catch(e) {}
     return '';
+}
+
+const NVIDIA_API_KEY = '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';
+const NVIDIA_MODEL   = 'nvidia/llama-3.3-nemotron-super-49b-v1';
+
+function askNvidia(userMessage, history) {
+    return new Promise((resolve, reject) => {
+        const messages = [
+            { role: 'system', content: buildSystemPrompt() },
+            ...history.slice(-8),
+            { role: 'user', content: userMessage }
+        ];
+        const body = JSON.stringify({ model: NVIDIA_MODEL, max_tokens: 400, messages, stream: false });
+        const req = https.request({
+            hostname: 'integrate.api.nvidia.com',
+            path: '/v1/chat/completions',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + NVIDIA_API_KEY,
+                'Content-Length': Buffer.byteLength(body)
+            }
+        }, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    resolve(json.choices?.[0]?.message?.content || '...');
+                } catch(e) { reject(new Error(data)); }
+            });
+        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
 }
 
 function downloadBuffer(url) {
@@ -389,39 +517,6 @@ function transcribeVoice(audioBuffer) {
             res.on('end', () => {
                 try { resolve(JSON.parse(data).text || ''); }
                 catch(e) { reject(new Error(data)); }
-            });
-        });
-        req.on('error', reject);
-        req.write(body);
-        req.end();
-    });
-}
-
-function askGroq(userMessage, history) {
-    return new Promise((resolve, reject) => {
-        const messages = [
-            { role: 'system', content: GROQ_SYSTEM_PROMPT },
-            ...history.slice(-8),
-            { role: 'user', content: userMessage }
-        ];
-        const body = JSON.stringify({ model: 'llama-3.3-70b-versatile', max_tokens: 350, messages });
-        const req = https.request({
-            hostname: 'api.groq.com',
-            path: '/openai/v1/chat/completions',
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + getGroqKey(),
-                'Content-Length': Buffer.byteLength(body)
-            }
-        }, (res) => {
-            let data = '';
-            res.on('data', c => data += c);
-            res.on('end', () => {
-                try {
-                    const json = JSON.parse(data);
-                    resolve(json.choices?.[0]?.message?.content || '...');
-                } catch(e) { reject(new Error(data)); }
             });
         });
         req.on('error', reject);
@@ -522,7 +617,7 @@ async function initTelegram() {
                 const history = chatHistories[chatId] || [];
                 bot.sendChatAction(chatId, 'typing');
                 try {
-                    const reply = await askGroq(transcribed, history);
+                    const reply = await askNvidia(transcribed, history);
                     history.push({ role: 'user', content: transcribed });
                     history.push({ role: 'assistant', content: reply });
                     chatHistories[chatId] = history.slice(-20);
@@ -686,9 +781,11 @@ async function initTelegram() {
                     state.data.brand = (text.toLowerCase() === 'non') ? '' : text.trim();
                     state.step = 'WAITING_PACK';
 
-                    // Build pack list from packs.json
-                    const packs = loadPacks();
-                    const packLines = Object.values(packs).map(p => `• ${p.nom} — ${p.prix} DA`).join('\n');
+                    // Build pack list from DB activities
+                    const activities = loadActivities();
+                    const packLines = activities.length
+                        ? activities.map(a => `• ${a.icon} ${a.name}`).join('\n')
+                        : '• (aucune activité enregistrée)';
                     const isExistant = state.data.category === 'Existant';
 
                     bot.sendMessage(chatId,
@@ -763,10 +860,27 @@ async function initTelegram() {
 
             // --- PACK / FAQ AUTO-RESPONSE ---
             if (!state) {
-                // 1. Secteur détecté → affiche le pack
+                // 0. Option catalogue keyword match
+                const optMatches = findOptionByKeyword(text);
+                if (optMatches.length) {
+                    const header = lang === 'dz' ? '🗂️ *Options من الكاتالوغ :*' : '🗂️ *Options du catalogue :*';
+                    const parts = [header, ''];
+                    for (const o of optMatches) {
+                        if (o.isMatch) {
+                            parts.push(`✅ *${o.name}*\n    💰 ${o.price.toLocaleString('fr-DZ')} DA`);
+                        } else {
+                            const tip = lang === 'dz' ? o.tip.tip_dz : o.tip.tip_fr;
+                            parts.push(`💡 *${o.name}* — ${o.price.toLocaleString('fr-DZ')} DA\n    _${tip}_`);
+                        }
+                    }
+                    bot.sendMessage(chatId, parts.join('\n'), { parse_mode: 'Markdown' });
+                    return;
+                }
+
+                // 1. Secteur détecté → affiche le pack depuis les activités DB
                 const secteur = detectSecteur(text);
                 if (secteur) {
-                    const pack = formatPack(secteur, lang);
+                    const pack = formatActivityPack(secteur, lang);
                     if (pack) {
                         await sendWithYoutube(bot, chatId, pack.text, pack.youtube);
                         return;
@@ -777,11 +891,11 @@ async function initTelegram() {
                 const faqResult = findFaq(text, lang);
                 if (faqResult) {
                     if (faqResult.type === 'pack_query') {
-                        const reply = lang === 'dz'
-                            ? '🏪 Chnou naw3 l-activité taa3ak ?\n\nSupérette / Pharmacie / Boulangerie / Quincaillerie / Industrie / Restaurant ?'
-                            : '🏪 Quel est votre type d\'activité ?\n\nSupérette / Pharmacie / Boulangerie / Quincaillerie / Industrie / Restaurant ?';
-                        bot.sendMessage(chatId, reply);
-                        return;
+                        const reply = formatAllActivities(lang);
+                        if (reply) {
+                            bot.sendMessage(chatId, reply, { parse_mode: 'Markdown' });
+                            return;
+                        }
                     }
                     if (faqResult.type === 'answer') {
                         await sendWithYoutube(bot, chatId, faqResult.text, faqResult.youtube);
@@ -857,20 +971,12 @@ async function initTelegram() {
                 }
             }
 
-            // --- DEFAULT FALLBACK: ask Groq ---
+            // --- DEFAULT FALLBACK: ask NVIDIA ---
             if (!state) {
-                const groqKey = getGroqKey();
-                if (!groqKey) {
-                    const fallback = lang === 'dz'
-                        ? '❓ Ma fhemtch. Contacti support taa3 LOGICOM.'
-                        : '❓ Je n\'ai pas compris. Contactez le support LOGICOM.';
-                    bot.sendMessage(chatId, fallback);
-                    return;
-                }
                 const history = chatHistories[chatId] || [];
                 bot.sendChatAction(chatId, 'typing');
                 try {
-                    const reply = await askGroq(text, history);
+                    const reply = await askNvidia(text, history);
                     history.push({ role: 'user', content: text });
                     history.push({ role: 'assistant', content: reply });
                     chatHistories[chatId] = history.slice(-20);
