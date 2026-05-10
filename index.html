@@ -2014,9 +2014,10 @@
     <div class="tab" onclick="switchTab(5)">💻 Matériel</div>
     <div class="tab" onclick="switchTab(6)"><span class="ring-bell">🔔</span> Rappels <span id="alertBadge" style="display:none; background:#ff4444; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:5px; font-weight:bold; box-shadow:0 0 10px rgba(255,0,0,0.5)">!</span></div>
     <div class="tab" onclick="switchTab(7)">📦 Étiquettes Colis</div>
-    <div class="tab" onclick="switchTab(8)">🎙️ Assistant IA</div>
-    <div class="tab" onclick="switchTab(9)">🔌 API Sync</div>
-    <div class="tab" onclick="switchTab(10)">🛠️ Sur Mesure</div>
+    <div class="tab" onclick="switchTab(8)">🛠️ Sur Mesure</div>
+    <div class="tab" onclick="switchTab(9)">🎙️ Assistant IA</div>
+    <div class="tab" onclick="switchTab(10)">🔌 API Sync</div>
+    <div class="tab" onclick="switchTab(11)">🧾 LOGICOM Clients</div>
   </div>
 
   <div class="container">
@@ -2342,7 +2343,7 @@
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-          <div class="field"><label>Endpoint API (WhatsApp/autre)</label><input type="text" id="apiEndpoint" placeholder="https://api.example.com/send"></div>
+          <div class="field"><label>Endpoint API (WhatsApp/autre)</label><input type="text" id="apiEndpoint" placeholder="GET apiV2/LAHBIB/ClientsAppSolde"></div>
           <div class="field"><label>Clé API / Token</label><input type="password" id="apiKey" placeholder="Votre token secret..."></div>
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
@@ -3017,7 +3018,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     // ═══════════════════════════ TABS ═══════════════════════════
-    const TAB_PANEL_IDS = ['p0','p1','p2','p4','p3','p5','p6','panelEtiquettes','p7','pApiSync','pSurMesure'];
+    const TAB_PANEL_IDS = ['p0','p1','p2','p4','p3','p5','p6','panelEtiquettes','pSurMesure','p7','pApiSync','pLogicomClients'];
 
     function switchTab(i) {
       document.querySelectorAll('.tab').forEach((t, j) => t.classList.toggle('active', i === j));
@@ -3033,7 +3034,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       if (i === 0) renderOptions();
       if (i === 1) renderActivities();
       if (i === 2) renderClients();
-      if (i === 9) apiSyncLoadConfig();
+      if (i === 10) apiSyncLoadConfig();
+      if (i === 11) renderLogicomClients();
       if (i === 3) renderDashboard();
       if (i === 4) {
         renderRecap();
@@ -3052,7 +3054,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       if (i === 5) renderMaterials();
       if (i === 6) { renderReminders(); loadApiKeys(); refreshWAStatus(); startWAStatusPolling(); const b = document.getElementById('alertBadge'); if(b) b.style.display = 'none'; }
       if (i === 7) renderLabel();
-      if (i === 8) initVoiceChat();
+      if (i === 9) initVoiceChat();
+      if (i === 8 && typeof smRender === 'function') smRender();
     }
 
     // ═══════════════════════════ OPTIONS TABLE ═══════════════════════════
@@ -5173,7 +5176,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('syncApiUrl').value = localStorage.getItem('sync-api-url') || '';
       document.getElementById('syncApiUsername').value = localStorage.getItem('sync-api-username') || '';
       document.getElementById('syncApiPassword').value = localStorage.getItem('sync-api-password') || '';
-      document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || '';
+      document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || 'GET apiV2/LAHBIB/ClientsAppSolde';
       document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
       document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
       document.getElementById('paymentConfirmTemplate').value = localStorage.getItem('logicom-payment-confirm-template') || 'Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿';
@@ -5560,77 +5563,179 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
     async function sendApiReminder(id) {
       const c = clients.find(x => x.id === id);
-      const endpoint = localStorage.getItem('logicom-api-endpoint');
-      if (!endpoint) return toast('Veuillez configurer l\'API en haut ⚙️', true);
+      const endpointRaw = (localStorage.getItem('logicom-api-endpoint') || '').trim();
+      if (!endpointRaw) return toast('Veuillez configurer l\'API en haut ⚙️', true);
 
       toast('Appel API en cours...');
       try {
-        console.log('Sending API call to:', endpoint, 'for client:', c.name);
-        toast('API appelée avec succès (Démo) ✓');
+        // Force GET (the endpoint field can be written like: "GET apiV2/LAHBIB/ClientsAppSolde")
+        const endpoint = endpointRaw.replace(/^\s*(GET|POST|PUT|PATCH|DELETE)\s+/i, '').trim();
+        const baseUrl = (localStorage.getItem('sync-api-url') || '').trim().replace(/\/$/, '');
+        const finalUrl = /^https?:\/\//i.test(endpoint)
+          ? endpoint
+          : (baseUrl ? `${baseUrl}/${endpoint.replace(/^\//, '')}` : endpoint);
+
+        if (!/^https?:\/\//i.test(finalUrl)) {
+          return toast('URL API invalide. Configurez aussi "URL API Sync".', true);
+        }
+
+        const apiRes = await ipcRenderer.invoke('sync-api-request', {
+          method: 'GET',
+          url: finalUrl
+        });
+
+        if (apiRes.status < 200 || apiRes.status >= 300) {
+          throw new Error(`HTTP ${apiRes.status}`);
+        }
+
+        console.log('Sending API call with GET to:', finalUrl, 'for client:', c.name);
+        toast('API appelée avec succès (GET) ✓');
         c.dateDernierRappel = new Date().toLocaleDateString('fr-FR') + ' (API)';
         syncDB();
         renderReminders();
       } catch (e) {
-        toast('Erreur API', true);
+        toast(`Erreur API: ${e.message || 'échec de requête'}`, true);
       }
     }
 
+    function parseApiNumber(value) {
+      if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+      if (typeof value !== 'string') return 0;
+      const cleaned = value.replace(/\s/g, '').replace(',', '.').replace(/[^\d.-]/g, '');
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function findFieldByHints(obj, hints) {
+      if (!obj || typeof obj !== 'object') return '';
+      const keys = Object.keys(obj);
+      const key = keys.find(k => hints.some(h => k.toLowerCase().includes(h)));
+      return key ? obj[key] : '';
+    }
+
+    function extractApiClients(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== 'object') return [];
+      const candidate = payload.data || payload.clients || payload.items || payload.results || payload.list || payload.rows;
+      return Array.isArray(candidate) ? candidate : [];
+    }
+
+    function normalizeApiClientRow(ex, idx) {
+      const keyClientRaw = ex.O_KEY_TIERS ?? ex.KEY_CLIENT ?? ex.key_client ?? ex.keyClient ?? ex.KEYCLIENT ?? findFieldByHints(ex, ['o_key_tiers', 'key_client', 'keyclient', 'client_key', 'code_client']);
+      const phoneFromList = Array.isArray(ex.listNumeros) && ex.listNumeros.length
+        ? (ex.listNumeros[0].NUMERO_EMAIL || ex.listNumeros[0].numero_email || ex.listNumeros[0].numero || '')
+        : '';
+      const phoneRaw = phoneFromList || (ex.TELEPHONE ?? ex.telephone ?? ex.phone ?? ex.tel ?? ex.GSM ?? findFieldByHints(ex, ['telephone', 'phone', 'tel', 'mobile', 'gsm', 'numero']));
+      const nameRaw = ex.TIERS_FR ?? ex.NOM_CLIENT ?? ex.nom_client ?? ex.NOMCLIENT ?? ex.name ?? ex.clientName ?? findFieldByHints(ex, ['tiers_fr', 'nom_client', 'nom', 'client_name', 'name', 'tiers']);
+      const soldeRaw = ex.O_MONTANT_ECHEANCE_RETARD ?? ex.O_SOLDE_TIERS ?? ex.SOLDE_LOGICOM ?? ex.solde_logicom ?? ex.SOLDE ?? ex.solde ?? ex.RESTE ?? ex.montant ?? findFieldByHints(ex, ['montant_echeance_retard', 'o_solde_tiers', 'solde', 'reste', 'debit', 'montant']);
+      const villeRaw = ex.VILLE_FR ?? ex.ville_fr ?? ex.VILLE ?? ex.ville ?? findFieldByHints(ex, ['ville', 'city']);
+      const typeRawVal = ex.TYPE_ABONNEMENT ?? ex.type_abonnement ?? ex.TYPE ?? ex.type ?? findFieldByHints(ex, ['abonnement', 'subscription', 'type']);
+
+      const keyClient = String(keyClientRaw ?? '').trim();
+      const phone = String(phoneRaw ?? '').trim().replace(/\s+/g, '');
+      const rawName = String(nameRaw ?? '').trim();
+      const name = rawName || (keyClient ? `Client ${keyClient}` : (phone ? `Client ${phone}` : `Client API ${idx + 1}`));
+      const solde = Math.abs(parseApiNumber(soldeRaw));
+      const ville = String(villeRaw ?? '').trim();
+      const typeRaw = String(typeRawVal ?? '').trim().toUpperCase();
+      const type = typeRaw === 'G' || typeRaw === 'GOLD' ? 'Gold' : typeRaw === 'S' || typeRaw === 'SILVER' ? 'Silver' : typeRaw;
+
+      return { keyClient, phone, rawName, name, solde, ville, type };
+    }
+
     async function syncExternalClients() {
-      const baseUrl  = localStorage.getItem('sync-api-url');
+      const baseUrl  = (localStorage.getItem('sync-api-url') || '').trim().replace(/\/$/, '');
       const username = localStorage.getItem('sync-api-username');
       const password = localStorage.getItem('sync-api-password');
+      const endpointRaw = (localStorage.getItem('logicom-api-endpoint') || '').trim();
 
-      if (!baseUrl || !username || !password) {
-        return toast('⚙️ Configurez l\'URL, username et mot de passe API d\'abord', true);
+      const parseJsonSafe = (txt) => {
+        try { return JSON.parse(txt); } catch(_e) { return null; }
+      };
+      const toErrorMessage = (rawBody, fallback) => {
+        const j = parseJsonSafe(rawBody || '');
+        if (j && (j.message || j.error)) return j.message || j.error;
+        const body = String(rawBody || '').trim();
+        if (!body) return fallback;
+        if (body.startsWith('<')) return `${fallback} (réponse HTML/404)`;
+        return `${fallback}: ${body.slice(0, 180)}`;
+      };
+      const parseEndpoint = (value) => value.replace(/^\s*(GET|POST|PUT|PATCH|DELETE)\s+/i, '').trim();
+      const endpoint = endpointRaw ? parseEndpoint(endpointRaw) : '';
+      const directUrl = endpoint
+        ? (/^https?:\/\//i.test(endpoint)
+            ? endpoint
+            : (baseUrl ? `${baseUrl}/${endpoint.replace(/^\//, '')}` : ''))
+        : '';
+      const canUseDirectGet = !!directUrl;
+
+      if (!canUseDirectGet && (!baseUrl || !username || !password)) {
+        return toast('⚙️ Configurez soit un Endpoint API GET, soit URL/username/password API.', true);
       }
 
       toast('Connexion à l\'API... 🔄');
       try {
-        // Step 1: Login via main process (no CORS)
-        const loginRaw = await ipcRenderer.invoke('sync-api-request', {
-          method: 'POST',
-          url: `${baseUrl}/login`,
-          body: { username, password, typeApp: 'DELYV' }
-        });
-        if (loginRaw.status !== 200) {
-          const err = JSON.parse(loginRaw.body || '{}');
-          throw new Error(err.message || `Login échoué (${loginRaw.status})`);
-        }
-        const loginData = JSON.parse(loginRaw.body);
-        const token = loginData.token;
-        if (!token) throw new Error('Aucun token reçu du serveur.');
+        let clientsRaw;
 
-        // Step 2: Fetch clients via main process
-        toast('Récupération des clients... 📥');
-        const clientsRaw = await ipcRenderer.invoke('sync-api-request', {
-          method: 'GET',
-          url: `${baseUrl}/clients?typeApp=DELYV`,
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (clientsRaw.status !== 200) throw new Error(`Erreur récupération clients (${clientsRaw.status})`);
-        const apiClients = JSON.parse(clientsRaw.body);
-        if (!Array.isArray(apiClients)) throw new Error('Réponse API invalide (attendu: liste).');
+        if (canUseDirectGet) {
+          // Direct endpoint mode: GET /apiV2/... (no /login required)
+          toast('Récupération des clients (GET direct)... 📥');
+          clientsRaw = await ipcRenderer.invoke('sync-api-request', {
+            method: 'GET',
+            url: directUrl
+          });
+          if (clientsRaw.status !== 200) {
+            throw new Error(toErrorMessage(clientsRaw.body, `Erreur récupération clients (${clientsRaw.status})`));
+          }
+        } else {
+          // Legacy auth mode: POST /login then GET /clients
+          const loginRaw = await ipcRenderer.invoke('sync-api-request', {
+            method: 'POST',
+            url: `${baseUrl}/login`,
+            body: { username, password, typeApp: 'DELYV' }
+          });
+          if (loginRaw.status !== 200) {
+            throw new Error(toErrorMessage(loginRaw.body, `Login échoué (${loginRaw.status})`));
+          }
+          const loginData = parseJsonSafe(loginRaw.body);
+          const token = loginData && loginData.token;
+          if (!token) throw new Error('Aucun token reçu du serveur.');
+
+          toast('Récupération des clients... 📥');
+          clientsRaw = await ipcRenderer.invoke('sync-api-request', {
+            method: 'GET',
+            url: `${baseUrl}/clients?typeApp=DELYV`,
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (clientsRaw.status !== 200) {
+            throw new Error(toErrorMessage(clientsRaw.body, `Erreur récupération clients (${clientsRaw.status})`));
+          }
+        }
+
+        const parsedClientsPayload = parseJsonSafe(clientsRaw.body);
+        const apiClients = extractApiClients(parsedClientsPayload);
+        if (!Array.isArray(apiClients) || apiClients.length === 0) throw new Error('Réponse API invalide (attendu: liste clients).');
 
         // Step 3: Merge into local clients — update solde if exists, add if new
         let added = 0, updated = 0;
         const today = new Date().toISOString().split('T')[0];
 
-        apiClients.forEach(ex => {
-          const keyClient = String(ex.KEY_CLIENT || '');
-          const name      = ex.NOM_CLIENT || ex.name || 'Sans Nom';
-          const phone     = ex.TELEPHONE || ex.phone || '';
-          const solde     = Number(ex.SOLDE_LOGICOM || ex.solde || 0);
-          const ville     = ex.VILLE_FR || ex.ville || '';
-          const type      = ex.TYPE_ABONNEMENT || '';
+        apiClients.forEach((ex, idx) => {
+          const { keyClient, phone, rawName, name, solde, ville, type } = normalizeApiClientRow(ex, idx);
+          const allowNameMatch = !!rawName;
 
           // Try to match by KEY_CLIENT stored in note, or by name
           const existing = clients.find(c =>
-            (c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
+            (keyClient && c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
             (phone && c.phone === phone) ||
-            c.name === name
+            (allowNameMatch && c.name === name)
           );
 
           if (existing) {
+            existing.source = 'Import API';
+            if (keyClient && !(existing.note || '').includes(`KEY_CLIENT:${keyClient}`)) {
+              existing.note = `${existing.note ? existing.note + ' | ' : ''}KEY_CLIENT:${keyClient}`;
+            }
             // Update solde (negotiatedPrice) and paidAmount so balance reflects API solde
             if (solde > 0 && existing.negotiatedPrice !== solde) {
               existing.negotiatedPrice = solde;
@@ -5642,7 +5747,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
               id: nextClientId++,
               name,
               phone,
-              brand: type === 'G' ? 'Gold' : type === 'S' ? 'Silver' : '',
+              brand: type,
               potential: false,
               address: ville,
               source: 'Import API',
@@ -5671,12 +5776,66 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         await syncDB();
         renderClients();
         renderReminders();
+        renderLogicomClients();
         toast(`✅ Sync terminé : ${added} ajouté(s), ${updated} mis à jour`);
 
       } catch (err) {
         console.error('[Sync API]', err);
         toast('❌ ' + err.message, true);
       }
+    }
+
+    function renderLogicomClients() {
+      const body = document.getElementById('logicomClientBody');
+      if (!body) return;
+
+      const q = (document.getElementById('logicomClientSearch')?.value || '').trim().toLowerCase();
+      const typeFilter = (document.getElementById('logicomClientType')?.value || '').trim();
+      const onlyUnpaid = !!document.getElementById('logicomClientOnlyUnpaid')?.checked;
+
+      const imported = clients
+        .filter(c => c && c.source === 'Import API')
+        .sort((a, b) => (b.id || 0) - (a.id || 0));
+
+      const filtered = imported.filter(c => {
+        const name = String(c.name || '').toLowerCase();
+        const phone = String(c.phone || '').toLowerCase();
+        const brand = String(c.brand || '');
+        const totalVal = Number(c.negotiatedPrice || 0);
+        const paidVal = Number(c.paidAmount || 0);
+        const balance = Math.max(0, totalVal - paidVal);
+        const matchQ = !q || name.includes(q) || phone.includes(q);
+        const matchType = !typeFilter || brand === typeFilter;
+        const matchUnpaid = !onlyUnpaid || balance > 0;
+        return matchQ && matchType && matchUnpaid;
+      });
+
+      const countEl = document.getElementById('logicomClientCount');
+      if (countEl) countEl.textContent = `${filtered.length} / ${imported.length} client(s) synchronisé(s)`;
+
+      if (filtered.length === 0) {
+        body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Aucun client synchronisé pour le moment.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = filtered.map(c => {
+        const totalVal = Number(c.negotiatedPrice || 0);
+        const paidVal = Number(c.paidAmount || 0);
+        const balance = Math.max(0, totalVal - paidVal);
+        const addedBy = c.added_by ? '@' + c.added_by : 'Import API';
+        const note = c.note || '-';
+        const created = c.created_at ? c.created_at.split('-').reverse().join('/') : '-';
+        return `<tr>
+          <td><span class="num-badge">${c.id || '-'}</span></td>
+          <td>${c.name || '-'}</td>
+          <td>${c.phone || '-'}</td>
+          <td>${c.brand || '-'}</td>
+          <td class="price-cell">${balance.toLocaleString('fr-DZ')} DA</td>
+          <td style="font-size:11px; color:var(--muted); max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${note}">${note}</td>
+          <td>${created}</td>
+          <td style="font-size:11px; font-weight:700; color:var(--accent)">${addedBy}</td>
+        </tr>`;
+      }).join('');
     }
 
     // ═══════════════════════════ KEYBOARD SHORTCUTS ═══════════════════════════
@@ -6828,6 +6987,58 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
     </div>
   </div>
 
+  <!-- ══ PANEL 11 : LOGICOM CLIENTS SYNC LIST ══ -->
+  <div class="panel" id="pLogicomClients">
+    <div class="toolbar" style="justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🧾 LOGICOM Clients</h2>
+      <div id="logicomClientCount" style="font-size:12px; color:var(--muted); font-weight:700;">0 client(s) synchronisé(s)</div>
+    </div>
+    <div class="toolbar" style="gap:10px; flex-wrap:wrap;">
+      <input
+        type="text"
+        id="logicomClientSearch"
+        placeholder="🔍 Rechercher nom ou téléphone..."
+        oninput="renderLogicomClients()"
+        class="premium-input"
+        style="min-width:280px; flex:1;"
+      >
+      <select
+        id="logicomClientType"
+        onchange="renderLogicomClients()"
+        class="premium-select"
+        style="min-width:160px;"
+      >
+        <option value="">Abonnement (Tous)</option>
+        <option value="Gold">Gold</option>
+        <option value="Silver">Silver</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); background:var(--card); border:1px solid var(--border); border-radius:8px; padding:7px 10px;">
+        <input type="checkbox" id="logicomClientOnlyUnpaid" onchange="renderLogicomClients()">
+        Solde > 0 uniquement
+      </label>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('logicomClientSearch').value=''; document.getElementById('logicomClientType').value=''; document.getElementById('logicomClientOnlyUnpaid').checked=false; renderLogicomClients();">Effacer filtres</button>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:60px;">ID</th>
+            <th>Client</th>
+            <th>Téléphone</th>
+            <th>Abonnement</th>
+            <th>Solde (DA)</th>
+            <th>Référence API</th>
+            <th>Date</th>
+            <th>Par</th>
+          </tr>
+        </thead>
+        <tbody id="logicomClientBody">
+          <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Aucun client synchronisé pour le moment.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <script>
     // ══ API SYNC TAB ══
     function apiSyncSaveConfig() {
@@ -6919,32 +7130,33 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        let apiClients;
-        try { apiClients = JSON.parse(clientsRaw.body); } catch(e) { apiClients = clientsRaw.body; }
+        let parsedPayload;
+        try { parsedPayload = JSON.parse(clientsRaw.body); } catch(e) { parsedPayload = clientsRaw.body; }
+        const apiClients = extractApiClients(parsedPayload);
 
         asLog('recv', `HTTP ${clientsRaw.status} — ${Array.isArray(apiClients) ? apiClients.length + ' clients' : 'réponse brute'}`, apiClients);
 
-        if (clientsRaw.status !== 200 || !Array.isArray(apiClients)) return;
+        if (clientsRaw.status !== 200 || !Array.isArray(apiClients) || apiClients.length === 0) return;
 
         // ── STEP 3: MERGE ──────────────────────────────────
         let added = 0, updated = 0;
         const today = new Date().toISOString().split('T')[0];
 
-        apiClients.forEach(ex => {
-          const keyClient = String(ex.KEY_CLIENT || '');
-          const name      = ex.NOM_CLIENT || ex.name || 'Sans Nom';
-          const phone     = ex.TELEPHONE  || ex.phone || '';
-          const solde     = Number(ex.SOLDE_LOGICOM || ex.solde || 0);
-          const ville     = ex.VILLE_FR   || ex.ville || '';
-          const type      = ex.TYPE_ABONNEMENT || '';
+        apiClients.forEach((ex, idx) => {
+          const { keyClient, phone, rawName, name, solde, ville, type } = normalizeApiClientRow(ex, idx);
+          const allowNameMatch = !!rawName;
 
           const existing = clients.find(c =>
-            (c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
+            (keyClient && c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
             (phone && c.phone === phone) ||
-            c.name === name
+            (allowNameMatch && c.name === name)
           );
 
           if (existing) {
+            existing.source = 'Import API';
+            if (keyClient && !(existing.note || '').includes(`KEY_CLIENT:${keyClient}`)) {
+              existing.note = `${existing.note ? existing.note + ' | ' : ''}KEY_CLIENT:${keyClient}`;
+            }
             if (solde > 0 && existing.negotiatedPrice !== solde) {
               existing.negotiatedPrice = solde;
               existing.paidAmount = 0;
@@ -6953,7 +7165,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           } else {
             clients.push({
               id: nextClientId++, name, phone,
-              brand: type === 'G' ? 'Gold' : type === 'S' ? 'Silver' : '',
+              brand: type,
               potential: false, address: ville, source: 'Import API',
               options: [], note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
               installer: 'Non', material: 'Non',
@@ -6970,6 +7182,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         await syncDB();
         renderClients();
         renderReminders();
+        renderLogicomClients();
 
         const summary = document.getElementById('as_summary');
         summary.style.display = 'block';
@@ -6988,8 +7201,8 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
 
   <!-- ══ PANEL 11 : SUR MESURE ══ -->
   <div class="panel" id="pSurMesure">
-    <div class="toolbar" style="flex-wrap:wrap; gap:10px;">
-      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🛠️ Demandes Sur Mesure</h2>
+    <div class="toolbar" style="flex-wrap:wrap; gap:12px; align-items:center;">
+      <h2 style="font-family:'Syne'; color:var(--text); font-size:20px; flex-shrink:0;">🛠️ Demandes Sur Mesure</h2>
       <button onclick="smOpenForm()" style="
         padding: 10px 22px;
         font-size: 14px;
@@ -7011,9 +7224,15 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       onmouseup="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 0 #a06010, 0 8px 16px rgba(232,160,32,0.35)';"
       onmouseleave="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 0 #a06010, 0 8px 16px rgba(232,160,32,0.35)';"
       >＋ Nouvelle demande</button>
-      <input id="smSearch" type="text" placeholder="🔍 Rechercher..." oninput="smRender()"
-        style="margin-left:auto; padding:8px 14px; border-radius:8px; border:1px solid var(--border);
-               background:var(--navy2); color:var(--text); font-size:14px; min-width:200px;">
+      <div style="position:relative; flex-shrink:0;">
+        <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; pointer-events:none;">🔍</span>
+        <input id="smSearch" type="text" placeholder="Rechercher..." oninput="smRender()"
+          style="padding:9px 14px 9px 36px; border-radius:10px; border:1px solid var(--border);
+                 background:var(--navy2); color:var(--text); font-size:14px; width:220px;
+                 outline:none; transition:border-color .15s, box-shadow .15s;"
+          onfocus="this.style.borderColor='var(--accent)'; this.style.boxShadow='0 0 0 3px rgba(232,160,32,.15)'"
+          onblur="this.style.borderColor='var(--border)'; this.style.boxShadow='none'">
+      </div>
     </div>
 
     <!-- Stats bar -->
@@ -7093,6 +7312,11 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           </div>
 
           <!-- Note -->
+          <div class="sm-field">
+            <label class="sm-label">⏰ Deadline</label>
+            <input id="smDeadline" type="date" class="sm-input">
+          </div>
+
           <div class="sm-field">
             <label class="sm-label">📝 Note interne</label>
             <textarea id="smNote" rows="2" placeholder="Observations équipe, devis estimé…" class="sm-input" style="resize:vertical;"></textarea>
@@ -7178,6 +7402,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       document.getElementById('smActivity').value = item?.activity || '';
       document.getElementById('smPriority').value = item?.priority || 'normale';
       document.getElementById('smDemand').value   = item?.demand   || '';
+      document.getElementById('smDeadline').value = item?.deadline || '';
       document.getElementById('smNote').value     = item?.note     || '';
       document.getElementById('smModal').style.display = 'flex';
     }
@@ -7201,6 +7426,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
             phone:    document.getElementById('smPhone').value.trim(),
             activity: document.getElementById('smActivity').value.trim(),
             priority: document.getElementById('smPriority').value,
+            deadline: document.getElementById('smDeadline').value,
             note:     document.getElementById('smNote').value.trim(),
           };
         }
@@ -7211,6 +7437,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           phone:    document.getElementById('smPhone').value.trim(),
           activity: document.getElementById('smActivity').value.trim(),
           priority: document.getElementById('smPriority').value,
+          deadline: document.getElementById('smDeadline').value,
           note:     document.getElementById('smNote').value.trim(),
           status:   'en_attente',
           created:  new Date().toLocaleDateString('fr-DZ'),
@@ -7219,6 +7446,31 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       smSaveAll(items);
       smCloseForm();
       smRender();
+    }
+
+    function smWhatsApp(id) {
+      const item = smLoad().find(x => x.id === id);
+      if (!item) return;
+      const priority = { haute:'🔴 Haute', normale:'🟡 Normale', basse:'🟢 Basse' }[item.priority] || item.priority;
+      const status   = { en_attente:'⏳ En attente', en_cours:'🔧 En cours', terminé:'✅ Terminé', annulé:'❌ Annulé' }[item.status] || item.status;
+      const msg = [
+        `🛠️ *DEMANDE SUR MESURE — LOGICOM*`,
+        ``,
+        `👤 Client : ${item.name}`,
+        item.phone    ? `📞 Tél : ${item.phone}`        : '',
+        item.activity ? `🏢 Activité : ${item.activity}` : '',
+        `⚡ Priorité : ${priority}`,
+        `📊 Statut : ${status}`,
+        `📅 Date : ${item.created || ''}`,
+        item.deadline ? `⏰ Deadline : ${new Date(item.deadline).toLocaleDateString('fr-DZ')}` : '',
+        ``,
+        `📋 *Demande :*`,
+        item.demand,
+        item.note ? `\n📝 Note : ${item.note}` : '',
+      ].filter(l => l !== '').join('\n');
+
+      const url = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(url, '_blank');
     }
 
     function smDelete(id) {
@@ -7260,45 +7512,121 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         return;
       }
 
+      const PRIORITY_BAR = { haute:'#ef4444', normale:'#e8a020', basse:'#4ade80' };
       list.innerHTML = items.map(item => {
-        const sc = SM_STATUS_COLOR[item.status] || '#999';
-        const sl = SM_STATUS_LABEL[item.status] || item.status;
-        const pl = SM_PRIORITY_LABEL[item.priority] || item.priority;
+        const sc  = SM_STATUS_COLOR[item.status]  || '#999';
+        const sl  = SM_STATUS_LABEL[item.status]  || item.status;
+        const pl  = SM_PRIORITY_LABEL[item.priority] || item.priority;
+        const pc  = PRIORITY_BAR[item.priority]   || '#999';
+        const initials = item.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
         const statusOpts = SM_STATUS.map(s =>
           `<option value="${s}" ${s === item.status ? 'selected' : ''}>${SM_STATUS_LABEL[s]}</option>`
         ).join('');
         return `
-        <div style="background:var(--card); border:1px solid var(--border); border-radius:14px; padding:18px 20px; display:flex; flex-direction:column; gap:10px; position:relative;">
-          <!-- Header row -->
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-            <div>
-              <div style="font-weight:700; font-size:15px;">${item.name}</div>
-              ${item.activity ? `<div style="font-size:12px; color:var(--muted);">${item.activity}</div>` : ''}
-              ${item.phone    ? `<div style="font-size:12px; color:var(--muted);">📞 ${item.phone}</div>` : ''}
+        <div style="
+          background:var(--card);
+          border:1px solid var(--border);
+          border-left: 4px solid ${pc};
+          border-radius:16px;
+          padding:0;
+          display:flex; flex-direction:column;
+          overflow:hidden;
+          box-shadow:0 2px 12px var(--shadow);
+          transition:transform .15s, box-shadow .15s;
+        "
+        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px var(--shadow)'"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 12px var(--shadow)'">
+
+          <!-- Card header -->
+          <div style="padding:16px 18px 12px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px;">
+            <div style="display:flex; gap:12px; align-items:center; min-width:0;">
+              <!-- Avatar -->
+              <div style="
+                width:42px; height:42px; border-radius:12px; flex-shrink:0;
+                background:linear-gradient(135deg,${pc}33,${pc}66);
+                border:1.5px solid ${pc}88;
+                display:flex; align-items:center; justify-content:center;
+                font-family:'Syne',sans-serif; font-weight:800; font-size:14px; color:${pc};
+              ">${initials}</div>
+              <div style="min-width:0;">
+                <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:3px;">
+                  ${item.activity ? `<span style="font-size:11px; color:var(--muted); background:var(--navy2); border-radius:20px; padding:1px 8px;">🏢 ${item.activity}</span>` : ''}
+                  ${item.phone    ? `<span style="font-size:11px; color:var(--muted);">📞 ${item.phone}</span>` : ''}
+                </div>
+              </div>
             </div>
-            <span style="font-size:11px; color:${sc}; border:1px solid ${sc}; border-radius:20px; padding:3px 10px; white-space:nowrap;">${sl}</span>
+            <!-- Status pill -->
+            <span style="
+              font-size:11px; font-weight:600; white-space:nowrap;
+              color:${sc}; background:${sc}22;
+              border:1px solid ${sc}55;
+              border-radius:20px; padding:4px 11px; flex-shrink:0;
+            ">${sl}</span>
           </div>
 
-          <!-- Demand -->
-          <div style="background:var(--navy2); border-radius:8px; padding:10px 12px; font-size:13px; line-height:1.5; color:var(--text);">
+          <!-- Divider -->
+          <div style="height:1px; background:var(--border); margin:0 18px;"></div>
+
+          <!-- Demand body -->
+          <div style="padding:14px 18px; font-size:13px; line-height:1.65; color:var(--text); flex:1;">
             ${item.demand.replace(/\n/g, '<br>')}
           </div>
 
-          ${item.note ? `<div style="font-size:12px; color:var(--muted); font-style:italic;">📝 ${item.note}</div>` : ''}
+          ${item.note ? `
+          <div style="margin:0 18px 12px; padding:8px 12px; background:var(--navy2); border-radius:8px; border-left:3px solid var(--muted);">
+            <span style="font-size:11px; color:var(--muted); font-style:italic;">📝 ${item.note}</span>
+          </div>` : ''}
 
-          <!-- Footer -->
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:4px;">
-            <div style="display:flex; gap:6px; align-items:center;">
-              <span style="font-size:11px; color:var(--muted);">${pl}</span>
-              <span style="font-size:11px; color:var(--muted);">· ${item.created || ''}</span>
+          <!-- Card footer -->
+          <div style="
+            padding:10px 18px 14px;
+            display:flex; justify-content:space-between; align-items:center;
+            gap:8px; flex-wrap:wrap;
+            border-top:1px solid var(--border);
+            background:linear-gradient(to bottom, transparent, rgba(0,0,0,.04));
+          ">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span style="font-size:11px; font-weight:600; color:${pc}; background:${pc}22; border-radius:20px; padding:2px 9px;">${pl}</span>
+              <span style="font-size:11px; color:var(--muted);">📅 ${item.created || ''}</span>
+              ${(() => {
+                if (!item.deadline) return '';
+                const today = new Date(); today.setHours(0,0,0,0);
+                const dl = new Date(item.deadline);
+                const diff = Math.round((dl - today) / 86400000);
+                const dlStr = dl.toLocaleDateString('fr-DZ');
+                if (diff < 0)  return `<span style="font-size:11px; font-weight:700; color:#ef4444; background:#ef444422; border-radius:20px; padding:2px 9px;">⚠️ Expiré ${dlStr}</span>`;
+                if (diff === 0) return `<span style="font-size:11px; font-weight:700; color:#f97316; background:#f9731622; border-radius:20px; padding:2px 9px;">🔥 Aujourd'hui</span>`;
+                if (diff <= 3)  return `<span style="font-size:11px; font-weight:700; color:#f97316; background:#f9731622; border-radius:20px; padding:2px 9px;">⏳ ${diff}j — ${dlStr}</span>`;
+                return `<span style="font-size:11px; color:var(--muted); background:var(--navy2); border-radius:20px; padding:2px 9px;">⏰ ${dlStr}</span>`;
+              })()}
             </div>
-            <div style="display:flex; gap:6px;">
-              <select onchange="smSetStatus(${item.id}, this.value)"
-                style="font-size:11px; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:var(--navy2); color:var(--text); cursor:pointer;">
-                ${statusOpts}
-              </select>
-              <button onclick="smOpenForm(${item.id})" style="font-size:12px; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer;">✏️</button>
-              <button onclick="smDelete(${item.id})" style="font-size:12px; padding:4px 10px; border-radius:6px; border:none; background:var(--danger); color:var(--red); cursor:pointer;">🗑️</button>
+            <div style="display:flex; gap:6px; align-items:center;">
+              <select onchange="smSetStatus(${item.id}, this.value)" style="
+                font-size:11px; padding:5px 8px; border-radius:8px;
+                border:1px solid var(--border); background:var(--navy2);
+                color:var(--text); cursor:pointer; outline:none;
+              ">${statusOpts}</select>
+              <button onclick="smWhatsApp(${item.id})" title="Envoyer sur WhatsApp" style="
+                width:30px; height:30px; border-radius:8px; border:none;
+                background:#25d36622; color:#25d366; cursor:pointer; font-size:15px;
+                display:flex; align-items:center; justify-content:center;
+                transition:background .15s;
+              " onmouseover="this.style.background='#25d36644'" onmouseout="this.style.background='#25d36622'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.554 4.103 1.523 5.824L.057 23.215a.75.75 0 0 0 .921.921l5.391-1.466A11.944 11.944 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.726 9.726 0 0 1-4.964-1.357l-.355-.211-3.684 1.002 1.002-3.684-.211-.355A9.726 9.726 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+              </button>
+              <button onclick="smOpenForm(${item.id})" title="Modifier" style="
+                width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
+                background:var(--navy2); color:var(--text); cursor:pointer; font-size:13px;
+                display:flex; align-items:center; justify-content:center;
+                transition:background .15s;
+              " onmouseover="this.style.background='var(--border)'" onmouseout="this.style.background='var(--navy2)'">✏️</button>
+              <button onclick="smDelete(${item.id})" title="Supprimer" style="
+                width:30px; height:30px; border-radius:8px; border:none;
+                background:var(--danger); color:var(--red); cursor:pointer; font-size:13px;
+                display:flex; align-items:center; justify-content:center;
+                transition:background .15s;
+              " onmouseover="this.style.background='rgba(255,99,71,.25)'" onmouseout="this.style.background='var(--danger)'">🗑️</button>
             </div>
           </div>
         </div>`;
@@ -7310,12 +7638,6 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       if (e.target === this) smCloseForm();
     });
 
-    // Render when tab is activated (hooked into switchTab)
-    const _origSwitchTab = switchTab;
-    switchTab = function(i) {
-      _origSwitchTab(i);
-      if (i === 10) smRender();
-    };
   </script>
 </body>
 </html>
