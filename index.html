@@ -2336,7 +2336,7 @@
         <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px;">
           <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">📥 Sync Clients (API LOGICOM)</div>
           <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
-            <div class="field" style="margin:0;"><label>URL Base</label><input type="text" id="syncApiUrl" placeholder="http://192.168.x.x:1647"></div>
+            <div class="field" style="margin:0;"><label>URL Base</label><input type="text" id="syncApiUrl" placeholder="http://26.181.59.54:1647"></div>
             <div class="field" style="margin:0;"><label>Username</label><input type="text" id="syncApiUsername" placeholder="ex: AHMED" oninput="this.value=this.value.toUpperCase()"></div>
             <div class="field" style="margin:0;"><label>Mot de passe</label><input type="password" id="syncApiPassword" placeholder="••••••••"></div>
           </div>
@@ -5173,7 +5173,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
 
     function loadApiSettings() {
-      document.getElementById('syncApiUrl').value = localStorage.getItem('sync-api-url') || '';
+      document.getElementById('syncApiUrl').value = localStorage.getItem('sync-api-url') || 'http://26.181.59.54:1647';
       document.getElementById('syncApiUsername').value = localStorage.getItem('sync-api-username') || '';
       document.getElementById('syncApiPassword').value = localStorage.getItem('sync-api-password') || '';
       document.getElementById('apiEndpoint').value = localStorage.getItem('logicom-api-endpoint') || 'GET apiV2/LAHBIB/ClientsAppSolde';
@@ -5551,6 +5551,33 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       renderReminders();
     }
 
+    function formatPhoneForWhatsApp(phone) {
+      const cleanPhone = String(phone || '').replace(/[^\d+]/g, '');
+      if (!cleanPhone) return '';
+      return cleanPhone.startsWith('0') ? `213${cleanPhone.substring(1)}` : cleanPhone;
+    }
+
+    async function remindLogicomClient(id) {
+      const c = clients.find(x => x.id === id);
+      if (!c) return;
+
+      const total = Number(c.negotiatedPrice || 0);
+      const paid = Number(c.paidAmount || 0);
+      const balance = Math.max(0, total - paid);
+      const finalPhone = formatPhoneForWhatsApp(c.phone);
+
+      if (!finalPhone) {
+        toast('Numéro client introuvable ou invalide.', true);
+        return;
+      }
+
+      let msg = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
+      msg = msg.replace('{name}', c.name || 'Client').replace('{balance}', balance.toLocaleString('fr-DZ'));
+
+      const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
+      await ipcRenderer.invoke('open-whatsapp', url);
+    }
+
     function resetReminder(id) {
       const c = clients.find(x => x.id === id);
       if (!c) return;
@@ -5622,12 +5649,25 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
     function normalizeApiClientRow(ex, idx) {
       const keyClientRaw = ex.O_KEY_TIERS ?? ex.KEY_CLIENT ?? ex.key_client ?? ex.keyClient ?? ex.KEYCLIENT ?? findFieldByHints(ex, ['o_key_tiers', 'key_client', 'keyclient', 'client_key', 'code_client']);
-      const phoneFromList = Array.isArray(ex.listNumeros) && ex.listNumeros.length
-        ? (ex.listNumeros[0].NUMERO_EMAIL || ex.listNumeros[0].numero_email || ex.listNumeros[0].numero || '')
-        : '';
+      const phoneFromList = (() => {
+        const arr = Array.isArray(ex.listNumeros) ? ex.listNumeros : [];
+        if (!arr.length) return '';
+        // API uses NUMERO_EMAIL to store phone-like values (e.g. "0566-88-55-22")
+        const pick = arr.find(x => {
+          const v = String(x?.NUMERO_EMAIL ?? x?.numero_email ?? x?.numero ?? '').trim();
+          return v && /[0-9]/.test(v);
+        }) || arr[0];
+        return String(pick?.NUMERO_EMAIL ?? pick?.numero_email ?? pick?.numero ?? '').trim();
+      })();
       const phoneRaw = phoneFromList || (ex.TELEPHONE ?? ex.telephone ?? ex.phone ?? ex.tel ?? ex.GSM ?? findFieldByHints(ex, ['telephone', 'phone', 'tel', 'mobile', 'gsm', 'numero']));
       const nameRaw = ex.TIERS_FR ?? ex.NOM_CLIENT ?? ex.nom_client ?? ex.NOMCLIENT ?? ex.name ?? ex.clientName ?? findFieldByHints(ex, ['tiers_fr', 'nom_client', 'nom', 'client_name', 'name', 'tiers']);
-      const soldeRaw = ex.O_MONTANT_ECHEANCE_RETARD ?? ex.O_SOLDE_TIERS ?? ex.SOLDE_LOGICOM ?? ex.solde_logicom ?? ex.SOLDE ?? ex.solde ?? ex.RESTE ?? ex.montant ?? findFieldByHints(ex, ['montant_echeance_retard', 'o_solde_tiers', 'solde', 'reste', 'debit', 'montant']);
+      // Business meaning:
+      // - O_SOLDE_TIERS: client's current balance (the real "solde")
+      // - O_MONTANT_ECHEANCE: agreed amount to pay on a due date
+      // - O_MONTANT_ECHEANCE_RETARD: overdue part of that agreed amount
+      const soldeTiersRaw = ex.O_SOLDE_TIERS ?? findFieldByHints(ex, ['o_solde_tiers', 'solde_tiers']);
+      const echeanceRaw = ex.O_MONTANT_ECHEANCE ?? findFieldByHints(ex, ['montant_echeance']);
+      const echeanceRetardRaw = ex.O_MONTANT_ECHEANCE_RETARD ?? findFieldByHints(ex, ['montant_echeance_retard']);
       const villeRaw = ex.VILLE_FR ?? ex.ville_fr ?? ex.VILLE ?? ex.ville ?? findFieldByHints(ex, ['ville', 'city']);
       const typeRawVal = ex.TYPE_ABONNEMENT ?? ex.type_abonnement ?? ex.TYPE ?? ex.type ?? findFieldByHints(ex, ['abonnement', 'subscription', 'type']);
 
@@ -5635,18 +5675,25 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const phone = String(phoneRaw ?? '').trim().replace(/\s+/g, '');
       const rawName = String(nameRaw ?? '').trim();
       const name = rawName || (keyClient ? `Client ${keyClient}` : (phone ? `Client ${phone}` : `Client API ${idx + 1}`));
-      const solde = Math.abs(parseApiNumber(soldeRaw));
+      // API convention:
+      // - O_SOLDE_TIERS < 0 means client owes money (debt)
+      // - LOGICOM stores debt as a positive balance
+      const soldeSigned = parseApiNumber(soldeTiersRaw);
+      const solde = soldeSigned < 0 ? Math.abs(soldeSigned) : soldeSigned;
+      const echeance = Math.abs(parseApiNumber(echeanceRaw));
+      const echeanceRetard = Math.abs(parseApiNumber(echeanceRetardRaw));
       const ville = String(villeRaw ?? '').trim();
       const typeRaw = String(typeRawVal ?? '').trim().toUpperCase();
       const type = typeRaw === 'G' || typeRaw === 'GOLD' ? 'Gold' : typeRaw === 'S' || typeRaw === 'SILVER' ? 'Silver' : typeRaw;
 
-      return { keyClient, phone, rawName, name, solde, ville, type };
+      return { keyClient, phone, rawName, name, solde, echeance, echeanceRetard, ville, type };
     }
 
     async function syncExternalClients() {
       const baseUrl  = (localStorage.getItem('sync-api-url') || '').trim().replace(/\/$/, '');
       const username = localStorage.getItem('sync-api-username');
       const password = localStorage.getItem('sync-api-password');
+      const manualBearerToken = (localStorage.getItem('sync-api-bearer-token') || 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI0OSIsInVuaXF1ZV9uYW1lIjoiTEFIQklCIiwiYWN0b3J0IjoiREVMRklWIiwibmJmIjoxNzc4NDkyNzk2LCJleHAiOjE3ODM2NzY3OTYsImlhdCI6MTc3ODQ5Mjc5Nn0.UWnFaiVd8tS4h-Kz1vg90mwiVzukTbx4eYSLWbmlJmzwjrElkEooxvAFLbNvuWgzZuxXMRROhSjLFxsVUgFpXW').trim();
       const endpointRaw = (localStorage.getItem('logicom-api-endpoint') || '').trim();
 
       const parseJsonSafe = (txt) => {
@@ -5662,11 +5709,17 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       };
       const parseEndpoint = (value) => value.replace(/^\s*(GET|POST|PUT|PATCH|DELETE)\s+/i, '').trim();
       const endpoint = endpointRaw ? parseEndpoint(endpointRaw) : '';
-      const directUrl = endpoint
-        ? (/^https?:\/\//i.test(endpoint)
-            ? endpoint
-            : (baseUrl ? `${baseUrl}/${endpoint.replace(/^\//, '')}` : ''))
+      const baseLooksDirect = /^https?:\/\//i.test(baseUrl) && /\/apiv2\//i.test(baseUrl);
+      // Priority:
+      // 1) absolute endpoint URL
+      // 2) base URL already pointing to apiV2 route (use as-is)
+      // 3) relative endpoint appended to base URL
+      const directUrlFromEndpointAbsolute = (/^https?:\/\//i.test(endpoint)) ? endpoint : '';
+      const directUrlFromBase = baseLooksDirect ? baseUrl : '';
+      const directUrlFromEndpointRelative = (!directUrlFromEndpointAbsolute && !baseLooksDirect && endpoint && baseUrl)
+        ? `${baseUrl}/${endpoint.replace(/^\//, '')}`
         : '';
+      const directUrl = directUrlFromEndpointAbsolute || directUrlFromBase || directUrlFromEndpointRelative;
       const canUseDirectGet = !!directUrl;
 
       if (!canUseDirectGet && (!baseUrl || !username || !password)) {
@@ -5676,13 +5729,26 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       toast('Connexion à l\'API... 🔄');
       try {
         let clientsRaw;
+        const directHeaders = {};
+        if (manualBearerToken) {
+          directHeaders['Authorization'] = `Bearer ${manualBearerToken}`;
+          directHeaders['X-Auth-Mode'] = 'bearer-manual';
+        } else if (username && password) {
+          const basic = btoa(`${username}:${password}`);
+          directHeaders['Authorization'] = `Basic ${basic}`;
+          directHeaders['username'] = username;
+          directHeaders['password'] = password;
+          directHeaders['X-Username'] = username;
+          directHeaders['X-Password'] = password;
+        }
 
         if (canUseDirectGet) {
           // Direct endpoint mode: GET /apiV2/... (no /login required)
           toast('Récupération des clients (GET direct)... 📥');
           clientsRaw = await ipcRenderer.invoke('sync-api-request', {
             method: 'GET',
-            url: directUrl
+            url: directUrl,
+            headers: directHeaders
           });
           if (clientsRaw.status !== 200) {
             throw new Error(toErrorMessage(clientsRaw.body, `Erreur récupération clients (${clientsRaw.status})`));
@@ -5716,68 +5782,52 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         const apiClients = extractApiClients(parsedClientsPayload);
         if (!Array.isArray(apiClients) || apiClients.length === 0) throw new Error('Réponse API invalide (attendu: liste clients).');
 
-        // Step 3: Merge into local clients — update solde if exists, add if new
-        let added = 0, updated = 0;
+        // Step 3: Replace mode — drop old imported API clients, insert fresh list
+        const retainedClients = clients.filter(c => c.source !== 'Import API');
+        const removed = clients.length - retainedClients.length;
+        clients = retainedClients;
+        let added = 0;
         const today = new Date().toISOString().split('T')[0];
 
         apiClients.forEach((ex, idx) => {
           const { keyClient, phone, rawName, name, solde, ville, type } = normalizeApiClientRow(ex, idx);
-          const allowNameMatch = !!rawName;
-
-          // Try to match by KEY_CLIENT stored in note, or by name
-          const existing = clients.find(c =>
-            (keyClient && c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
-            (phone && c.phone === phone) ||
-            (allowNameMatch && c.name === name)
-          );
-
-          if (existing) {
-            existing.source = 'Import API';
-            if (keyClient && !(existing.note || '').includes(`KEY_CLIENT:${keyClient}`)) {
-              existing.note = `${existing.note ? existing.note + ' | ' : ''}KEY_CLIENT:${keyClient}`;
-            }
-            // Update solde (negotiatedPrice) and paidAmount so balance reflects API solde
-            if (solde > 0 && existing.negotiatedPrice !== solde) {
-              existing.negotiatedPrice = solde;
-              existing.paidAmount = 0;
-              updated++;
-            }
-          } else {
-            clients.push({
-              id: nextClientId++,
-              name,
-              phone,
-              brand: type,
-              potential: false,
-              address: ville,
-              source: 'Import API',
-              options: [],
-              note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
-              installer: 'Non',
-              material: 'Non',
-              paymentStatus: solde > 0 ? 'Non' : 'Oui',
-              paymentMode: '',
-              finalState: '',
-              noPurchaseReason: '',
-              created_at: today,
-              called: false,
-              trialStatus: 0,
-              negotiatedPrice: solde,
-              paidAmount: 0,
-              paymentDeadline: '',
-              autoReminder: solde > 0 ? 1 : 0,
-              trialOutcome: '',
-              trialLostReason: ''
-            });
-            added++;
-          }
+          // Strict sync rule: process only clients with positive balance.
+          if (solde <= 0) return;
+          clients.push({
+            id: nextClientId++,
+            name,
+            phone,
+            brand: type,
+            potential: false,
+            address: ville,
+            source: 'Import API',
+            options: [],
+            note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
+            installer: 'Non',
+            material: 'Non',
+            paymentStatus: 'Non',
+            paymentMode: '',
+            finalState: '',
+            noPurchaseReason: '',
+            created_at: today,
+            called: false,
+            trialStatus: 0,
+            negotiatedPrice: solde,
+            paidAmount: 0,
+            paymentDeadline: '',
+            autoReminder: 1,
+            trialOutcome: '',
+            trialLostReason: ''
+          });
+          added++;
         });
+        nextClientId = clients.length ? Math.max(...clients.map(c => Number(c.id) || 0)) + 1 : 1;
 
         await syncDB();
         renderClients();
         renderReminders();
         renderLogicomClients();
-        toast(`✅ Sync terminé : ${added} ajouté(s), ${updated} mis à jour`);
+        toast(`✅ Sync terminé : ${removed} ancien(s) supprimé(s), ${added} nouveau(x) importé(s)`);
 
       } catch (err) {
         console.error('[Sync API]', err);
@@ -5814,7 +5864,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       if (countEl) countEl.textContent = `${filtered.length} / ${imported.length} client(s) synchronisé(s)`;
 
       if (filtered.length === 0) {
-        body.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Aucun client synchronisé pour le moment.</td></tr>';
+        body.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--muted);">Aucun client synchronisé pour le moment.</td></tr>';
         return;
       }
 
@@ -5834,6 +5884,9 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           <td style="font-size:11px; color:var(--muted); max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${note}">${note}</td>
           <td>${created}</td>
           <td style="font-size:11px; font-weight:700; color:var(--accent)">${addedBy}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="remindLogicomClient(${c.id})" ${c.phone ? '' : 'disabled'} title="${c.phone ? 'Envoyer rappel WhatsApp' : 'Aucun numéro'}">📲 Rappeler</button>
+          </td>
         </tr>`;
       }).join('');
     }
@@ -6933,6 +6986,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">🔌 API LOGICOM — Sync Clients</h2>
       <div style="flex:1"></div>
       <button class="btn btn-ghost btn-sm" onclick="apiSyncClearLog()">🗑 Vider log</button>
+      <button class="btn btn-ghost btn-sm" onclick="runApiLoginDebug()">🔐 Tester Login</button>
       <button class="btn btn-primary" onclick="runApiSync()">▶ Lancer Sync</button>
     </div>
 
@@ -6942,7 +6996,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       <div style="display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px;">
         <div>
           <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">URL Base</label>
-          <input type="text" id="as_url" placeholder="http://26.181.59.54:1647/apiv2"
+          <input type="text" id="as_url" placeholder="http://26.181.59.54:1647"
             style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; box-sizing:border-box;">
         </div>
         <div>
@@ -6954,6 +7008,11 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Mot de passe</label>
           <input type="password" id="as_pass" placeholder="••••••••"
             style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:13px; box-sizing:border-box;">
+        </div>
+        <div style="grid-column:1 / -1;">
+          <label style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Bearer Token (manuel)</label>
+          <input type="text" id="as_token" placeholder="eyJhbGciOi..."
+            style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12px; box-sizing:border-box; font-family:monospace;">
         </div>
       </div>
       <div style="margin-top:10px; display:flex; gap:10px;">
@@ -7030,10 +7089,11 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
             <th>Référence API</th>
             <th>Date</th>
             <th>Par</th>
+            <th>WhatsApp</th>
           </tr>
         </thead>
         <tbody id="logicomClientBody">
-          <tr><td colspan="8" style="text-align:center; padding:20px; color:var(--muted);">Aucun client synchronisé pour le moment.</td></tr>
+          <tr><td colspan="9" style="text-align:center; padding:20px; color:var(--muted);">Aucun client synchronisé pour le moment.</td></tr>
         </tbody>
       </table>
     </div>
@@ -7045,14 +7105,16 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       localStorage.setItem('sync-api-url',      document.getElementById('as_url').value.trim().replace(/\/$/,''));
       localStorage.setItem('sync-api-username', document.getElementById('as_user').value.trim());
       localStorage.setItem('sync-api-password', document.getElementById('as_pass').value);
+      localStorage.setItem('sync-api-bearer-token', document.getElementById('as_token').value.trim());
       document.getElementById('as_config_status').textContent = '✅ Sauvegardé';
       setTimeout(() => document.getElementById('as_config_status').textContent = '', 2000);
     }
 
     function apiSyncLoadConfig() {
-      document.getElementById('as_url').value  = localStorage.getItem('sync-api-url') || '';
+      document.getElementById('as_url').value  = localStorage.getItem('sync-api-url') || 'http://26.181.59.54:1647';
       document.getElementById('as_user').value = localStorage.getItem('sync-api-username') || '';
       document.getElementById('as_pass').value = localStorage.getItem('sync-api-password') || '';
+      document.getElementById('as_token').value = localStorage.getItem('sync-api-bearer-token') || 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI0OSIsInVuaXF1ZV9uYW1lIjoiTEFIQklCIiwiYWN0b3J0IjoiREVMRklWIiwibmJmIjoxNzc4NDkyNzk2LCJleHAiOjE3ODM2NzY3OTYsImlhdCI6MTc3ODQ5Mjc5Nn0.UWnFaiVd8tS4h-Kz1vg90mwiVzukTbx4eYSLWbmlJmzwjrElkEooxvAFLbNvuWgzZuxXMRROhSjLFxsVUgFpXW';
     }
 
     function apiSyncClearLog() {
@@ -7072,7 +7134,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
       el.scrollTop = el.scrollHeight;
     }
 
-    async function runApiSync() {
+    async function runApiLoginDebug() {
       const baseUrl  = document.getElementById('as_url').value.trim().replace(/\/$/,'') || localStorage.getItem('sync-api-url');
       const username = document.getElementById('as_user').value.trim() || localStorage.getItem('sync-api-username');
       const password = document.getElementById('as_pass').value || localStorage.getItem('sync-api-password');
@@ -7082,16 +7144,13 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         return;
       }
 
-      // Clear logs
       document.getElementById('as_sent').innerHTML = '';
       document.getElementById('as_recv').innerHTML = '';
       document.getElementById('as_summary').style.display = 'none';
 
-      // ── STEP 1: LOGIN ──────────────────────────────────
       const loginBody = { username, password, typeApp: 'DELYV' };
       asLog('sent', `POST ${baseUrl}/login`, loginBody);
 
-      let token = null;
       try {
         const loginRaw = await ipcRenderer.invoke('sync-api-request', {
           method: 'POST',
@@ -7099,37 +7158,118 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           body: loginBody
         });
 
-        asLog('recv', `HTTP ${loginRaw.status}`, (() => {
-          try { return JSON.parse(loginRaw.body); } catch(e) { return loginRaw.body; }
-        })());
+        let loginJson;
+        try { loginJson = JSON.parse(loginRaw.body); }
+        catch(_e) { loginJson = { raw: loginRaw.body }; }
 
-        if (loginRaw.status !== 200) {
-          const err = JSON.parse(loginRaw.body || '{}');
-          document.getElementById('as_recv').innerHTML += `<span style="color:#f87171;">❌ Login échoué: ${err.message || loginRaw.status}</span>`;
-          return;
-        }
-
-        const loginData = JSON.parse(loginRaw.body);
-        token = loginData.token;
-        if (!token) {
-          document.getElementById('as_recv').innerHTML += '<span style="color:#f87171;">❌ Aucun token dans la réponse</span>';
-          return;
-        }
+        asLog('recv', `HTTP ${loginRaw.status} — Login JSON`, loginJson);
       } catch(e) {
         asLog('recv', 'ERREUR', e.message || String(e));
+      }
+    }
+
+    async function runApiSync() {
+      const baseUrl  = document.getElementById('as_url').value.trim().replace(/\/$/,'') || localStorage.getItem('sync-api-url');
+      const username = document.getElementById('as_user').value.trim() || localStorage.getItem('sync-api-username');
+      const password = document.getElementById('as_pass').value || localStorage.getItem('sync-api-password');
+      const manualBearerToken = (document.getElementById('as_token')?.value || localStorage.getItem('sync-api-bearer-token') || 'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiI0OSIsInVuaXF1ZV9uYW1lIjoiTEFIQklCIiwiYWN0b3J0IjoiREVMRklWIiwibmJmIjoxNzc4NDkyNzk2LCJleHAiOjE3ODM2NzY3OTYsImlhdCI6MTc3ODQ5Mjc5Nn0.UWnFaiVd8tS4h-Kz1vg90mwiVzukTbx4eYSLWbmlJmzwjrElkEooxvAFLbNvuWgzZuxXMRROhSjLFxsVUgFpXW').trim();
+      const endpointRaw = (localStorage.getItem('logicom-api-endpoint') || '').trim();
+      const parseEndpoint = (value) => value.replace(/^\s*(GET|POST|PUT|PATCH|DELETE)\s+/i, '').trim();
+      const endpoint = endpointRaw ? parseEndpoint(endpointRaw) : '';
+      const baseLooksDirect = /^https?:\/\//i.test(baseUrl) && /\/apiv2\//i.test(baseUrl);
+      const directUrlFromEndpointAbsolute = (/^https?:\/\//i.test(endpoint)) ? endpoint : '';
+      const directUrlFromBase = baseLooksDirect ? baseUrl : '';
+      const directUrlFromEndpointRelative = (!directUrlFromEndpointAbsolute && !baseLooksDirect && endpoint && baseUrl)
+        ? `${baseUrl}/${endpoint.replace(/^\//, '')}`
+        : '';
+      const directUrl = directUrlFromEndpointAbsolute || directUrlFromBase || directUrlFromEndpointRelative;
+      const canUseDirectGet = !!directUrl;
+
+      if (!canUseDirectGet && (!baseUrl || !username || !password)) {
+        document.getElementById('as_sent').innerHTML = '<span style="color:#f87171;">❌ Remplissez URL + credentials, ou configurez un endpoint GET direct</span>';
         return;
       }
 
-      // ── STEP 2: GET CLIENTS ────────────────────────────
-      asLog('sent', `GET ${baseUrl}/clients?typeApp=DELYV`, { Authorization: `Bearer ${token.substring(0,20)}...` });
+      // Clear logs
+      document.getElementById('as_sent').innerHTML = '';
+      document.getElementById('as_recv').innerHTML = '';
+      document.getElementById('as_summary').style.display = 'none';
+
+      let clientsRaw;
+      if (canUseDirectGet) {
+        const directHeaders = {};
+        if (manualBearerToken) {
+          directHeaders['Authorization'] = `Bearer ${manualBearerToken}`;
+          directHeaders['X-Auth-Mode'] = 'bearer-manual';
+        } else if (username && password) {
+          const basic = btoa(`${username}:${password}`);
+          directHeaders['Authorization'] = `Basic ${basic}`;
+          directHeaders['username'] = username;
+          directHeaders['password'] = password;
+          directHeaders['X-Username'] = username;
+          directHeaders['X-Password'] = password;
+        }
+        asLog('sent', `GET ${directUrl}`, { mode: 'direct', headers: Object.keys(directHeaders) });
+        try {
+          clientsRaw = await ipcRenderer.invoke('sync-api-request', {
+            method: 'GET',
+            url: directUrl,
+            headers: directHeaders
+          });
+        } catch(e) {
+          asLog('recv', 'ERREUR', e.message || String(e));
+          return;
+        }
+      } else {
+        // ── STEP 1: LOGIN ──────────────────────────────────
+        const loginBody = { username, password, typeApp: 'DELYV' };
+        asLog('sent', `POST ${baseUrl}/login`, loginBody);
+
+        let token = null;
+        try {
+          const loginRaw = await ipcRenderer.invoke('sync-api-request', {
+            method: 'POST',
+            url: `${baseUrl}/login`,
+            body: loginBody
+          });
+
+          asLog('recv', `HTTP ${loginRaw.status}`, (() => {
+            try { return JSON.parse(loginRaw.body); } catch(e) { return loginRaw.body; }
+          })());
+
+          if (loginRaw.status !== 200) {
+            const err = JSON.parse(loginRaw.body || '{}');
+            document.getElementById('as_recv').innerHTML += `<span style="color:#f87171;">❌ Login échoué: ${err.message || loginRaw.status}</span>`;
+            return;
+          }
+
+          const loginData = JSON.parse(loginRaw.body);
+          token = loginData.token;
+          if (!token) {
+            document.getElementById('as_recv').innerHTML += '<span style="color:#f87171;">❌ Aucun token dans la réponse</span>';
+            return;
+          }
+          asLog('recv', 'JWT token (login)', token);
+        } catch(e) {
+          asLog('recv', 'ERREUR', e.message || String(e));
+          return;
+        }
+
+        // ── STEP 2: GET CLIENTS ────────────────────────────
+        asLog('sent', `GET ${baseUrl}/clients?typeApp=DELYV`, { Authorization: `Bearer ${token.substring(0,20)}...` });
+        try {
+          clientsRaw = await ipcRenderer.invoke('sync-api-request', {
+            method: 'GET',
+            url: `${baseUrl}/clients?typeApp=DELYV`,
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+        } catch(e) {
+          asLog('recv', 'ERREUR', e.message || String(e));
+          return;
+        }
+      }
 
       try {
-        const clientsRaw = await ipcRenderer.invoke('sync-api-request', {
-          method: 'GET',
-          url: `${baseUrl}/clients?typeApp=DELYV`,
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-
         let parsedPayload;
         try { parsedPayload = JSON.parse(clientsRaw.body); } catch(e) { parsedPayload = clientsRaw.body; }
         const apiClients = extractApiClients(parsedPayload);
@@ -7138,46 +7278,31 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
 
         if (clientsRaw.status !== 200 || !Array.isArray(apiClients) || apiClients.length === 0) return;
 
-        // ── STEP 3: MERGE ──────────────────────────────────
-        let added = 0, updated = 0;
+        // ── STEP 3: REPLACE ─────────────────────────────────
+        const retainedClients = clients.filter(c => c.source !== 'Import API');
+        const removed = clients.length - retainedClients.length;
+        clients = retainedClients;
+        let added = 0;
         const today = new Date().toISOString().split('T')[0];
 
         apiClients.forEach((ex, idx) => {
           const { keyClient, phone, rawName, name, solde, ville, type } = normalizeApiClientRow(ex, idx);
-          const allowNameMatch = !!rawName;
-
-          const existing = clients.find(c =>
-            (keyClient && c.note && c.note.includes(`KEY_CLIENT:${keyClient}`)) ||
-            (phone && c.phone === phone) ||
-            (allowNameMatch && c.name === name)
-          );
-
-          if (existing) {
-            existing.source = 'Import API';
-            if (keyClient && !(existing.note || '').includes(`KEY_CLIENT:${keyClient}`)) {
-              existing.note = `${existing.note ? existing.note + ' | ' : ''}KEY_CLIENT:${keyClient}`;
-            }
-            if (solde > 0 && existing.negotiatedPrice !== solde) {
-              existing.negotiatedPrice = solde;
-              existing.paidAmount = 0;
-              updated++;
-            }
-          } else {
-            clients.push({
-              id: nextClientId++, name, phone,
-              brand: type,
-              potential: false, address: ville, source: 'Import API',
-              options: [], note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
-              installer: 'Non', material: 'Non',
-              paymentStatus: solde > 0 ? 'Non' : 'Oui', paymentMode: '',
-              finalState: '', noPurchaseReason: '', created_at: today,
-              called: false, trialStatus: 0,
-              negotiatedPrice: solde, paidAmount: 0, paymentDeadline: '',
-              autoReminder: solde > 0 ? 1 : 0, trialOutcome: '', trialLostReason: ''
-            });
-            added++;
-          }
+          if (solde <= 0) return;
+          clients.push({
+            id: nextClientId++, name, phone,
+            brand: type,
+            potential: false, address: ville, source: 'Import API',
+            options: [], note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
+            installer: 'Non', material: 'Non',
+            paymentStatus: 'Non', paymentMode: '',
+            finalState: '', noPurchaseReason: '', created_at: today,
+            called: false, trialStatus: 0,
+            negotiatedPrice: solde, paidAmount: 0, paymentDeadline: '',
+            autoReminder: 1, trialOutcome: '', trialLostReason: ''
+          });
+          added++;
         });
+        nextClientId = clients.length ? Math.max(...clients.map(c => Number(c.id) || 0)) + 1 : 1;
 
         await syncDB();
         renderClients();
@@ -7186,7 +7311,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
 
         const summary = document.getElementById('as_summary');
         summary.style.display = 'block';
-        summary.innerHTML = `✅ <strong>Sync terminé</strong> — ${apiClients.length} clients reçus · <strong>${added}</strong> ajoutés · <strong>${updated}</strong> mis à jour`;
+        summary.innerHTML = `✅ <strong>Sync terminé</strong> — ${apiClients.length} clients reçus · <strong>${removed}</strong> anciens supprimés · <strong>${added}</strong> nouveaux importés`;
 
       } catch(e) {
         asLog('recv', 'ERREUR', e.message || String(e));
