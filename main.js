@@ -230,12 +230,17 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
 
   const idList = clientIds.map(id => parseInt(id)).filter(id => !isNaN(id) && id > 0).join(',');
   if (!idList) return { total: 0, sentWA: 0, sentTG: 0, failedWA: 0, failedTG: 0 };
+
+  console.log(`[BulkSend] IDs count: ${clientIds.length}. WA Ready: ${isWhatsAppReady()}`);
+
   const res = db.exec(`SELECT id, name, phone, brand, negotiatedPrice, paidAmount FROM clients WHERE id IN (${idList})`);
   const rows = res.length ? res[0].values.map(row => {
     const obj = {};
     res[0].columns.forEach((col, i) => obj[col] = row[i]);
     return obj;
   }) : [];
+
+  console.log(`[BulkSend] Rows found in DB: ${rows.length}`);
 
   let sentWA = 0, sentTG = 0, failedWA = 0, failedTG = 0;
   const tgSummaryLines = [];
@@ -251,9 +256,19 @@ ipcMain.handle('bulk-send-reminder-message', async (event, { clientIds, template
       .replace(/\{balance\}/g, balance.toLocaleString('fr-DZ'));
 
     // WhatsApp — send directly to client phone
-    if ((channel === 'wa' || channel === 'both') && isWhatsAppReady() && c.phone) {
-      try { await sendWhatsApp(c.phone, msg); sentWA++; await new Promise(r => setTimeout(r, 600)); }
-      catch(e) { failedWA++; }
+    if ((channel === 'wa' || channel === 'both') && c.phone) {
+      if (isWhatsAppReady()) {
+        try { 
+          await sendWhatsApp(c.phone, msg); 
+          sentWA++; 
+          await new Promise(r => setTimeout(r, 600)); 
+        } catch(e) { 
+          console.error(`[BulkSend] WA Error for ${c.name}:`, e.message);
+          failedWA++; 
+        }
+      } else {
+        console.warn(`[BulkSend] WA Not Ready - Skipping ${c.name}`);
+      }
     }
 
     // Collect for Telegram admin summary

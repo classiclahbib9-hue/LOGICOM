@@ -2355,6 +2355,11 @@
           <textarea id="reminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !</textarea>
         </div>
         <div class="field" style="margin-top:15px;">
+          <label>Modèle Message Groupé (Bulk WhatsApp)</label>
+          <textarea id="bulkReminderTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name}, l'équipe LOGICOM vous souhaite une excellente journée ! 🇩🇿
+Nous restons à votre disposition pour toute assistance ou mise à jour de votre logiciel.</textarea>
+        </div>
+        <div class="field" style="margin-top:15px;">
           <label>✅ Message de Confirmation Paiement <span style="font-size:11px; color:var(--muted);">(envoi automatique quand le client paye)</span></label>
           <div style="font-size:11px; color:var(--muted); margin-bottom:6px;">Variables : <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{name}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{amount}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{balance}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{brand}</code> <code style="background:var(--card); padding:1px 5px; border-radius:4px;">{mode}</code></div>
           <textarea id="paymentConfirmTemplate" style="width:100%; background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:8px; min-height:80px; font-family:'DM Sans';">Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿</textarea>
@@ -2398,6 +2403,35 @@
       </div>
 
       <!-- ══ MESSAGE AUX CLIENTS VENDUS ══ -->
+      <div id="bulkWAModal" class="overlay">
+        <div class="modal" style="max-width: 550px;">
+          <div class="modal-header">
+            <h3>🟢 Message Groupé WhatsApp</h3>
+            <button class="modal-close" onclick="closeModal('bulkWAModal')">×</button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">
+              Ce message sera envoyé à tous les clients actuellement affichés dans votre liste (selon vos filtres).
+            </p>
+            <div class="field">
+              <label>Modèle de Message</label>
+              <textarea id="bulkWATemplate" style="width:100%; background:var(--tag-bg); border:1px solid var(--border); color:var(--text); padding:12px; border-radius:8px; min-height:150px; font-family:'DM Sans'; font-size:14px; outline:none; resize:vertical;">Salam alikoum {name}, l'équipe LOGICOM vous souhaite une excellente journée ! 🇩🇿
+Nous restons à votre disposition pour toute assistance ou mise à jour de votre logiciel.</textarea>
+              <div style="font-size:11px; color:var(--muted); margin-top:8px;">
+                Variables disponibles : <code style="background:var(--tag-bg); padding:2px 4px; border-radius:4px;">{name}</code>, <code style="background:var(--tag-bg); padding:2px 4px; border-radius:4px;">{brand}</code>, <code style="background:var(--tag-bg); padding:2px 4px; border-radius:4px;">{balance}</code>, <code style="background:var(--tag-bg); padding:2px 4px; border-radius:4px;">{phone}</code>
+              </div>
+            </div>
+            <div id="bulkWAStatus" style="margin-top:15px; font-size:13px; font-weight:600; text-align:center;"></div>
+          </div>
+          <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <button class="btn btn-ghost" style="font-size:12px; color:var(--muted);" onclick="saveBulkTemplateFromModal()">💾 Sauvegarder comme défaut</button>
+            <div style="display:flex; gap:10px;">
+              <button class="btn btn-ghost" onclick="closeModal('bulkWAModal')">Annuler</button>
+              <button class="btn btn-primary" style="background:#25D366; color:white; border:none;" id="btnConfirmBulkWA" onclick="confirmBulkWhatsApp()">🚀 Envoyer à <span id="bulkWACount">0</span> clients</button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div style="background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
           <h4 style="font-family:'Syne'; font-size:14px; color:var(--accent); margin:0;">📢 Message aux Clients Vendus</h4>
@@ -4560,6 +4594,130 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     // Load count on tab switch
     document.addEventListener('DOMContentLoaded', () => updateSoldCount());
 
+    // ═══════════════════════════ WHATSAPP BULK ═══════════════════════════
+    function getFilteredClientsForBulk() {
+      const isLogicomTab = document.getElementById('pLogicomClients')?.classList.contains('active');
+      
+      if (isLogicomTab) {
+        const q = (document.getElementById('logicomClientSearch')?.value || '').trim().toLowerCase();
+        const type = document.getElementById('logicomClientType')?.value || '';
+        const onlyUnpaid = document.getElementById('logicomClientOnlyUnpaid')?.checked || false;
+
+        return clients.filter(c => {
+          if (c.source !== 'Import API') return false;
+          const matchQ = !q || (c.name && c.name.toLowerCase().includes(q)) || (c.phone && c.phone.toLowerCase().includes(q));
+          const matchType = !type || (c.brand === type);
+          const matchUnpaid = !onlyUnpaid || ((c.negotiatedPrice || 0) - (c.paidAmount || 0) > 0);
+          return matchQ && matchType && matchUnpaid;
+        });
+      } else {
+        const q = (document.getElementById('searchClient')?.value || '').trim().toLowerCase();
+        const qp = (document.getElementById('searchPhone')?.value || '').trim().toLowerCase();
+        const fCategory = document.getElementById('filterCategory')?.value || '';
+
+        return clients.filter(c => {
+          const matchQ = !q || (c.name && c.name.toLowerCase().includes(q)) || (c.brand && c.brand.toLowerCase().includes(q));
+          const matchPhone = !qp || (c.phone && c.phone.replace(/\s/g, '').includes(qp.replace(/\s/g, '')));
+          const matchCategory = !fCategory || (c.category || 'Nouveau') === fCategory;
+          return matchQ && matchPhone && matchCategory && (c.source !== 'Import API');
+        });
+      }
+    }
+
+    function openBulkWhatsApp() {
+      const filtered = getFilteredClientsForBulk();
+
+      if (filtered.length === 0) {
+        toast('Aucun client ne correspond aux filtres actuels', true);
+        return;
+      }
+
+      // Load saved template from settings
+      const savedTemplate = localStorage.getItem('logicom-bulk-reminder-template');
+      if (savedTemplate) {
+        document.getElementById('bulkWATemplate').value = savedTemplate;
+      }
+
+      const withPhone = filtered.filter(c => c.phone && c.phone.trim().length > 5);
+      document.getElementById('bulkWACount').textContent = withPhone.length;
+      
+      if (withPhone.length < filtered.length) {
+        document.getElementById('bulkWAStatus').textContent = `⚠️ ${filtered.length - withPhone.length} client(s) sans numéro valide seront ignorés`;
+        document.getElementById('bulkWAStatus').style.color = 'var(--orange)';
+      } else {
+        document.getElementById('bulkWAStatus').textContent = '';
+      }
+      document.getElementById('bulkWAStatus').style.color = '';
+      document.getElementById('btnConfirmBulkWA').disabled = false;
+      document.getElementById('bulkWAModal').classList.add('open');
+    }
+
+    async function confirmBulkWhatsApp() {
+      const template = document.getElementById('bulkWATemplate').value.trim();
+      if (!template) { toast('Veuillez saisir un message', true); return; }
+
+      // Check WhatsApp Status first
+      const waStatus = getWhatsAppStatus();
+      if (waStatus !== 'ready') {
+        toast('❌ WhatsApp non connecté. Veuillez scanner le QR code.', true);
+        const status = document.getElementById('bulkWAStatus');
+        status.textContent = '❌ WhatsApp non connecté';
+        status.style.color = 'var(--red)';
+        return;
+      }
+
+      const filtered = getFilteredClientsForBulk();
+      const filteredIds = filtered.map(c => c.id).filter(id => id);
+
+      if (filteredIds.length === 0) {
+        toast('Erreur : Aucun client trouvé avec les filtres actuels', true);
+        return;
+      }
+
+      if (!confirm(`Êtes-vous sûr de vouloir envoyer ce message à ${filteredIds.length} clients ?`)) return;
+
+      const btn = document.getElementById('btnConfirmBulkWA');
+      const status = document.getElementById('bulkWAStatus');
+      btn.disabled = true;
+      status.textContent = '⏳ Envoi en cours...';
+      status.style.color = 'var(--accent)';
+
+      try {
+        const result = await ipcRenderer.invoke('bulk-send-reminder-message', { 
+          clientIds: filteredIds, 
+          template: template, 
+          channel: 'wa' 
+        });
+
+        if (result.sentWA === 0 && result.failedWA === 0) {
+          status.textContent = '⚠️ Aucun message envoyé (vérifiez les numéros)';
+          status.style.color = 'var(--accent)';
+        } else {
+          status.textContent = `✅ Succès : ${result.sentWA} | ❌ Échecs : ${result.failedWA}`;
+          status.style.color = 'var(--green)';
+        }
+        
+        toast('Envoi groupé terminé !');
+        // Re-enable button after 2 seconds
+        setTimeout(() => { btn.disabled = false; }, 2000);
+      } catch (err) {
+        console.error('Bulk WA Error:', err);
+        status.textContent = '❌ Erreur de communication avec le serveur';
+        status.style.color = 'var(--red)';
+        btn.disabled = false;
+      }
+    }
+
+    function saveBulkTemplateFromModal() {
+      const template = document.getElementById('bulkWATemplate').value.trim();
+      if (!template) return;
+      localStorage.setItem('logicom-bulk-reminder-template', template);
+      // Sync with settings input if open
+      const settingsInput = document.getElementById('bulkReminderTemplate');
+      if (settingsInput) settingsInput.value = template;
+      toast('✅ Modèle sauvegardé par défaut');
+    }
+
     // ═══════════════════════════ WHATSAPP ═══════════════════════════
     let isMessaging = false;
     async function sendClientWhatsApp(id) {
@@ -5149,10 +5307,12 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const tgToken = document.getElementById('tgToken').value;
 
       const paymentConfirmTpl = document.getElementById('paymentConfirmTemplate').value;
+      const bulkReminderTpl = document.getElementById('bulkReminderTemplate').value;
       localStorage.setItem('logicom-api-endpoint', endpoint);
       localStorage.setItem('logicom-api-key', key);
       localStorage.setItem('logicom-reminder-template', template);
       localStorage.setItem('logicom-payment-confirm-template', paymentConfirmTpl);
+      localStorage.setItem('logicom-bulk-reminder-template', bulkReminderTpl);
       localStorage.setItem('logicom-tg-token', tgToken);
       const groqKey = document.getElementById('groqApiKey').value;
       localStorage.setItem('claude_api_key', groqKey);
@@ -5180,6 +5340,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('apiKey').value = localStorage.getItem('logicom-api-key') || '';
       document.getElementById('reminderTemplate').value = localStorage.getItem('logicom-reminder-template') || 'Salam alikoum {name}, petit rappel concernant votre reste à payer de {balance} DA pour LOGICOM. Merci de nous contacter !';
       document.getElementById('paymentConfirmTemplate').value = localStorage.getItem('logicom-payment-confirm-template') || 'Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿';
+      document.getElementById('bulkReminderTemplate').value = localStorage.getItem('logicom-bulk-reminder-template') || "Salam alikoum {name}, l'équipe LOGICOM vous souhaite une excellente journée ! 🇩🇿\nNous restons à votre disposition pour toute assistance ou mise à jour de votre logiciel.";
       const tgToken = localStorage.getItem('logicom-tg-token') || '';
       document.getElementById('tgToken').value = tgToken;
       const groqKey = localStorage.getItem('claude_api_key') || '';
@@ -5782,52 +5943,73 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         const apiClients = extractApiClients(parsedClientsPayload);
         if (!Array.isArray(apiClients) || apiClients.length === 0) throw new Error('Réponse API invalide (attendu: liste clients).');
 
-        // Step 3: Replace mode — drop old imported API clients, insert fresh list
-        const retainedClients = clients.filter(c => c.source !== 'Import API');
-        const removed = clients.length - retainedClients.length;
-        clients = retainedClients;
+        // Step 3: Delta Sync mode
         let added = 0;
+        let updated = 0;
+        let processedIds = new Set();
         const today = new Date().toISOString().split('T')[0];
 
         apiClients.forEach((ex, idx) => {
           const { keyClient, phone, rawName, name, solde, ville, type } = normalizeApiClientRow(ex, idx);
           // Strict sync rule: process only clients with positive balance.
           if (solde <= 0) return;
-          clients.push({
-            id: nextClientId++,
-            name,
-            phone,
-            brand: type,
-            potential: false,
-            address: ville,
-            source: 'Import API',
-            options: [],
-            note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
-            installer: 'Non',
-            material: 'Non',
-            paymentStatus: 'Non',
-            paymentMode: '',
-            finalState: '',
-            noPurchaseReason: '',
-            created_at: today,
-            called: false,
-            trialStatus: 0,
-            negotiatedPrice: solde,
-            paidAmount: 0,
-            paymentDeadline: '',
-            autoReminder: 1,
-            trialOutcome: '',
-            trialLostReason: ''
-          });
-          added++;
+
+          // Find existing client by keyClient (stored in note)
+          const existing = clients.find(c => c.source === 'Import API' && keyClient && c.note.includes(`KEY_CLIENT:${keyClient}`));
+
+          if (existing) {
+            existing.negotiatedPrice = solde;
+            existing.name = name;
+            existing.phone = phone;
+            existing.address = ville;
+            existing.brand = type;
+            processedIds.add(existing.id);
+            updated++;
+          } else {
+            const newId = nextClientId++;
+            clients.push({
+              id: newId,
+              name,
+              phone,
+              brand: type,
+              potential: false,
+              address: ville,
+              source: 'Import API',
+              options: [],
+              note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
+              installer: 'Non',
+              material: 'Non',
+              paymentStatus: 'Non',
+              paymentMode: '',
+              finalState: '',
+              noPurchaseReason: '',
+              created_at: today,
+              called: false,
+              trialStatus: 0,
+              negotiatedPrice: solde,
+              paidAmount: 0,
+              paymentDeadline: '',
+              autoReminder: 1,
+              trialOutcome: '',
+              trialLostReason: ''
+            });
+            processedIds.add(newId);
+            added++;
+          }
         });
+
+        // Remove clients that are no longer in the API (likely paid)
+        const initialCount = clients.length;
+        clients = clients.filter(c => c.source !== 'Import API' || processedIds.has(c.id));
+        const removed = initialCount - clients.length;
+
         nextClientId = clients.length ? Math.max(...clients.map(c => Number(c.id) || 0)) + 1 : 1;
 
         await syncDB();
         renderClients();
         renderReminders();
         renderLogicomClients();
-        toast(`✅ Sync terminé : ${removed} ancien(s) supprimé(s), ${added} nouveau(x) importé(s)`);
+        toast(`✅ Sync terminé : ${updated} mis à jour, ${added} ajouté(s), ${removed} retiré(s)`);
 
       } catch (err) {
         console.error('[Sync API]', err);
@@ -7076,6 +7258,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         Solde > 0 uniquement
       </label>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('logicomClientSearch').value=''; document.getElementById('logicomClientType').value=''; document.getElementById('logicomClientOnlyUnpaid').checked=false; renderLogicomClients();">Effacer filtres</button>
+      <button class="btn btn-primary" style="background:#25D366; color:white; font-family:'Syne'; font-weight:700; border:none; height:38px; padding:0 20px; border-radius:10px; box-shadow:0 10px 20px rgba(37, 211, 102, 0.2);" onclick="openBulkWhatsApp()">🟢 WHATSAPP À TOUS</button>
     </div>
     <div class="table-container">
       <table>
