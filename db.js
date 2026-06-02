@@ -63,6 +63,27 @@ async function initDB() {
           )
         `);
 
+        db.run(`
+          CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT,
+            tabsAccess TEXT
+          )
+        `);
+
+        // Add default admin if not exists
+        try {
+            const adminCheck = db.exec('SELECT * FROM users WHERE username = "admin"');
+            if (!adminCheck.length || !adminCheck[0].values.length) {
+                // By default give admin access to all tabs (0 to 12)
+                db.run(`INSERT INTO users (username, password, role, tabsAccess) VALUES ('admin', 'admin', 'Admin', '[0,1,2,3,4,5,6,7,8,9,10,11,12]')`);
+            }
+        } catch(e) {
+            console.error('Failed to create default admin:', e);
+        }
+
         // ═══════════════════════════ RAPPELS & CLIENTS ═══════════════════════════
         db.run(`
           CREATE TABLE IF NOT EXISTS clients (
@@ -77,7 +98,8 @@ async function initDB() {
             negotiatedPrice INTEGER DEFAULT 0,
             paidAmount INTEGER DEFAULT 0,
             paymentDeadline TEXT,
-            autoReminder INTEGER DEFAULT 0
+            autoReminder INTEGER DEFAULT 0,
+            reminderSent INTEGER DEFAULT 0
           )
         `);
 
@@ -108,6 +130,7 @@ async function initDB() {
         try { db.run("ALTER TABLE clients ADD COLUMN promisedMethod TEXT"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN promiseNote TEXT"); } catch(e){}
         try { db.run("ALTER TABLE clients ADD COLUMN installed_at TEXT"); } catch(e){}
+        try { db.run("ALTER TABLE clients ADD COLUMN reminderSent INTEGER DEFAULT 0"); } catch(e){}
 
         db.run(`
           CREATE TABLE IF NOT EXISTS materials (
@@ -118,6 +141,33 @@ async function initDB() {
             note TEXT
           )
         `);
+
+        db.run(`
+          CREATE TABLE IF NOT EXISTS payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            clientId INTEGER,
+            clientName TEXT,
+            amount INTEGER,
+            date TEXT,
+            method TEXT,
+            notes TEXT
+          )
+        `);
+
+        try {
+            db.run(`
+              CREATE TABLE IF NOT EXISTS pending_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                clientId INTEGER,
+                phone TEXT,
+                message TEXT,
+                channel TEXT,
+                status TEXT DEFAULT 'Pending',
+                created_at TEXT,
+                filePath TEXT
+              )
+            `);
+        } catch(e) {}
         
         saveToFile();
     } catch (err) {
@@ -143,6 +193,62 @@ function registerIpcHandlers() {
         return formatResult(res);
     });
 
+    ipcMain.handle('get-users', () => {
+        try {
+            const res = db.exec('SELECT * FROM users');
+            return formatResult(res);
+        } catch(e) { return []; }
+    });
+
+    ipcMain.handle('login', (event, { username, password }) => {
+        try {
+            const stmt = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?');
+            stmt.bind([username, password]);
+            if (stmt.step()) {
+                const user = stmt.getAsObject();
+                stmt.free();
+                return { success: true, user };
+            }
+            stmt.free();
+            return { success: false, message: 'Identifiants incorrects' };
+        } catch(e) { return { success: false, message: 'Erreur DB: ' + e.message }; }
+    });
+
+    ipcMain.handle('save-user', (event, user) => {
+        try {
+            if (user.id) {
+                db.run(`UPDATE users SET username=?, password=?, role=?, tabsAccess=? WHERE id=?`, 
+                    [user.username, user.password, user.role, JSON.stringify(user.tabsAccess), user.id]);
+            } else {
+                db.run(`INSERT INTO users (username, password, role, tabsAccess) VALUES (?, ?, ?, ?)`, 
+                    [user.username, user.password, user.role, JSON.stringify(user.tabsAccess)]);
+            }
+            saveToFile();
+            return { success: true };
+        } catch(e) { return { success: false, message: e.message }; }
+    });
+
+    ipcMain.handle('delete-user', (event, id) => {
+        try {
+            // Empêcher la suppression du compte admin
+            const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
+            stmt.bind([id]);
+            if (stmt.step()) {
+                const user = stmt.getAsObject();
+                stmt.free();
+                if (user.username === 'admin') {
+                    return { success: false, message: 'Impossible de supprimer le compte administrateur principal.' };
+                }
+            } else {
+                stmt.free();
+            }
+
+            db.run(`DELETE FROM users WHERE id=?`, [id]);
+            saveToFile();
+            return { success: true };
+        } catch(e) { return { success: false, message: e.message }; }
+    });
+
     ipcMain.handle('get-clients', () => {
         const res = db.exec('SELECT * FROM clients');
         return formatResult(res);
@@ -151,6 +257,30 @@ function registerIpcHandlers() {
     ipcMain.handle('get-materials', () => {
         const res = db.exec('SELECT * FROM materials');
         return formatResult(res);
+    });
+
+    ipcMain.handle('get-payments', () => {
+        try {
+            const res = db.exec('SELECT * FROM payments ORDER BY date DESC, id DESC');
+            return formatResult(res);
+        } catch(e) {
+            return [];
+        }
+    });
+
+    ipcMain.handle('get-pending-messages', () => {
+        try {
+            const res = db.exec(`
+                SELECT p.*, c.name AS clientName, c.brand AS clientBrand
+                FROM pending_messages p
+                LEFT JOIN clients c ON p.clientId = c.id
+                WHERE p.status = 'Pending'
+                ORDER BY p.created_at DESC
+            `);
+            return formatResult(res);
+        } catch(e) {
+            return [];
+        }
     });
 
     function formatResult(res) {
@@ -233,6 +363,15 @@ function registerIpcHandlers() {
                 stmt.free();
             }
 
+            if (data.payments) {
+                db.run('DELETE FROM payments');
+                const stmt = db.prepare('INSERT OR REPLACE INTO payments (id, clientId, clientName, amount, date, method, notes) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                for (const p of data.payments) {
+                    stmt.run([p.id || null, p.clientId, p.clientName, p.amount, p.date, p.method, p.notes || '']);
+                }
+                stmt.free();
+            }
+
             saveToFile();
             return true;
         } catch (err) {
@@ -246,6 +385,7 @@ function registerIpcHandlers() {
     ipcMain.handle('save-acts', (event, activitiesArray) => saveAll(event, { activities: activitiesArray }));
     ipcMain.handle('save-clients', (event, clientsArray) => saveAll(event, { clients: clientsArray }));
     ipcMain.handle('save-materials', (event, materialsArray) => saveAll(event, { materials: materialsArray }));
+    ipcMain.handle('save-payments', (event, paymentsArray) => saveAll(event, { payments: paymentsArray }));
 }
 
 async function addClientManually(clientData) {
@@ -396,4 +536,26 @@ function linkClientTelegram(phone, chatId) {
     } catch(e) {}
 }
 
-module.exports = { initDB, registerIpcHandlers, addClientManually, getDB, getUnpaidClientsByPeriod, linkClientTelegram, getSoldClients, savePaymentPromise, getDuePromises, saveToFile };
+// Queue a Telegram message to a client
+function queueTelegramMessage(clientId, chatId, message) {
+    try {
+        const now = new Date().toISOString();
+        db.run(
+            `INSERT INTO pending_messages (clientId, phone, message, channel, status, created_at) VALUES (?, ?, ?, ?, 'Pending', ?)`,
+            [clientId || null, String(chatId), message, 'Telegram', now]
+        );
+        saveToFile();
+
+        // Broadcast to all windows
+        const { BrowserWindow } = require('electron');
+        BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('refresh-moderation');
+        });
+        return true;
+    } catch(e) {
+        console.error('[DB] Failed to queue Telegram message:', e.message);
+        return false;
+    }
+}
+
+module.exports = { initDB, registerIpcHandlers, addClientManually, getDB, getUnpaidClientsByPeriod, linkClientTelegram, getSoldClients, savePaymentPromise, getDuePromises, saveToFile, queueTelegramMessage };

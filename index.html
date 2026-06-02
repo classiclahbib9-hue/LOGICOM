@@ -2002,6 +2002,9 @@
       <img src="logo.png" class="logo-img" alt="Logo">
       <span class="logo-text">LOGI<span>COM</span></span>
     </h1>
+    <div style="position:absolute; top:20px; left:20px;">
+       <button id="btnLogout" class="btn btn-ghost btn-sm" style="display:none; color:var(--red); border-color:var(--red);" onclick="logout()">Déconnexion</button>
+    </div>
     <div class="logo-badge"><span>DELFI – Votre Fidèle Partenaire &nbsp; • &nbsp; DELFI – Votre Fidèle Partenaire &nbsp; • &nbsp; DELFI – Votre Fidèle Partenaire &nbsp; • &nbsp; DELFI – Votre Fidèle Partenaire</span></div>
   </header>
 
@@ -2018,6 +2021,7 @@
     <div class="tab" onclick="switchTab(9)">🎙️ Assistant IA</div>
     <div class="tab" onclick="switchTab(10)">🔌 API Sync</div>
     <div class="tab" onclick="switchTab(11)">🧾 LOGICOM Clients</div>
+    <div class="tab" id="tabUsers" onclick="switchTab(12)" style="display:none;">👥 Utilisateurs</div>
   </div>
 
   <div class="container">
@@ -2260,6 +2264,82 @@
           <canvas id="chartMaterial"></canvas>
         </div>
       </div>
+
+      <!-- 📈 ANALYTICS & REVENUE TRANSACTION HISTORIC ══ -->
+      <div style="margin-top: 30px; display: flex; flex-direction: column; gap: 20px;">
+        <div style="background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px;">
+          <h3 style="font-family:'Syne'; color:var(--text); display:flex; align-items:center; gap:8px; margin:0 0 16px 0;"><span style="font-size:24px;">📈</span> Évolution des Recettes & Historique des Versements</h3>
+          
+          <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 24px; gap: 15px;">
+            <div class="stat-card" style="border-left: 4px solid #22c55e;">
+              <div class="stat-header">
+                <div class="sl">Recettes Totales Encaissées</div>
+                <div class="stat-icon" style="color:#22c55e;"><span style="font-size:18px;">💰</span></div>
+              </div>
+              <div class="sv green" id="statDashTotalPayments">0 DA</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:4px; font-family:'DM Sans';">somme de tous les paiements enregistrés</div>
+            </div>
+            
+            <div class="stat-card" style="border-left: 4px solid #3b82f6;">
+              <div class="stat-header">
+                <div class="sl">Dernier Versement</div>
+                <div class="stat-icon" style="color:#3b82f6;"><span style="font-size:18px;">⚡</span></div>
+              </div>
+              <div class="sv blue" id="statDashLastPaymentAmount">0 DA</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:4px; font-family:'DM Sans';" id="statDashLastPaymentLabel">aucun versement</div>
+            </div>
+
+            <div class="stat-card" style="border-left: 4px solid #eab308;">
+              <div class="stat-header">
+                <div class="sl">Nombre de Versements</div>
+                <div class="stat-icon" style="color:#eab308;"><span style="font-size:18px;">📊</span></div>
+              </div>
+              <div class="sv gold" id="statDashPaymentCount">0</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:4px; font-family:'DM Sans';">transactions totales validées</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+            <!-- Line Chart container -->
+            <div class="chart-container" style="min-height: 320px; padding: 15px; border-radius: 12px; background: rgba(255,255,255,0.02);">
+              <div class="chart-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span>📅 Chronologie des Recettes (Versements par Jour)</span>
+                <span style="font-size: 11px; color: var(--accent); background: rgba(34,197,94,0.1); padding: 2px 8px; border-radius: 12px;">En temps réel</span>
+              </div>
+              <canvas id="chartRevenueGrowth" style="max-height: 280px;"></canvas>
+            </div>
+
+            <!-- Recent payments table -->
+            <div style="border-radius: 12px; background: rgba(255,255,255,0.02); padding: 20px; border: 1px solid var(--border);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <h4 style="margin: 0; font-family: 'Syne'; color: var(--text); display: flex; align-items: center; gap: 6px;"><span style="font-size: 18px;">📝</span> Historique Récent des Transactions</h4>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" id="dashSearchPayment" placeholder="Rechercher un client..." oninput="renderDashPaymentsTable()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 12px; max-width: 180px;">
+                </div>
+              </div>
+              <div style="max-height: 350px; overflow-y: auto;">
+                <table class="table" style="width: 100%; border-collapse: collapse;">
+                  <thead>
+                    <tr style="border-bottom: 2px solid var(--border); font-size: 11px; text-transform: uppercase; color: var(--muted); text-align: left;">
+                      <th style="padding: 10px;">Date</th>
+                      <th style="padding: 10px;">Client</th>
+                      <th style="padding: 10px;">Montant</th>
+                      <th style="padding: 10px;">Mode</th>
+                      <th style="padding: 10px;">Note</th>
+                      <th style="padding: 10px; text-align: center;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashPaymentsTableBody" style="font-size: 13px;">
+                    <tr>
+                      <td colspan="6" style="text-align: center; padding: 20px; color: var(--muted);">Aucun versement enregistré pour le moment.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="panel" id="p3">
       <div class="toolbar" style="justify-content: flex-end; gap: 10px;">
@@ -2325,6 +2405,7 @@
       <div class="toolbar">
         <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;"><span class="ring-bell">🔔</span> Relances & Dettes</h2>
         <div style="flex:1"></div>
+        <button class="btn btn-ghost" onclick="openAddTestClientModal()" style="border-color:#8b5cf6; color:#8b5cf6; font-family:'Syne'; font-weight:700; font-size:12px; height:38px; border-radius:10px; background:rgba(139, 92, 246, 0.05); padding:0 15px; margin-right:5px;">🧪 Ajouter Client Test</button>
         <button class="btn btn-primary" onclick="syncExternalClients()">📥 Sync des Clients API</button>
         <button class="btn btn-ghost" onclick="toggleApiSettings()">⚙️ Config API</button>
       </div>
@@ -2389,6 +2470,34 @@ Merci pour votre confiance.</textarea>
               <input type="text" id="wasenderApiKey" placeholder="Entrez votre clé API Wasender..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--navy); color:var(--text); font-size:14px; box-sizing:border-box;">
             </div>
             <p style="font-size:11px; color:var(--muted); margin:0;">Votre clé API est utilisée pour envoyer des rappels groupés et individuels de manière extrêmement rapide et fiable sans avoir besoin de scanner un code QR en local.</p>
+          </div>
+        </div>
+        
+        <!-- OpenWA API Config -->
+        <div style="margin-top:20px; padding:16px; background:rgba(155,89,182,0.07); border:1px solid rgba(155,89,182,0.25); border-radius:12px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+              <input type="checkbox" id="openwaEnabled" style="width:16px;height:16px;cursor:pointer;" onchange="toggleOpenwaFields(this.checked)">
+              🟣 Utiliser OpenWA API Gateway (Self-Hosted)
+            </label>
+            <span style="font-size:12px; color:var(--muted);">— Envoie les messages via l'API OpenWA Gateway locale/externe</span>
+          </div>
+          <div id="openwaFields" style="display:none; flex-direction:column; gap:10px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+              <div class="field" style="margin:0;">
+                <label style="font-size:12px;">URL Serveur OpenWA</label>
+                <input type="text" id="openwaUrl" placeholder="http://localhost:2785" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--navy); color:var(--text); font-size:14px; box-sizing:border-box;">
+              </div>
+              <div class="field" style="margin:0;">
+                <label style="font-size:12px;">Session ID</label>
+                <input type="text" id="openwaSessionId" placeholder="logicom" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--navy); color:var(--text); font-size:14px; box-sizing:border-box;">
+              </div>
+              <div class="field" style="margin:0;">
+                <label style="font-size:12px;">Clé API (Master Key)</label>
+                <input type="password" id="openwaApiKey" placeholder="Entrez la clé si configurée..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--navy); color:var(--text); font-size:14px; box-sizing:border-box;">
+              </div>
+            </div>
+            <p style="font-size:11px; color:var(--muted); margin:0;">Envoie les messages via votre passerelle OpenWA autonome (dossier OpenWA-main). Assurez-vous que le serveur OpenWA est démarré sur le port configuré.</p>
           </div>
         </div>
         
@@ -2558,6 +2667,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
             <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/materials</span>
             <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/stats</span>
             <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border);">GET /api/ping</span>
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border); color:#25D366;">POST /api/whatsapp/send</span>
+            <span style="background:var(--card); padding:3px 10px; border-radius:6px; border:1px solid var(--border); color:#229ED9;">POST /api/telegram/send</span>
           </div>
           <p style="font-size:11px; color:var(--muted); margin-top:8px;">Utiliser le header : <code style="background:var(--card); padding:2px 6px; border-radius:4px;">Authorization: Bearer [votre-clé]</code></p>
         </div>
@@ -2703,6 +2814,29 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
 
   </div>
+
+    <!-- ══ PANEL 12 : UTILISATEURS ══ -->
+    <div class="panel" id="pUsers">
+      <div class="toolbar">
+        <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;">👥 Gestion des Utilisateurs</h2>
+        <div style="flex:1"></div>
+        <button class="btn btn-primary" onclick="openAddUser()">＋ Ajouter un utilisateur</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nom d'utilisateur</th>
+              <th>Rôle</th>
+              <th>Accès Onglets</th>
+              <th width="150">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userBody"></tbody>
+        </table>
+      </div>
+    </div>
 
   <!-- ══ MODAL OPTION ══ -->
   <div class="overlay" id="modalOpt">
@@ -2942,6 +3076,97 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       </div>
     </div>
   </div>
+  <!-- 🧪 MODAL CLIENT TEST API ══ -->
+  <div class="overlay" id="modalTestClient">
+    <div class="modal" style="max-width:420px; border-radius:16px;">
+      <div class="modal-header no-print">
+        <h3 style="font-family:'Syne'; color:var(--text);">🧪 Ajouter un Client Test (API)</h3>
+        <button class="modal-close" onclick="closeModal('modalTestClient')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+        <div class="field" style="margin:0;">
+          <label style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase;">Nom du Client Test</label>
+          <input type="text" id="tcName" placeholder="ex: Test Abbas" style="width:100%;">
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase;">Téléphone (Pour vos tests WhatsApp)</label>
+          <input type="text" id="tcPhone" placeholder="ex: 0550303331" style="width:100%;">
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase;">Solde / Dette (DA)</label>
+          <input type="number" id="tcSolde" placeholder="ex: 5000" value="5000" style="width:100%;">
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase;">Type d'abonnement</label>
+          <select id="tcType" style="width:100%; height:38px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); padding:0 10px;">
+            <option value="Gold">Gold</option>
+            <option value="Silver">Silver</option>
+            <option value="Bronze">Bronze</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase;">Ville</label>
+          <input type="text" id="tcVille" placeholder="ex: Alger" value="Alger" style="width:100%;">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding:15px 20px; display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn btn-ghost" onclick="closeModal('modalTestClient')">Annuler</button>
+        <button class="btn btn-primary" onclick="submitTestClient()" style="background:#8b5cf6; color:white; border:none; box-shadow:0 6px 12px rgba(139,92,246,0.25);">Créer Test Client</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 💵 MODAL ENREGISTRER PAIEMENT ══ -->
+  <div class="overlay" id="modalLogPayment">
+    <div class="modal" style="max-width:400px; border-radius:16px; background:var(--card); border:1px solid var(--border);">
+      <div class="modal-header no-print" style="padding:15px 20px; border-bottom:1px solid var(--border);">
+        <h3 style="font-family:'Syne'; color:var(--text); display:flex; align-items:center; gap:8px; margin:0;"><span style="font-size:20px;">💵</span> Enregistrer un Paiement</h3>
+        <button class="modal-close" onclick="closeModal('modalLogPayment')" style="background:none; border:none; color:var(--text); cursor:pointer; font-size:18px;">✕</button>
+      </div>
+      <div class="modal-body" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+        <input type="hidden" id="lpClientId">
+        <div class="field" style="margin:0;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; display:block; margin-bottom:5px;">Client</label>
+          <input type="text" id="lpClientName" readonly style="width:100%; background:var(--tag-bg); cursor:not-allowed; border:1px solid var(--border); border-radius:8px; height:38px; padding:0 10px; color:var(--text);">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="field" style="margin:0;">
+            <label style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; display:block; margin-bottom:5px;">Total Négocié (DA)</label>
+            <input type="text" id="lpNegotiated" readonly style="width:100%; background:var(--tag-bg); cursor:not-allowed; border:1px solid var(--border); border-radius:8px; height:38px; padding:0 10px; color:var(--text);">
+          </div>
+          <div class="field" style="margin:0;">
+            <label style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; display:block; margin-bottom:5px;">Reste à payer (DA)</label>
+            <input type="text" id="lpReste" readonly style="width:100%; background:var(--tag-bg); cursor:not-allowed; border:1px solid var(--border); border-radius:8px; height:38px; padding:0 10px; color:var(--text);">
+          </div>
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; display:block; margin-bottom:5px;">Montant du Versement (DA)</label>
+          <input type="number" id="lpAmount" placeholder="ex: 5000" style="width:100%; font-size:16px; font-weight:bold; color:#22c55e; border:1px solid var(--border); border-radius:8px; height:38px; padding:0 10px; background:var(--card);">
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; display:block; margin-bottom:5px;">Date du Paiement</label>
+          <input type="date" id="lpDate" style="width:100%; border:1px solid var(--border); border-radius:8px; height:38px; padding:0 10px; background:var(--card); color:var(--text);">
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; display:block; margin-bottom:5px;">Mode de Règlement</label>
+          <select id="lpMethod" style="width:100%; height:38px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); padding:0 10px;">
+            <option value="Cash">💰 Cash / Espèces</option>
+            <option value="CCP">✉️ CCP</option>
+            <option value="BaridiMob">📱 BaridiMob</option>
+            <option value="Virement">🏦 Virement Bancaire</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0;">
+          <label style="font-size:11px; font-weight:700; color:var(--accent); text-transform:uppercase; display:block; margin-bottom:5px;">Note / Commentaire</label>
+          <input type="text" id="lpNotes" placeholder="ex: Reçu N° 45" style="width:100%; border:1px solid var(--border); border-radius:8px; height:38px; padding:0 10px; background:var(--card); color:var(--text);">
+        </div>
+      </div>
+      <div class="modal-footer" style="padding:15px 20px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:10px;">
+        <button class="btn btn-ghost" onclick="closeModal('modalLogPayment')">Annuler</button>
+        <button class="btn btn-primary" onclick="submitLogPayment()" style="background:#22c55e; color:white; border:none; box-shadow:0 6px 12px rgba(34,197,94,0.25);">Confirmer le Paiement</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -3058,6 +3283,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     let clients = [];
     let nextClientId = 1;
     let editClientKey = null;
+    let payments = [];
 
     let materials = [];
     let nextMaterialId = 1;
@@ -3112,7 +3338,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           options: optsArray,
           activities: activities,
           clients: clients,
-          materials: materials
+          materials: materials,
+          payments: payments
         };
         
         // Immediate call to main process for disk write
@@ -3124,8 +3351,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       }
     }
 
+    let currentUser = null;
+    const ALL_TAB_NAMES = ['Catalogue', 'Activités', 'Clients', 'Dashboard', 'Devis & Récap', 'Matériel', 'Rappels', 'Étiquettes Colis', 'Sur Mesure', 'Assistant IA', 'API Sync', 'LOGICOM Clients', 'Utilisateurs'];
+
     // ═══════════════════════════ TABS ═══════════════════════════
-    const TAB_PANEL_IDS = ['p0','p1','p2','p4','p3','p5','p6','panelEtiquettes','pSurMesure','p7','pApiSync','pLogicomClients'];
+    const TAB_PANEL_IDS = ['p0','p1','p2','p4','p3','p5','p6','panelEtiquettes','pSurMesure','p7','pApiSync','pLogicomClients','pUsers'];
 
     function switchTab(i) {
       document.querySelectorAll('.tab').forEach((t, j) => t.classList.toggle('active', i === j));
@@ -3146,6 +3376,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         renderLogicomClients();
         if (typeof loadLogicomIndivTemplate === 'function') loadLogicomIndivTemplate();
       }
+      if (i === 12) renderUsers();
       if (i === 3) renderDashboard();
       if (i === 4) {
         renderRecap();
@@ -3496,7 +3727,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       <td>${displayDate}</td>
       <td style="font-size:11px; font-weight:700; color:var(--accent)">${c.added_by ? '@' + c.added_by : 'Direct'}</td>
       <td>
-        <button class="btn btn-ghost btn-sm" style="color:#25D366; border-color:#25D366; padding:0 8px;" onclick="sendClientWhatsApp(${c.id})">📲 WhatsApp</button>
+        <div style="display:flex; gap:4px">
+          <button class="btn btn-ghost btn-sm" style="color:#25D366; border-color:#25D366; padding:0 8px;" onclick="sendClientWhatsApp(${c.id})">📲 WhatsApp</button>
+          ${c.paymentStatus !== 'Régler' ? `<button class="btn btn-ghost btn-sm" style="color:#22c55e; border-color:#22c55e; padding:0 8px;" onclick="openLogPayment(${c.id})" title="Enregistrer un versement">💵 Pay</button>` : ''}
+        </div>
       </td>
       <td>
         <div style="display:flex; gap:4px">
@@ -3920,6 +4154,18 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
         // Auto-send payment confirmation if payment changed
         const paymentJustMade = paidAmount > oldPaidAmount || (paymentStatus === 'Régler' && oldPaymentStatus !== 'Régler');
+        if (paidAmount > oldPaidAmount) {
+          payments.push({
+            id: Date.now(),
+            clientId: c.id,
+            clientName: c.name,
+            amount: paidAmount - oldPaidAmount,
+            date: new Date().toISOString().split('T')[0],
+            method: paymentMode || 'Cash',
+            notes: 'Mise à jour fiche client'
+          });
+        }
+
         if (paymentJustMade && phone) {
           const total = negotiatedPrice || getClientTotalValue(c);
           const amountPaid = paidAmount - oldPaidAmount > 0 ? paidAmount - oldPaidAmount : paidAmount;
@@ -3934,22 +4180,25 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           const cleanPhone = phone.replace(/[^\d+]/g, '');
           const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
           
-          try {
-            const { ready } = await ipcRenderer.invoke('get-whatsapp-status');
-            if (ready) {
-              await ipcRenderer.invoke('send-whatsapp-message', { phone: finalPhone, message: tpl, clientId: c.id });
-              toast(`✅ Confirmation paiement envoyée directement à ${name} !`);
-            } else {
-              ipcRenderer.invoke('open-whatsapp', `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(tpl)}`);
-              toast(`📲 Confirmation paiement envoyée à ${name}`);
-            }
-          } catch (err) {
-            ipcRenderer.invoke('open-whatsapp', `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(tpl)}`);
-            toast(`📲 Confirmation paiement envoyée à ${name}`);
-          }
+          ipcRenderer.invoke('open-whatsapp', `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(tpl)}`);
+          ipcRenderer.invoke('update-last-reminder', c.id);
+          toast(`📲 Confirmation paiement préparée dans WhatsApp pour ${name} (à approuver et envoyer) !`);
         }
       } else {
-        clients.push({ id: nextClientId++, name, phone, brand, category, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate, trialPeriod: trialPeriod, added_by: 'Direct', negotiatedPrice, paidAmount, paymentDeadline, autoReminder });
+        const newId = nextClientId++;
+        clients.push({ id: newId, name, phone, brand, category, potential, address, source, options: selectedOpts, note: '', installer, material, paymentStatus, paymentMode, finalState, noPurchaseReason, created_at: createdAt, called: called, trialStatus: trialStatus, trialStartDate: trialStartDate, trialPeriod: trialPeriod, added_by: 'Direct', negotiatedPrice, paidAmount, paymentDeadline, autoReminder });
+        
+        if (paidAmount > 0) {
+          payments.push({
+            id: Date.now(),
+            clientId: newId,
+            clientName: name,
+            amount: paidAmount,
+            date: new Date().toISOString().split('T')[0],
+            method: paymentMode || 'Cash',
+            notes: 'Versement initial'
+          });
+        }
       }
 
       closeModal('modalClient');
@@ -4023,6 +4272,153 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     // ═══════════════════════════ UTILS ═══════════════════════════
     function closeModal(id) { document.getElementById(id).classList.remove('open'); }
     document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
+
+    function openAddTestClientModal() {
+      document.getElementById('tcName').value = '';
+      document.getElementById('tcPhone').value = '';
+      document.getElementById('tcSolde').value = '5000';
+      document.getElementById('tcType').value = 'Gold';
+      document.getElementById('tcVille').value = 'Alger';
+      document.getElementById('modalTestClient').classList.add('open');
+    }
+
+    function openLogPayment(clientId) {
+      const c = clients.find(x => x.id === clientId);
+      if (!c) return toast('Client introuvable', true);
+
+      const totalVal = c.negotiatedPrice || getClientTotalValue(c);
+      const paidVal = c.paidAmount || 0;
+      const balance = Math.max(0, totalVal - paidVal);
+
+      document.getElementById('lpClientId').value = c.id;
+      document.getElementById('lpClientName').value = c.name;
+      document.getElementById('lpNegotiated').value = totalVal.toLocaleString('fr-DZ') + ' DA';
+      document.getElementById('lpReste').value = balance.toLocaleString('fr-DZ') + ' DA';
+      document.getElementById('lpAmount').value = balance; // Default to remaining balance
+      document.getElementById('lpDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('lpMethod').value = c.paymentMode || 'Cash';
+      document.getElementById('lpNotes').value = '';
+
+      document.getElementById('modalLogPayment').classList.add('open');
+    }
+
+    async function submitLogPayment() {
+      const id = parseInt(document.getElementById('lpClientId').value);
+      const amount = parseInt(document.getElementById('lpAmount').value) || 0;
+      const date = document.getElementById('lpDate').value || new Date().toISOString().split('T')[0];
+      const method = document.getElementById('lpMethod').value;
+      const notes = document.getElementById('lpNotes').value.trim();
+
+      if (amount <= 0) return toast('Le montant doit être supérieur à 0.', true);
+
+      const c = clients.find(x => x.id === id);
+      if (!c) return toast('Client introuvable.', true);
+
+      const totalVal = c.negotiatedPrice || getClientTotalValue(c);
+      const oldPaid = c.paidAmount || 0;
+      const newPaid = oldPaid + amount;
+
+      c.paidAmount = newPaid;
+      c.paymentMode = method;
+
+      // Update payment status dynamically
+      if (newPaid >= totalVal) {
+        c.paymentStatus = 'Régler';
+      } else if (newPaid > 0) {
+        c.paymentStatus = 'Verser';
+      } else {
+        c.paymentStatus = 'Non';
+      }
+
+      // Record transaction
+      payments.push({
+        id: Date.now(),
+        clientId: c.id,
+        clientName: c.name,
+        amount: amount,
+        date: date,
+        method: method,
+        notes: notes || 'Enregistré via bouton paiement'
+      });
+
+      await syncDB();
+      closeModal('modalLogPayment');
+      
+      // Refresh all lists
+      renderClients();
+      renderLogicomClients();
+      renderReminders();
+      if (typeof renderDashboard === 'function') {
+        renderDashboard();
+      }
+
+      toast(`💵 Paiement de ${amount.toLocaleString('fr-DZ')} DA enregistré pour ${c.name} ! ✓`);
+
+      // Auto-send payment confirmation
+      if (c.phone) {
+        const balance = Math.max(0, totalVal - newPaid);
+        let tpl = localStorage.getItem('logicom-payment-confirm-template') || 'Salam alikoum {name} 🎉 Merci pour votre paiement de {amount} DA via {mode} ! Reste : {balance} DA. — Équipe LOGICOM 🇩🇿';
+        tpl = tpl
+          .replace('{name}', c.name)
+          .replace('{amount}', amount.toLocaleString('fr-DZ'))
+          .replace('{balance}', balance.toLocaleString('fr-DZ'))
+          .replace('{brand}', c.brand || '')
+          .replace('{mode}', method || 'Cash');
+        const cleanPhone = c.phone.replace(/[^\d+]/g, '');
+        const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
+        
+        ipcRenderer.invoke('open-whatsapp', `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(tpl)}`);
+        ipcRenderer.invoke('update-last-reminder', c.id);
+        toast(`📲 Confirmation paiement préparée dans WhatsApp pour ${c.name} (à approuver et envoyer) !`);
+      }
+    }
+
+    async function submitTestClient() {
+      const name = document.getElementById('tcName').value.trim();
+      const phone = document.getElementById('tcPhone').value.trim();
+      const solde = parseInt(document.getElementById('tcSolde').value) || 5000;
+      const type = document.getElementById('tcType').value;
+      const ville = document.getElementById('tcVille').value.trim();
+
+      if (!name) return toast('Le nom est obligatoire.', true);
+      if (!phone) return toast('Le numéro de téléphone est obligatoire.', true);
+
+      const today = new Date().toISOString().split('T')[0];
+      const newId = nextClientId++;
+
+      clients.push({
+        id: newId,
+        name: name,
+        phone: phone,
+        brand: type,
+        potential: false,
+        address: ville,
+        source: 'Import API',
+        options: [],
+        note: `KEY_CLIENT:TEST_${newId}`,
+        installer: 'Non',
+        material: 'Non',
+        paymentStatus: 'Non',
+        paymentMode: '',
+        finalState: '',
+        noPurchaseReason: '',
+        created_at: today,
+        called: false,
+        trialStatus: 0,
+        negotiatedPrice: solde,
+        paidAmount: 0,
+        paymentDeadline: '',
+        autoReminder: 1,
+        trialOutcome: '',
+        trialLostReason: ''
+      });
+
+      await syncDB();
+      closeModal('modalTestClient');
+      renderLogicomClients();
+      renderReminders();
+      toast(`🧪 Client Test "${name}" ajouté ! ✓`);
+    }
 
     function toast(msg, err = false) {
       const t = document.getElementById('toast');
@@ -4114,6 +4510,27 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const convertedTrials = clients_filtered.filter(c => c.trialOutcome === 'converted');
       const convRate = decidedTrials.length > 0 ? Math.round(convertedTrials.length / decidedTrials.length * 100) : null;
       setVal('statTrialConvRate', convRate !== null ? `${convRate}% (${convertedTrials.length}/${decidedTrials.length})` : '—');
+
+      // Calculations for payments
+      let totalPaymentsSum = 0;
+      payments.forEach(p => totalPaymentsSum += Number(p.amount || 0));
+      
+      let lastPaymentAmount = 0;
+      let lastPaymentLabel = 'Aucun versement enregistré';
+      if (payments.length > 0) {
+        const sortedPayments = [...payments].sort((a,b) => b.id - a.id);
+        const lp = sortedPayments[0];
+        lastPaymentAmount = lp.amount;
+        const displayDate = lp.date ? lp.date.split('-').reverse().join('/') : '-';
+        lastPaymentLabel = `Par ${lp.clientName} le ${displayDate}`;
+      }
+
+      setVal('statDashTotalPayments', totalPaymentsSum.toLocaleString('fr-DZ') + ' DA');
+      setVal('statDashLastPaymentAmount', lastPaymentAmount.toLocaleString('fr-DZ') + ' DA');
+      setVal('statDashLastPaymentLabel', lastPaymentLabel);
+      setVal('statDashPaymentCount', payments.length);
+      
+      renderDashPaymentsTable();
 
       let totalGlobal = 0, resteRecouvrer = 0, manqueGagner = 0, caInstalle = 0;
       const periodActive = dashPeriodDays !== 0 || dashDateFrom || dashDateTo;
@@ -4344,8 +4761,126 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
               options: charConfig
             });
           }
+
+          // Revenue Growth Timeline Line Chart
+          const crg = document.getElementById('chartRevenueGrowth');
+          if (crg) {
+            const ctxrg = crg.getContext('2d');
+            if (window.revenueGrowthChart) window.revenueGrowthChart.destroy();
+
+            // Group payments by date
+            const dailyPayments = {};
+            payments.forEach(p => {
+              const dateStr = p.date ? p.date.split('T')[0] : 'N/A';
+              dailyPayments[dateStr] = (dailyPayments[dateStr] || 0) + Number(p.amount);
+            });
+
+            // Sort dates chronologically
+            const sortedDates = Object.keys(dailyPayments).sort();
+            const revenueDataPoints = sortedDates.map(d => dailyPayments[d]);
+
+            window.revenueGrowthChart = new Chart(ctxrg, {
+              type: 'line',
+              data: {
+                labels: sortedDates.map(d => d.split('-').reverse().join('/')),
+                datasets: [{
+                  label: 'Versements (DA)',
+                  data: revenueDataPoints,
+                  borderColor: '#22c55e',
+                  backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                  borderWidth: 2,
+                  fill: true,
+                  tension: 0.3,
+                  pointRadius: 4,
+                  pointBackgroundColor: '#22c55e',
+                  hoverRadius: 6
+                }]
+              },
+              options: {
+                ...charConfig,
+                plugins: {
+                  ...charConfig.plugins,
+                  legend: { display: false }
+                },
+                scales: {
+                  y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: 'rgba(255, 255, 255, 0.5)' }
+                  },
+                  x: {
+                    grid: { display: false },
+                    ticks: { color: 'rgba(255, 255, 255, 0.5)' }
+                  }
+                }
+              }
+            });
+          }
         } catch(e) { console.error("Chart Render Error:", e); }
       });
+    }
+
+    function renderDashPaymentsTable() {
+      const tbody = document.getElementById('dashPaymentsTableBody');
+      if (!tbody) return;
+
+      const q = document.getElementById('dashSearchPayment') ? document.getElementById('dashSearchPayment').value.trim().toLowerCase() : '';
+      
+      const filteredPayments = payments.filter(p => {
+        return !q || p.clientName.toLowerCase().includes(q) || (p.notes && p.notes.toLowerCase().includes(q)) || (p.method && p.method.toLowerCase().includes(q));
+      });
+
+      if (filteredPayments.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 20px; color: var(--muted);">Aucun versement ne correspond à votre recherche.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filteredPayments.slice(0, 100).map(p => {
+        const displayDate = p.date ? p.date.split('-').reverse().join('/') : '-';
+        return `<tr style="border-bottom: 1px solid var(--border);">
+          <td style="padding: 10px; font-weight: 500; color: var(--muted);">${displayDate}</td>
+          <td style="padding: 10px; font-weight: 600; color: var(--text);">${p.clientName}</td>
+          <td style="padding: 10px; font-weight: bold; color: #22c55e;">+${p.amount.toLocaleString('fr-DZ')} DA</td>
+          <td style="padding: 10px;"><span style="background: var(--tag-bg); color: var(--accent); font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700; border: 1px solid var(--border);">${p.method || 'Cash'}</span></td>
+          <td style="padding: 10px; color: var(--muted); font-size: 12px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${p.notes || ''}">${p.notes || '-'}</td>
+          <td style="padding: 10px; text-align: center;">
+            <button class="btn btn-ghost btn-sm" onclick="deletePayment(${p.id})" style="border: 1px solid var(--red); color: var(--red); background: rgba(220,38,38,0.05); padding: 2px 6px;" title="Annuler le versement">✕ Annuler</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function deletePayment(paymentId) {
+      if (!confirm('Annuler et supprimer ce paiement ? Le solde du client sera mis à jour en conséquence.')) return;
+
+      const p = payments.find(x => x.id === paymentId);
+      if (!p) return toast('Paiement introuvable.', true);
+
+      // Try to find the client
+      const c = clients.find(x => x.id === p.clientId);
+      if (c) {
+        c.paidAmount = Math.max(0, (c.paidAmount || 0) - p.amount);
+        const totalVal = c.negotiatedPrice || getClientTotalValue(c);
+        
+        if (c.paidAmount >= totalVal) {
+          c.paymentStatus = 'Régler';
+        } else if (c.paidAmount > 0) {
+          c.paymentStatus = 'Verser';
+        } else {
+          c.paymentStatus = 'Non';
+        }
+      }
+
+      payments = payments.filter(x => x.id !== paymentId);
+      await syncDB();
+
+      renderClients();
+      renderLogicomClients();
+      renderReminders();
+      if (typeof renderDashboard === 'function') {
+        renderDashboard();
+      }
+
+      toast('💵 Paiement annulé et supprimé. Solde client restauré.');
     }
 
     function getClientTotalValue(c) {
@@ -5547,6 +6082,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         materials = savedMaterials;
       }
 
+      const savedPayments = await ipcRenderer.invoke('get-payments');
+      if (savedPayments && savedPayments.length > 0) {
+        payments = savedPayments;
+      }
+
       // Restore Recap selection
       const savedRecap = localStorage.getItem('logicom-selected-acts');
       if (savedRecap) {
@@ -5879,6 +6419,15 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       localStorage.setItem('logicom-wasender-enabled', wasenderEnabled ? '1' : '0');
       localStorage.setItem('logicom-wasender-apikey', wasenderApiKey);
 
+      const openwaEnabled = document.getElementById('openwaEnabled').checked;
+      const openwaUrl = document.getElementById('openwaUrl').value.trim() || 'http://localhost:2785';
+      const openwaSessionId = document.getElementById('openwaSessionId').value.trim() || 'logicom';
+      const openwaApiKey = document.getElementById('openwaApiKey').value.trim();
+      localStorage.setItem('logicom-openwa-enabled', openwaEnabled ? '1' : '0');
+      localStorage.setItem('logicom-openwa-url', openwaUrl);
+      localStorage.setItem('logicom-openwa-sessionid', openwaSessionId);
+      localStorage.setItem('logicom-openwa-apikey', openwaApiKey);
+
       ipcRenderer.invoke('update-telegram-config', { 
         token: tgToken, 
         groqApiKey: groqKey, 
@@ -5888,7 +6437,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         trialExpiredTemplate, 
         trialExpiredEnabled,
         wasenderEnabled,
-        wasenderApiKey
+        wasenderApiKey,
+        openwaEnabled,
+        openwaUrl,
+        openwaSessionId,
+        openwaApiKey
       });
       toast('Configuration sauvegardée ✓');
     }
@@ -5923,6 +6476,13 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       document.getElementById('wasenderApiKey').value = localStorage.getItem('logicom-wasender-apikey') || '2437786234c590dbc2427d4d41efddb26ff7d833fc026b6feef87d63e9b3f851';
       toggleWasenderFields(wasenderEnabled);
 
+      const openwaEnabled = localStorage.getItem('logicom-openwa-enabled') === '1';
+      document.getElementById('openwaEnabled').checked = openwaEnabled;
+      document.getElementById('openwaUrl').value = localStorage.getItem('logicom-openwa-url') || 'http://localhost:2785';
+      document.getElementById('openwaSessionId').value = localStorage.getItem('logicom-openwa-sessionid') || 'logicom';
+      document.getElementById('openwaApiKey').value = localStorage.getItem('logicom-openwa-apikey') || '';
+      toggleOpenwaFields(openwaEnabled);
+
       ipcRenderer.invoke('update-telegram-config', { 
         token: tgToken, 
         groqApiKey: groqKey, 
@@ -5932,7 +6492,11 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         trialExpiredTemplate: localStorage.getItem('logicom-trial-expired-template') || "Salam alikoum {name} ! 👋 Votre période d'essai LOGICOM de {days} jours est terminée. Vous avez aimé le logiciel ? Contactez-nous pour confirmer votre achat 😊 — Équipe LOGICOM 🇩🇿",
         trialExpiredEnabled: localStorage.getItem('logicom-trial-expired-enabled') === '1',
         wasenderEnabled,
-        wasenderApiKey
+        wasenderApiKey,
+        openwaEnabled,
+        openwaUrl: localStorage.getItem('logicom-openwa-url') || 'http://localhost:2785',
+        openwaSessionId: localStorage.getItem('logicom-openwa-sessionid') || 'logicom',
+        openwaApiKey: localStorage.getItem('logicom-openwa-apikey') || ''
       });
     }
 
@@ -6154,6 +6718,12 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
     }
     window.toggleWasenderFields = toggleWasenderFields;
 
+    function toggleOpenwaFields(checked) {
+      const f = document.getElementById('openwaFields');
+      if (f) f.style.display = checked ? 'flex' : 'none';
+    }
+    window.toggleOpenwaFields = toggleOpenwaFields;
+
     async function renderReminders() {
       const body = document.getElementById('reminderBody');
       const trialBody = document.getElementById('trialReminderBody');
@@ -6319,20 +6889,14 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const cleanPhone = (c.phone || '').replace(/[^\d+]/g, '');
       const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
       
-      try {
-        const { ready } = await ipcRenderer.invoke('get-whatsapp-status');
-        if (ready) {
-          toast('Envoi du rappel en arrière-plan...');
-          await ipcRenderer.invoke('send-whatsapp-message', { phone: finalPhone, message: msg, clientId: id });
-          toast(`✅ Rappel d'essai envoyé directement à ${c.name} !`);
-        } else {
-          const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
-          await ipcRenderer.invoke('open-whatsapp', url);
-        }
-      } catch (err) {
-        const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
-        await ipcRenderer.invoke('open-whatsapp', url);
-      }
+      const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
+      await ipcRenderer.invoke('open-whatsapp', url);
+      
+      c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
+      c.reminderSent = true;
+      syncDB();
+      renderReminders();
+      toast(`📲 Rappel d'essai préparé dans WhatsApp pour ${c.name} (à approuver et envoyer) !`);
     }
 
     async function sendManualReminder(id) {
@@ -6347,25 +6911,14 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       const cleanPhone = (c.phone || '').replace(/[^\d+]/g, '');
       const finalPhone = cleanPhone.startsWith('0') ? '213' + cleanPhone.substring(1) : cleanPhone;
       
-      try {
-        const { ready } = await ipcRenderer.invoke('get-whatsapp-status');
-        if (ready) {
-          toast('Envoi du rappel en arrière-plan...');
-          await ipcRenderer.invoke('send-whatsapp-message', { phone: finalPhone, message: msg, clientId: id });
-          toast(`✅ Rappel envoyé directement à ${c.name} !`);
-        } else {
-          const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
-          await ipcRenderer.invoke('open-whatsapp', url);
-        }
-      } catch (err) {
-        const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
-        await ipcRenderer.invoke('open-whatsapp', url);
-      }
+      const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
+      await ipcRenderer.invoke('open-whatsapp', url);
 
       c.dateDernierRappel = new Date().toLocaleDateString('fr-FR');
       c.reminderSent = true;
       syncDB();
       renderReminders();
+      toast(`📲 Rappel de paiement préparé dans WhatsApp pour ${c.name} (à approuver et envoyer) !`);
     }
 
     function formatPhoneForWhatsApp(phone) {
@@ -6394,20 +6947,8 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       let msg = localStorage.getItem('logicom-reminder-template') || "Salam alikoum {name}, petit rappel pour votre crédit de {balance} DA.";
       msg = msg.replace('{name}', c.name || 'Client').replace('{balance}', balance.toLocaleString('fr-DZ'));
 
-      try {
-        const { ready } = await ipcRenderer.invoke('get-whatsapp-status');
-        if (ready) {
-          toast('Envoi du rappel en arrière-plan...');
-          await ipcRenderer.invoke('send-whatsapp-message', { phone: finalPhone, message: msg, clientId: id });
-          toast(`✅ Rappel envoyé directement à ${c.name} !`);
-        } else {
-          const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
-          await ipcRenderer.invoke('open-whatsapp', url);
-        }
-      } catch (err) {
-        const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
-        await ipcRenderer.invoke('open-whatsapp', url);
-      }
+      const url = `whatsapp://send?phone=${finalPhone}&text=${encodeURIComponent(msg)}`;
+      await ipcRenderer.invoke('open-whatsapp', url);
 
       // Mark local date
       const today = new Date().toLocaleDateString('fr-FR');
@@ -6415,6 +6956,7 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
       c.reminderSent = true;
       await syncDB();
       renderLogicomClients();
+      toast(`📲 Rappel de paiement préparé dans WhatsApp pour ${c.name} (à approuver et envoyer) !`);
     }
 
     function resetReminder(id) {
@@ -6632,15 +7174,35 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           // Strict sync rule: process only clients with positive balance.
           if (solde <= 0) return;
 
-          // Find existing client by keyClient (stored in note)
-          const existing = clients.find(c => c.source === 'Import API' && keyClient && c.note.includes(`KEY_CLIENT:${keyClient}`));
+          // Find existing client by keyClient, name or phone
+          let existing = null;
+          if (keyClient) {
+            existing = clients.find(c => c.source === 'Import API' && c.note && c.note.includes(`KEY_CLIENT:${keyClient}`));
+          }
+          if (!existing && name) {
+            existing = clients.find(c => c.source === 'Import API' && c.name && c.name.trim().toLowerCase() === name.trim().toLowerCase());
+          }
+          const normPhone = phone ? String(phone).trim().replace(/\s+/g, '') : '';
+          if (!existing && normPhone) {
+            existing = clients.find(c => {
+              if (c.source !== 'Import API' || !c.phone) return false;
+              const p = String(c.phone).trim().replace(/\s+/g, '');
+              return p && p === normPhone;
+            });
+          }
 
           if (existing) {
+            // API solde IS the authoritative current balance (debt).
+            // Set negotiatedPrice = solde, paidAmount = 0 so displayed balance matches source.
             existing.negotiatedPrice = solde;
+            existing.paidAmount = 0;
             existing.name = name;
             existing.phone = phone;
             existing.address = ville;
             existing.brand = type;
+            if (keyClient && (!existing.note || !existing.note.includes(`KEY_CLIENT:${keyClient}`))) {
+              existing.note = `KEY_CLIENT:${keyClient}`;
+            }
             processedIds.add(existing.id);
             updated++;
           } else {
@@ -6676,9 +7238,15 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           }
         });
 
-        // Remove clients that are no longer in the API (likely paid)
+        // Remove clients that are no longer in the API (likely paid), but keep manual test clients, paid clients, or installed ones!
         const initialCount = clients.length;
-        clients = clients.filter(c => c.source !== 'Import API' || processedIds.has(c.id));
+        clients = clients.filter(c => {
+          if (c.source !== 'Import API') return true;
+          if (processedIds.has(c.id)) return true;
+          if (c.note && c.note.includes('TEST_')) return true;
+          if (Number(c.paidAmount || 0) > 0 || c.paymentStatus === 'Régler' || c.installer === 'Oui') return true;
+          return false;
+        });
         const removed = initialCount - clients.length;
 
         nextClientId = clients.length ? Math.max(...clients.map(c => Number(c.id) || 0)) + 1 : 1;
@@ -6748,8 +7316,24 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
         return matchQ && matchType && matchUnpaid && matchContact;
       });
 
+      // Update stats bar counts
       const countEl = document.getElementById('logicomClientCount');
       if (countEl) countEl.textContent = `${filtered.length} / ${imported.length} client(s) débiteur(s)`;
+
+      const totalAllEl = document.getElementById('logicomTotalAllClients');
+      if (totalAllEl) totalAllEl.textContent = clients.length;
+
+      const filteredCountEl = document.getElementById('logicomFilteredCount');
+      if (filteredCountEl) filteredCountEl.textContent = filtered.length;
+
+      // Calculate and display total balance of filtered clients
+      const totalBalance = filtered.reduce((sum, c) => {
+        const totalVal = Number(c.negotiatedPrice || 0);
+        const paidVal = Number(c.paidAmount || 0);
+        return sum + Math.max(0, totalVal - paidVal);
+      }, 0);
+      const totalBalanceEl = document.getElementById('logicomTotalBalance');
+      if (totalBalanceEl) totalBalanceEl.textContent = Math.round(totalBalance).toLocaleString('fr-DZ') + ' DA';
 
       const recoveredStats = getRecoveredStats();
       const uiAmt = document.getElementById('uiRecoveredAmount');
@@ -6797,7 +7381,10 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
           <td>${created}</td>
           <td style="font-size:11px; font-weight:700; color:var(--accent)">${addedBy}</td>
           <td>
-            <button class="btn btn-ghost btn-sm" onclick="remindLogicomClient(${c.id})" ${c.phone ? '' : 'disabled'} title="${c.phone ? 'Envoyer rappel WhatsApp' : 'Aucun numéro'}">📲 Rappeler</button>
+            <div style="display:flex; gap:4px">
+              <button class="btn btn-ghost btn-sm" onclick="remindLogicomClient(${c.id})" ${c.phone ? '' : 'disabled'} title="${c.phone ? 'Envoyer rappel WhatsApp' : 'Aucun numéro'}">📲 Rappeler</button>
+              <button class="btn btn-ghost btn-sm" style="color:#22c55e; border-color:#22c55e; padding:0 8px;" onclick="openLogPayment(${c.id})" title="Enregistrer un versement">💵 Versement</button>
+            </div>
           </td>
         </tr>`;
       }).join('');
@@ -6805,6 +7392,12 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
     // ═══════════════════════════ KEYBOARD SHORTCUTS ═══════════════════════════
     document.addEventListener('keydown', (e) => {
+      // Shortcut: Press 'Alt + U' to lock the software
+      if (e.altKey && (e.key === 'u' || e.key === 'U')) {
+        e.preventDefault();
+        if (typeof logout === 'function') logout();
+      }
+
       // Shortcut: Press 'Control' to open 'Add Client' when on Clients tab
       if (e.key === 'Control') {
         const clientPanel = document.getElementById('p2');
@@ -6817,13 +7410,19 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
       // Shortcut: Press 'Escape' (Echap) to close any open modal
       if (e.key === 'Escape') {
-        const openOverlays = document.querySelectorAll('.overlay.open');
+        // Prevent closing the login overlay with Escape
+        const openOverlays = document.querySelectorAll('.overlay.open:not(#loginOverlay)');
         openOverlays.forEach(o => o.classList.remove('open'));
       }
     });
 
     // ═══════════════════════════ WHATSAPP QR ═══════════════════════════
     ipcRenderer.on('whatsapp-qr', async (event, qr) => {
+      const openwa = document.getElementById('openwaEnabled');
+      const wasender = document.getElementById('wasenderEnabled');
+      if ((openwa && openwa.checked) || (wasender && wasender.checked)) {
+        return;
+      }
       // Generate QR as data URL using qrcode library loaded via CDN
       if (!window.QRCode) {
         const s = document.createElement('script');
@@ -7960,10 +8559,37 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
 
   <!-- ══ PANEL 11 : LOGICOM CLIENTS SYNC LIST ══ -->
   <div class="panel" id="pLogicomClients">
+    <!-- ══ CLIENT COUNT STATS BAR ══ -->
+    <div style="display:flex; gap:14px; margin-bottom:18px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:180px; background:linear-gradient(135deg, rgba(26,79,160,0.15), rgba(26,79,160,0.05)); border:1px solid rgba(26,79,160,0.25); border-radius:14px; padding:16px 20px; display:flex; align-items:center; gap:14px;">
+        <div style="width:48px; height:48px; border-radius:12px; background:rgba(26,79,160,0.2); display:flex; align-items:center; justify-content:center; font-size:22px;">👥</div>
+        <div>
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700; letter-spacing:0.8px;">Total Clients</div>
+          <div id="logicomTotalAllClients" style="font-size:28px; font-weight:800; color:var(--text); font-family:'Syne'; line-height:1.1;">0</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:1px;">dans la base de données</div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:180px; background:linear-gradient(135deg, rgba(232,160,32,0.15), rgba(232,160,32,0.05)); border:1px solid rgba(232,160,32,0.25); border-radius:14px; padding:16px 20px; display:flex; align-items:center; gap:14px;">
+        <div style="width:48px; height:48px; border-radius:12px; background:rgba(232,160,32,0.2); display:flex; align-items:center; justify-content:center; font-size:22px;">📋</div>
+        <div>
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700; letter-spacing:0.8px;">Clients Affichés</div>
+          <div id="logicomFilteredCount" style="font-size:28px; font-weight:800; color:var(--accent); font-family:'Syne'; line-height:1.1;">0</div>
+          <div id="logicomClientCount" style="font-size:11px; color:var(--muted); margin-top:1px;">0 / 0 client(s) débiteur(s)</div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:180px; background:linear-gradient(135deg, rgba(74,222,128,0.12), rgba(74,222,128,0.04)); border:1px solid rgba(74,222,128,0.2); border-radius:14px; padding:16px 20px; display:flex; align-items:center; gap:14px;">
+        <div style="width:48px; height:48px; border-radius:12px; background:rgba(74,222,128,0.2); display:flex; align-items:center; justify-content:center; font-size:22px;">💰</div>
+        <div>
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700; letter-spacing:0.8px;">Total Solde Restant</div>
+          <div id="logicomTotalBalance" style="font-size:28px; font-weight:800; color:#4ade80; font-family:'Syne'; line-height:1.1;">0 DA</div>
+          <div style="font-size:11px; color:var(--muted); margin-top:1px;">montant à récupérer</div>
+        </div>
+      </div>
+    </div>
+
     <div class="toolbar" style="justify-content:space-between; gap:10px; flex-wrap:wrap; border-bottom:1px solid var(--border); padding-bottom:15px; margin-bottom:15px;">
       <div>
         <h2 style="font-family:'Syne'; color:var(--text); font-size:20px; margin:0;">🧾 LOGICOM Clients</h2>
-        <div id="logicomClientCount" style="font-size:12px; color:var(--muted); font-weight:700; margin-top:2px;">0 client(s) synchronisé(s)</div>
       </div>
       <div id="logicomRecoveryStatsSummary" style="display:flex; gap:20px; align-items:center; background:rgba(34,197,94,0.06); border:1px solid rgba(34,197,94,0.15); padding:8px 16px; border-radius:10px; font-family:'DM Sans';">
         <div>
@@ -8235,7 +8861,7 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
         if (clientsRaw.status !== 200 || !Array.isArray(apiClients) || apiClients.length === 0) return;
 
         // ── STEP 3: REPLACE ─────────────────────────────────
-        // Capture old contacted history to retain across syncs
+        // Capture old contacted history and local states to retain across syncs
         const oldImportHistory = {};
         clients.filter(c => c.source === 'Import API').forEach(c => {
           let key = null;
@@ -8244,22 +8870,46 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
           } else {
             key = (c.name || '').trim();
           }
+          
+          const history = {
+            id: c.id,
+            dateDernierRappel: c.dateDernierRappel || null,
+            reminderSent: c.reminderSent || false,
+            called: c.called || false,
+            negotiatedPrice: Number(c.negotiatedPrice || 0),
+            paidAmount: Number(c.paidAmount || 0),
+            paymentStatus: c.paymentStatus || 'Non',
+            paymentMode: c.paymentMode || '',
+            installer: c.installer || 'Non',
+            material: c.material || 'Non',
+            installed_at: c.installed_at || null,
+            appearanceCount: Number(c.appearanceCount || 1)
+          };
+
           if (key) {
-            oldImportHistory[key] = {
-              dateDernierRappel: c.dateDernierRappel || null,
-              reminderSent: c.reminderSent || false,
-              called: c.called || false,
-              negotiatedPrice: Number(c.negotiatedPrice || 0),
-              paidAmount: Number(c.paidAmount || 0),
-              appearanceCount: Number(c.appearanceCount || 1)
-            };
+            oldImportHistory[`key_${key.toLowerCase()}`] = history;
+            oldImportHistory[key] = history; // Original key for disappeared detection
+          }
+          if (c.name) {
+            oldImportHistory[`name_${c.name.trim().toLowerCase()}`] = history;
+          }
+          const normPhone = c.phone ? String(c.phone).trim().replace(/\s+/g, '') : '';
+          if (normPhone) {
+            oldImportHistory[`phone_${normPhone}`] = history;
           }
         });
 
-        const retainedClients = clients.filter(c => c.source !== 'Import API');
+        // Filter: Keep manual clients, test clients, or any imported clients with payments/installations
+        const retainedClients = clients.filter(c => {
+          if (c.source !== 'Import API') return true;
+          if (c.note && c.note.includes('TEST_')) return true;
+          if (Number(c.paidAmount || 0) > 0 || c.paymentStatus === 'Régler' || c.installer === 'Oui') return true;
+          return false;
+        });
         const removed = clients.length - retainedClients.length;
         clients = retainedClients;
         let added = 0;
+        let processedIds = new Set();
         const today = new Date().toISOString().split('T')[0];
         const incomingKeys = new Set();
 
@@ -8271,32 +8921,79 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
 
           if (solde <= 0) return;
 
-          let oldHistory = null;
+          // Look for an existing client in currently retained clients
+          let existing = null;
           if (keyClient) {
-            oldHistory = oldImportHistory[keyClient.trim()];
+            existing = clients.find(c => c.source === 'Import API' && c.note && c.note.includes(`KEY_CLIENT:${keyClient}`));
           }
-          if (!oldHistory && name) {
-            oldHistory = oldImportHistory[name.trim()];
+          if (!existing && name) {
+            existing = clients.find(c => c.source === 'Import API' && c.name && c.name.trim().toLowerCase() === name.trim().toLowerCase());
+          }
+          const normPhone = phone ? String(phone).trim().replace(/\s+/g, '') : '';
+          if (!existing && normPhone) {
+            existing = clients.find(c => {
+              if (c.source !== 'Import API' || !c.phone) return false;
+              const p = String(c.phone).trim().replace(/\s+/g, '');
+              return p && p === normPhone;
+            });
           }
 
-          clients.push({
-            id: nextClientId++, name, phone,
-            brand: type,
-            potential: false, address: ville, source: 'Import API',
-            options: [], note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
-            installer: 'Non', material: 'Non',
-            paymentStatus: 'Non', paymentMode: '',
-            finalState: '', noPurchaseReason: '', created_at: today,
-            called: oldHistory ? oldHistory.called : false, 
-            trialStatus: 0,
-            negotiatedPrice: solde, paidAmount: 0, paymentDeadline: '',
-            autoReminder: 1, trialOutcome: '', trialLostReason: '',
-            dateDernierRappel: oldHistory ? oldHistory.dateDernierRappel : undefined,
-            reminderSent: oldHistory ? oldHistory.reminderSent : undefined,
-            appearanceCount: oldHistory ? (Number(oldHistory.appearanceCount || 1) + 1) : 1
-          });
-          added++;
+          let oldHistory = null;
+          if (keyClient) {
+            oldHistory = oldImportHistory[`key_${keyClient.trim().toLowerCase()}`];
+          }
+          if (!oldHistory && name) {
+            oldHistory = oldImportHistory[`name_${name.trim().toLowerCase()}`];
+          }
+          if (!oldHistory && normPhone) {
+            oldHistory = oldImportHistory[`phone_${normPhone}`];
+          }
+
+          if (existing) {
+            // API solde IS the authoritative current balance (debt).
+            existing.negotiatedPrice = solde;
+            existing.paidAmount = 0;
+            existing.name = name;
+            existing.phone = phone;
+            existing.address = ville;
+            existing.brand = type;
+            if (keyClient && (!existing.note || !existing.note.includes(`KEY_CLIENT:${keyClient}`))) {
+              existing.note = `KEY_CLIENT:${keyClient}`;
+            }
+            existing.appearanceCount = oldHistory ? (Number(oldHistory.appearanceCount || 1) + 1) : 1;
+            processedIds.add(existing.id);
+          } else {
+            const newId = nextClientId++;
+            clients.push({
+              id: newId, name, phone,
+              brand: type,
+              potential: false, address: ville, source: 'Import API',
+              options: [], note: keyClient ? `KEY_CLIENT:${keyClient}` : '',
+              installer: 'Non', material: 'Non',
+              paymentStatus: 'Non', paymentMode: '',
+              finalState: '', noPurchaseReason: '', created_at: today,
+              called: oldHistory ? oldHistory.called : false, 
+              trialStatus: 0,
+              negotiatedPrice: solde, paidAmount: 0, paymentDeadline: '',
+              autoReminder: 1, trialOutcome: '', trialLostReason: '',
+              dateDernierRappel: oldHistory ? oldHistory.dateDernierRappel : undefined,
+              reminderSent: oldHistory ? oldHistory.reminderSent : undefined,
+              appearanceCount: oldHistory ? (Number(oldHistory.appearanceCount || 1) + 1) : 1
+            });
+            processedIds.add(newId);
+            added++;
+          }
         });
+
+        // Clean up leftover clients that are not in processedIds AND did not pay/install
+        clients = clients.filter(c => {
+          if (c.source !== 'Import API') return true;
+          if (processedIds.has(c.id)) return true;
+          if (c.note && c.note.includes('TEST_')) return true;
+          if (Number(c.paidAmount || 0) > 0 || c.paymentStatus === 'Régler' || c.installer === 'Oui') return true;
+          return false;
+        });
+
         nextClientId = clients.length ? Math.max(...clients.map(c => Number(c.id) || 0)) + 1 : 1;
 
         // Calculate newly recovered clients (disappeared clients with old outstanding balances)
@@ -8788,5 +9485,230 @@ IMPORTANT: جاوب دايما بالدارجة الجزائرية فقط — م
     });
 
   </script>
+
+  <!-- ══ MODAL USER ══ -->
+  <div class="overlay" id="modalUser">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalUserTitle">Ajouter un utilisateur</h3>
+        <button class="modal-close" onclick="closeModal('modalUser')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="userId">
+        <div class="field"><label>Nom d'utilisateur</label><input type="text" id="userUsername"></div>
+        <div class="field"><label>Mot de passe</label><input type="password" id="userPassword"></div>
+        <div class="field">
+          <label>Rôle</label>
+          <select id="userRole" onchange="toggleTabsAccess()">
+            <option value="User">Utilisateur Standard</option>
+            <option value="Admin">Administrateur</option>
+          </select>
+        </div>
+        <div class="field" id="tabsAccessBox">
+          <label>Accès aux onglets</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; background:var(--card); padding:10px; border:1px solid var(--border); border-radius:6px; max-height:150px; overflow-y:auto;" id="userTabsCheckboxes">
+            <!-- Checkboxes generated by JS -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalUser')">Annuler</button>
+        <button class="btn btn-primary" onclick="saveUser()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ LOGIN OVERLAY ══ -->
+  <div id="loginOverlay" class="overlay open" style="z-index:10000; background:var(--navy); justify-content:center; align-items:center;">
+    <div style="background:var(--card); padding:40px; border-radius:16px; width:100%; max-width:400px; box-shadow:0 20px 50px rgba(0,0,0,0.5); text-align:center;">
+      <h1 style="font-family:'Syne'; color:var(--text); margin-bottom:10px; font-size:32px;">LOGI<span style="color:var(--blue);">COM</span></h1>
+      <p style="color:var(--muted); margin-bottom:30px; font-size:14px;">Connectez-vous pour accéder à l'application</p>
+      
+      <div class="field" style="text-align:left; margin-bottom:15px;">
+        <label>Nom d'utilisateur</label>
+        <input type="text" id="loginUsername" placeholder="Votre identifiant" style="width:100%; box-sizing:border-box;" onkeydown="if(event.key==='Enter') login()">
+      </div>
+      <div class="field" style="text-align:left; margin-bottom:25px;">
+        <label>Mot de passe</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" style="width:100%; box-sizing:border-box;" onkeydown="if(event.key==='Enter') login()">
+      </div>
+      
+      <div id="loginError" style="color:var(--red); font-size:13px; margin-bottom:15px; display:none;"></div>
+      
+      <button class="btn btn-primary" style="width:100%; height:45px; font-size:16px;" onclick="login()">Se connecter</button>
+    </div>
+  </div>
+
+<script>
+    const ipc = require('electron').ipcRenderer;
+
+    async function login() {
+        const u = document.getElementById('loginUsername').value;
+        const p = document.getElementById('loginPassword').value;
+        const err = document.getElementById('loginError');
+        
+        if (!u || !p) { err.textContent = 'Veuillez remplir tous les champs'; err.style.display = 'block'; return; }
+        
+        try {
+            const res = await ipc.invoke('login', { username: u, password: p });
+            if (res.success) {
+                currentUser = res.user;
+                currentUser.tabsAccess = JSON.parse(currentUser.tabsAccess || '[]');
+                document.getElementById('loginOverlay').classList.remove('open');
+                document.getElementById('btnLogout').style.display = 'block';
+                updateTabsAccess();
+            } else {
+                err.textContent = res.message || 'Erreur de connexion';
+                err.style.display = 'block';
+            }
+        } catch(e) {
+            err.textContent = 'Erreur système: ' + e.message;
+            err.style.display = 'block';
+        }
+    }
+
+    function logout() {
+        currentUser = null;
+        document.getElementById('loginOverlay').classList.add('open');
+        document.getElementById('btnLogout').style.display = 'none';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').style.display = 'none';
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    }
+
+    function updateTabsAccess() {
+        const tabs = document.querySelectorAll('.tabs .tab');
+        let firstAvailable = -1;
+        
+        tabs.forEach((t, i) => {
+            if (currentUser.role === 'Admin' || (currentUser.tabsAccess && currentUser.tabsAccess.includes(i))) {
+                t.style.display = 'flex';
+                if (firstAvailable === -1) firstAvailable = i;
+            } else {
+                t.style.display = 'none';
+            }
+        });
+        
+        const tabUsers = document.getElementById('tabUsers');
+        if (currentUser.role === 'Admin') {
+            tabUsers.style.display = 'flex';
+        } else {
+            tabUsers.style.display = 'none';
+        }
+        
+        if (firstAvailable !== -1) {
+            switchTab(firstAvailable);
+        }
+    }
+
+    // ═══════════════════════════ USERS ═══════════════════════════
+    let usersList = [];
+    async function renderUsers() {
+        if (!currentUser || currentUser.role !== 'Admin') return;
+        usersList = await ipc.invoke('get-users');
+        document.getElementById('userBody').innerHTML = usersList.map(u => {
+            let accessHtml = u.role === 'Admin' ? '<span class="badge-m">Tous les onglets</span>' : 
+                (JSON.parse(u.tabsAccess||'[]').length > 0 ? JSON.parse(u.tabsAccess).map(idx => ALL_TAB_NAMES[idx]).join(', ') : 'Aucun');
+            return `<tr>
+                <td>${u.id}</td>
+                <td><strong>${u.username}</strong></td>
+                <td>${u.role}</td>
+                <td style="max-width:300px; white-space:normal; font-size:11px;">${accessHtml}</td>
+                <td>
+                    <button class="btn btn-ghost btn-sm" onclick="openEditUser(${u.id})">✏️</button>
+                    ${u.username !== 'admin' ? `<button class="btn btn-danger btn-sm" style="margin-left:6px" onclick="deleteUser(${u.id})">🗑</button>` : ''}
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function openAddUser() {
+        document.getElementById('modalUserTitle').textContent = 'Ajouter un utilisateur';
+        document.getElementById('userId').value = '';
+        document.getElementById('userUsername').value = '';
+        document.getElementById('userPassword').value = '';
+        document.getElementById('userRole').value = 'User';
+        generateTabsCheckboxes([]);
+        toggleTabsAccess();
+        document.getElementById('modalUser').classList.add('open');
+    }
+
+    function openEditUser(id) {
+        const u = usersList.find(x => x.id === id);
+        if (!u) return;
+        document.getElementById('modalUserTitle').textContent = 'Modifier un utilisateur';
+        document.getElementById('userId').value = u.id;
+        document.getElementById('userUsername').value = u.username;
+        document.getElementById('userPassword').value = u.password;
+        document.getElementById('userRole').value = u.role;
+        generateTabsCheckboxes(JSON.parse(u.tabsAccess || '[]'));
+        toggleTabsAccess();
+        document.getElementById('modalUser').classList.add('open');
+    }
+
+    function generateTabsCheckboxes(selectedAccess) {
+        const box = document.getElementById('userTabsCheckboxes');
+        let html = '';
+        // Skip 'Utilisateurs' tab which is index 12
+        for (let i = 0; i < 12; i++) {
+            const checked = selectedAccess.includes(i) ? 'checked' : '';
+            html += `<label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; margin-bottom:0;">
+                <input type="checkbox" class="user-tab-chk" value="${i}" ${checked} style="width:14px; height:14px;"> ${ALL_TAB_NAMES[i]}
+            </label>`;
+        }
+        box.innerHTML = html;
+    }
+
+    function toggleTabsAccess() {
+        const role = document.getElementById('userRole').value;
+        const box = document.getElementById('tabsAccessBox');
+        if (role === 'Admin') {
+            box.style.display = 'none';
+        } else {
+            box.style.display = 'block';
+        }
+    }
+
+    async function saveUser() {
+        const id = document.getElementById('userId').value;
+        const username = document.getElementById('userUsername').value.trim();
+        const password = document.getElementById('userPassword').value.trim();
+        const role = document.getElementById('userRole').value;
+        
+        if (!username || !password) return toast('Remplissez tous les champs', true);
+        
+        let tabsAccess = [];
+        if (role === 'Admin') {
+            tabsAccess = [0,1,2,3,4,5,6,7,8,9,10,11,12];
+        } else {
+            document.querySelectorAll('.user-tab-chk').forEach(chk => {
+                if (chk.checked) tabsAccess.push(Number(chk.value));
+            });
+        }
+        
+        const user = { username, password, role, tabsAccess };
+        if (id) user.id = Number(id);
+        
+        const res = await ipc.invoke('save-user', user);
+        if (res.success) {
+            toast('Utilisateur sauvegardé');
+            closeModal('modalUser');
+            renderUsers();
+        } else {
+            toast(res.message, true);
+        }
+    }
+
+    async function deleteUser(id) {
+        if (!confirm('Supprimer cet utilisateur ?')) return;
+        const res = await ipc.invoke('delete-user', id);
+        if (res.success) {
+            toast('Utilisateur supprimé');
+            renderUsers();
+        } else {
+            toast(res.message, true);
+        }
+    }
+</script>
 </body>
 </html>

@@ -251,6 +251,22 @@ function getWasenderConfig() {
     return { enabled: false, apiKey: '' };
 }
 
+function getOpenwaConfig() {
+    try {
+        const p = path.join(app.getPath('userData'), 'telegram-config.json');
+        if (fs.existsSync(p)) {
+            const cfg = JSON.parse(fs.readFileSync(p, 'utf8'));
+            return {
+                enabled: !!cfg.openwaEnabled,
+                url: cfg.openwaUrl || 'http://localhost:2785',
+                apiKey: cfg.openwaApiKey || '',
+                sessionId: cfg.openwaSessionId || 'logicom'
+            };
+        }
+    } catch(e) {}
+    return { enabled: false, url: 'http://localhost:2785', apiKey: '', sessionId: 'logicom' };
+}
+
 function sendViaWasender(phone, message, apiKey) {
     return new Promise((resolve, reject) => {
         let normalized = normalizePhone(phone);
@@ -293,11 +309,92 @@ function sendViaWasender(phone, message, apiKey) {
     });
 }
 
-async function sendWhatsApp(phone, message) {
+function sendViaOpenwa(phone, message, config) {
+    return new Promise((resolve, reject) => {
+        let normalized = normalizePhone(phone);
+        if (!normalized.startsWith('213')) normalized = '213' + normalized;
+        const chatId = `${normalized}@c.us`;
+
+        const body = JSON.stringify({
+            chatId: chatId,
+            text: message
+        });
+
+        const { URL } = require('url');
+        const urlObj = new URL(config.url + `/api/sessions/${config.sessionId}/messages/send-text`);
+        const lib = urlObj.protocol === 'https:' ? https : require('http');
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(body)
+        };
+        if (config.apiKey) {
+            headers['X-API-Key'] = config.apiKey;
+        }
+
+        const req = lib.request({
+            hostname: urlObj.hostname,
+            port: urlObj.port,
+            path: urlObj.pathname + urlObj.search,
+            method: 'POST',
+            headers: headers
+        }, (res) => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                console.log('[OpenWA Client] Response status:', res.statusCode, 'data:', data);
+                if (res.statusCode >= 200 && res.statusCode < 300) {
+                    resolve({ success: true, data: data });
+                } else {
+                    reject(new Error(`OpenWA API error (${res.statusCode}): ${data}`));
+                }
+            });
+        });
+
+        req.on('error', (err) => {
+            console.error('[OpenWA Client] Connection error:', err.message);
+            reject(err);
+        });
+
+        req.write(body);
+        req.end();
+    });
+}
+
+async function sendWhatsApp(phone, message, bypassApproval = false, clientId = null) {
     const wasender = getWasenderConfig();
+    const openwa = getOpenwaConfig();
     const rawPhones = String(phone || '').split(/[,\/;]+/).map(p => p.trim()).filter(p => p.length > 5);
     
     if (!rawPhones.length) throw new Error('Aucun numéro de téléphone valide');
+
+    if (!bypassApproval) {
+        // Intercept and queue the message!
+        const { getDB, saveToFile } = require('./db');
+        const db = getDB();
+        if (db) {
+            const now = new Date().toISOString();
+            // Queue for each raw phone number
+            for (const rawPhone of rawPhones) {
+                let normalized = normalizePhone(rawPhone);
+                if (!normalized.startsWith('213')) normalized = '213' + normalized;
+                db.run(
+                    `INSERT INTO pending_messages (clientId, phone, message, channel, status, created_at) VALUES (?, ?, ?, ?, 'Pending', ?)`,
+                    [clientId || null, normalized, message, 'WhatsApp', now]
+                );
+            }
+            saveToFile();
+
+            // Broadcast refresh event to Electron windows
+            const { BrowserWindow } = require('electron');
+            BrowserWindow.getAllWindows().forEach(win => {
+                win.webContents.send('refresh-moderation');
+            });
+
+            console.log(`[WhatsApp Queue] Intercepted and queued ${rawPhones.length} message(s) for approval.`);
+            return { queued: true };
+        }
+    }
 
     let successCount = 0;
     let lastErr = null;
@@ -308,6 +405,11 @@ async function sendWhatsApp(phone, message) {
             if (wasender.enabled && wasender.apiKey) {
                 console.log('[WA] Sending via WASender API for phone:', rawPhone);
                 await sendViaWasender(rawPhone, message, wasender.apiKey);
+                lastChatId = `${normalizePhone(rawPhone)}@c.us`;
+                successCount++;
+            } else if (openwa.enabled) {
+                console.log('[WA] Sending via OpenWA API for phone:', rawPhone);
+                await sendViaOpenwa(rawPhone, message, openwa);
                 lastChatId = `${normalizePhone(rawPhone)}@c.us`;
                 successCount++;
             } else {
@@ -343,13 +445,17 @@ async function sendWhatsApp(phone, message) {
 
 function isWhatsAppReady() { 
     const wasender = getWasenderConfig();
+    const openwa = getOpenwaConfig();
     if (wasender.enabled && wasender.apiKey) return true;
+    if (openwa.enabled) return true;
     return waReady; 
 }
 
 function getWhatsAppStatus() {
     const wasender = getWasenderConfig();
+    const openwa = getOpenwaConfig();
     if (wasender.enabled && wasender.apiKey) return 'ready';
+    if (openwa.enabled) return 'ready';
 
     if (!waClient) return 'disconnected';
     if (waReady) return 'ready';
@@ -386,15 +492,17 @@ async function processBulkWhatsApp(clients, template, event) {
                     .replaceAll('{brand}', client.brand || '')
                     .replaceAll('{phone}', client.phone || '');
 
-                await sendWhatsApp(client.phone, personalized);
+                const waResult = await sendWhatsApp(client.phone, personalized, false, client.id);
                 
-                // Update DB
-                const { getDB, saveToFile } = require('./db');
-                const db = getDB();
                 const today = new Date().toLocaleDateString('fr-FR');
-                if (db && client.id) {
-                    db.run(`UPDATE clients SET dateDernierRappel=? WHERE id=?`, [today, client.id]);
-                    saveToFile();
+                if (!waResult || !waResult.queued) {
+                    // Update DB
+                    const { getDB, saveToFile } = require('./db');
+                    const db = getDB();
+                    if (db && client.id) {
+                        db.run(`UPDATE clients SET dateDernierRappel=? WHERE id=?`, [today, client.id]);
+                        saveToFile();
+                    }
                 }
 
                 success++;
@@ -471,7 +579,8 @@ async function resetWhatsApp(onQr, onAdminNotify) {
 
 async function checkWhatsAppNumber(phone) {
     const wasender = getWasenderConfig();
-    if (wasender.enabled && wasender.apiKey) {
+    const openwa = getOpenwaConfig();
+    if ((wasender.enabled && wasender.apiKey) || openwa.enabled) {
         return true;
     }
 

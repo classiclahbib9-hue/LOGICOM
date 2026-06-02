@@ -1,5 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { addClientManually, getUnpaidClientsByPeriod, getDB, savePaymentPromise, saveToFile } = require('./db');
+const { addClientManually, getUnpaidClientsByPeriod, getDB, savePaymentPromise, saveToFile, queueTelegramMessage } = require('./db');
 const { parsePromiseWithGroq } = require('./promise-parser');
 const { sendWhatsApp, isWhatsAppReady } = require('./whatsapp');
 const fs = require('fs');
@@ -1071,18 +1071,25 @@ async function initTelegram() {
                         // Send Telegram if client has chatId
                         if (client.telegramChatId) {
                             try {
-                                await bot.sendMessage(client.telegramChatId, telegramMsg, { parse_mode: 'Markdown' });
-                                tgSent = true;
-                                sentTelegram++;
+                                const tgQueued = queueTelegramMessage(client.id, client.telegramChatId, telegramMsg);
+                                if (tgQueued) {
+                                    tgSent = true;
+                                    sentTelegram++;
+                                }
                             } catch(e) {}
                         }
 
                         // Send WhatsApp if ready and client has phone
                         if (waReady && client.phone) {
                             try {
-                                await sendWhatsApp(client.phone, waMsg);
-                                waSent = true;
-                                sentWhatsApp++;
+                                const waResult = await sendWhatsApp(client.phone, waMsg, false, client.id);
+                                if (waResult && waResult.queued) {
+                                    waSent = true;
+                                    sentWhatsApp++;
+                                } else {
+                                    waSent = true;
+                                    sentWhatsApp++;
+                                }
                                 await new Promise(r => setTimeout(r, 500)); // WhatsApp rate limit
                             } catch(e) {}
                         }

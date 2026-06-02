@@ -1,7 +1,7 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const path = require('path')
 const fs = require('fs')
-const { initDB, registerIpcHandlers, getDB, getSoldClients, savePaymentPromise, getDuePromises } = require('./db')
+const { initDB, registerIpcHandlers, getDB, getSoldClients, savePaymentPromise, getDuePromises, queueTelegramMessage } = require('./db')
 const { initTelegram } = require('./telegram')
 const { initWhatsApp } = require('./whatsapp')
 const { startApiServer, generateKey, loadKeys, saveKeys } = require('./api-server')
@@ -184,19 +184,28 @@ ipcMain.handle('bulk-send-sold-message', async (event, { filter, template, chann
     const tgReady2 = !!(tgBot && c.telegramChatId);
 
     if ((channel === 'tg' || channel === 'both') && tgReady2) {
-      try { await tgBot.sendMessage(c.telegramChatId, msg); sentTG++; }
+      try {
+        const tgQueued = queueTelegramMessage(c.id, c.telegramChatId, msg);
+        if (tgQueued) {
+          sentTG++;
+        } else {
+          failedTG++;
+        }
+      }
       catch(e) { failedTG++; }
     }
 
     const needWA2 = channel === 'wa' || channel === 'both' || (channel === 'tg' && !tgReady2);
     if (needWA2 && waReady2) {
       try { 
-        await sendWhatsApp(c.phone, msg); 
+        const resWA = await sendWhatsApp(c.phone, msg, false, c.id); 
         sentWA++; 
-        const today = new Date().toLocaleDateString('fr-FR');
-        const db = getDB();
-        if (db) {
-          db.run(`UPDATE clients SET dateDernierRappel=? WHERE id=?`, [today, c.id]);
+        if (!resWA || !resWA.queued) {
+            const today = new Date().toLocaleDateString('fr-FR');
+            const db = getDB();
+            if (db) {
+              db.run(`UPDATE clients SET dateDernierRappel=? WHERE id=?`, [today, c.id]);
+            }
         }
         await new Promise(r => setTimeout(r, 500)); 
       }
@@ -230,9 +239,9 @@ ipcMain.handle('send-whatsapp-message', async (event, { phone, message, clientId
   // Permissive check
   if (!require('./whatsapp').getWhatsAppStatus()) throw new Error('WhatsApp non initialisé');
   
-  await sendWhatsApp(phone, message);
+  const resWA = await sendWhatsApp(phone, message, false, clientId);
   
-  if (clientId) {
+  if (clientId && (!resWA || !resWA.queued)) {
     const db = getDB();
     const today = new Date().toLocaleDateString('fr-FR');
     if (db) {
@@ -241,7 +250,7 @@ ipcMain.handle('send-whatsapp-message', async (event, { phone, message, clientId
       saveToFile();
     }
   }
-  return { ok: true };
+  return { ok: true, queued: !!(resWA && resWA.queued) };
 });
 
 ipcMain.handle('update-last-reminder', async (event, clientId) => {
@@ -964,8 +973,8 @@ app.whenReady().then(async () => {
     try { await bot.sendMessage(adminChatId, alert, { parse_mode: 'Markdown' }); } catch(e) {}
   })
   scheduleDuePromiseAlerts()
-  scheduleAutoWhatsAppReminders()
-  scheduleTrialExpiredMessages()
+  // scheduleAutoWhatsAppReminders() // Disabled to prevent any automatic unsanctioned background client messaging
+  // scheduleTrialExpiredMessages()   // Disabled to prevent any automatic unsanctioned background client messaging
   createWindow()
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow() })
 })

@@ -4,6 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { app } = require('electron');
 const { getBot } = require('./telegram');
+const { sendWhatsApp } = require('./whatsapp');
 
 const PORT = 3737;
 let dbRef = null; // set by startApiServer()
@@ -148,6 +149,22 @@ function startApiServer(db) {
         send(res, 200, { ok: true, message_id: result.message_id });
       } catch(e) {
         send(res, 502, { error: e.message });
+      }
+    } else if (route === '/api/whatsapp/send' && req.method === 'POST') {
+      let body;
+      try { body = await readBody(req); }
+      catch(e) { send(res, 400, { error: 'Invalid JSON body' }); return; }
+
+      const { phone, message } = body;
+      if (!phone || !message) {
+        send(res, 400, { error: 'phone and message are required' }); return;
+      }
+
+      try {
+        const chatId = await sendWhatsApp(phone, message);
+        send(res, 200, { ok: true, chatId });
+      } catch(e) {
+        send(res, 502, { error: e.message || String(e) });
       }
     } else {
       send(res, 404, { error: 'Route not found' });
