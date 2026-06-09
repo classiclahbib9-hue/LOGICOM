@@ -2326,11 +2326,27 @@
         <h2 style="font-family:'Syne'; color:var(--text); font-size:20px;"><span class="ring-bell">🔔</span> Relances & Dettes</h2>
         <div style="flex:1"></div>
         <button class="btn btn-primary" onclick="syncExternalClients()">📥 Sync des Clients API</button>
-        <button class="btn btn-ghost" onclick="toggleApiSettings()">⚙️ Config API</button>
+        <button class="btn btn-ghost" onclick="toggleApiSettings()">⚙️ Configuration</button>
       </div>
 
       <div id="apiSettingsBox" style="display:none; background:var(--tag-bg); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:20px;">
         <h4 style="margin-bottom:15px; font-family:'Syne'; font-size:14px; color:var(--accent)">⚙️ Configuration</h4>
+
+        <!-- Emplacement de la Base de données -->
+        <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px;">
+          <div style="font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;">💾 Emplacement des Données (Base de données)</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="font-size:13px; color:var(--text)">Chemin actuel : <code id="dbPathDisplay" style="background:var(--tag-bg); padding:4px 8px; border-radius:6px; word-break:break-all; font-family:monospace; font-size:11px;">Chargement...</code></div>
+            <div style="display:flex; gap:10px; margin-top:6px; flex-wrap:wrap;">
+              <button class="btn btn-sm" style="background:#1a4fa0; color:white; border:none; padding:6px 14px; border-radius:6px; cursor:pointer;" onclick="changeDbPath('move')">📦 Déplacer mes données existantes</button>
+              <button class="btn btn-sm btn-ghost" style="padding:6px 14px; border-radius:6px; border:1px solid var(--border); cursor:pointer;" onclick="changeDbPath('change')">🔗 Se connecter à une autre base</button>
+            </div>
+            <p style="font-size:11px; color:var(--muted); margin:0; line-height:1.4;">
+              <b>Déplacer :</b> Copie votre base de données actuelle vers un nouvel emplacement (utile pour Google Drive, OneDrive, clé USB).<br/>
+              <b>Se connecter :</b> Utilise une base de données existante sans copier vos données actuelles. L'application redémarrera pour appliquer les modifications.
+            </p>
+          </div>
+        </div>
 
         <!-- Sync Clients API -->
         <div style="background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:16px;">
@@ -5354,6 +5370,29 @@ Votre logiciel ({brand}) est actif et notre équipe est disponible pour vous acc
 
       if (groqKey && tgToken) {
         ipcRenderer.invoke('update-telegram-config', { token: tgToken, groqApiKey: groqKey });
+      }
+
+      // Load and display current DB path
+      ipcRenderer.invoke('get-db-path').then(path => {
+        document.getElementById('dbPathDisplay').innerText = path;
+      }).catch(err => {
+        console.error('Failed to get DB path:', err);
+      });
+    }
+
+    async function changeDbPath(action) {
+      try {
+        const res = await ipcRenderer.invoke('select-db-path', action);
+        if (res && res.success) {
+          toast(`✅ Base de données configurée : ${res.newPath}. Redémarrage de l'application...`);
+          setTimeout(() => {
+            ipcRenderer.invoke('relaunch-app');
+          }, 3000);
+        } else if (res && res.error) {
+          alert(`Erreur : ${res.error}`);
+        }
+      } catch (err) {
+        console.error('Failed to change DB path:', err);
       }
     }
 

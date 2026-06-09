@@ -765,7 +765,7 @@ function scheduleAutoWhatsAppReminders() {
 }
 
 // ── Pending clients sync (from bot-server.js queue) ─────────────────────────
-const PENDING_FILE = path.join(__dirname, 'pending-clients.json');
+const PENDING_FILE = path.join(app.getPath('userData'), 'pending-clients.json');
 
 function importPendingClients() {
   if (!fs.existsSync(PENDING_FILE)) return;
@@ -805,6 +805,9 @@ function importPendingClients() {
 }
 
 function watchPendingClients() {
+  if (!fs.existsSync(PENDING_FILE)) {
+    try { fs.writeFileSync(PENDING_FILE, '[]'); } catch(e) {}
+  }
   fs.watchFile(PENDING_FILE, { interval: 5000 }, () => {
     try {
       const list = JSON.parse(fs.readFileSync(PENDING_FILE, 'utf8'));

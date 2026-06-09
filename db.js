@@ -5,13 +5,47 @@ const { ipcMain, app, Notification } = require('electron');
 
 let db;
 let SQL;
-const dbPath = path.join(__dirname, 'test.db');
-const backupDir = path.join(__dirname, 'backups');
+let dbPath;
+let backupDir;
+
+function resolveDbPaths() {
+    if (dbPath) return; // Already resolved
+    const defaultDir = app.getPath('userData');
+    const configPath = path.join(defaultDir, 'db-config.json');
+    let customPath = '';
+    try {
+        if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            customPath = config.dbPath || '';
+        }
+    } catch (e) {
+        console.error('[DB Path Config] Failed to read db-config.json:', e.message);
+    }
+
+    dbPath = customPath || path.join(defaultDir, 'test.db');
+    backupDir = path.join(path.dirname(dbPath), 'backups');
+
+    // If the database file does not exist, copy the template from __dirname (packed template)
+    if (!fs.existsSync(dbPath)) {
+        const templatePath = path.join(__dirname, 'test.db');
+        if (fs.existsSync(templatePath)) {
+            try {
+                const dir = path.dirname(dbPath);
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                fs.copyFileSync(templatePath, dbPath);
+                console.log(`[DB] Copied default template test.db to ${dbPath}`);
+            } catch (copyErr) {
+                console.error('[DB] Failed to copy template database:', copyErr.message);
+            }
+        }
+    }
+}
 
 function safeLog(...args) {} // Logging disabled
 
 function makeBackup() {
     try {
+        resolveDbPaths();
         if (!fs.existsSync(dbPath)) return;
         if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir);
         const ts = new Date().toISOString().replace(/[:.]/g, '-');
@@ -31,6 +65,7 @@ function makeBackup() {
 }
 
 async function initDB() {
+    resolveDbPaths();
     SQL = await initSqlJs({
         locateFile: file => path.join(__dirname, 'node_modules', 'sql.js', 'dist', file)
     });
@@ -246,6 +281,61 @@ function registerIpcHandlers() {
     ipcMain.handle('save-acts', (event, activitiesArray) => saveAll(event, { activities: activitiesArray }));
     ipcMain.handle('save-clients', (event, clientsArray) => saveAll(event, { clients: clientsArray }));
     ipcMain.handle('save-materials', (event, materialsArray) => saveAll(event, { materials: materialsArray }));
+
+    ipcMain.handle('get-db-path', () => {
+        resolveDbPaths();
+        return dbPath;
+    });
+
+    ipcMain.handle('select-db-path', async (event, action) => {
+        const { dialog } = require('electron');
+        const defaultDir = app.getPath('userData');
+        resolveDbPaths();
+        
+        const { filePath } = await dialog.showSaveDialog({
+            title: 'Sélectionner l\'emplacement de la base de données',
+            defaultPath: dbPath || path.join(defaultDir, 'test.db'),
+            filters: [{ name: 'SQLite Database', extensions: ['db'] }]
+        });
+        
+        if (!filePath) return { success: false, cancelled: true };
+        
+        try {
+            const newDir = path.dirname(filePath);
+            if (!fs.existsSync(newDir)) {
+                fs.mkdirSync(newDir, { recursive: true });
+            }
+            
+            if (action === 'move' && fs.existsSync(dbPath)) {
+                // Save current state first
+                saveToFile();
+                // Copy current database to the new path
+                fs.copyFileSync(dbPath, filePath);
+            } else if (!fs.existsSync(filePath)) {
+                // If not moving and file doesn't exist, copy template or make empty
+                const templatePath = path.join(__dirname, 'test.db');
+                if (fs.existsSync(templatePath)) {
+                    fs.copyFileSync(templatePath, filePath);
+                } else {
+                    fs.writeFileSync(filePath, '');
+                }
+            }
+            
+            // Save path to configuration
+            const configPath = path.join(app.getPath('userData'), 'db-config.json');
+            fs.writeFileSync(configPath, JSON.stringify({ dbPath: filePath }, null, 2));
+            
+            return { success: true, newPath: filePath };
+        } catch (e) {
+            console.error('[DB] Failed to change database path:', e);
+            return { success: false, error: e.message };
+        }
+    });
+
+    ipcMain.handle('relaunch-app', () => {
+        app.relaunch();
+        app.exit(0);
+    });
 }
 
 async function addClientManually(clientData) {
